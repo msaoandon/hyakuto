@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+ 
+# Build output
+dist/
+.next/
+out/
+ 
+# Environment
+.env
+.env.local
+.env.*.local
+ 
+# macOS
+.DS_Store
+ 
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+ 
+# TypeScript
+*.tsbuildinfo
+ 
+# Testing
+coverage/
+ 
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+ 
+# Turbo
+.turbo/
+ 
+# PWA
+sw.js
+workbox-*.js
+ 
+# Debug
+npm-debug.log*
+pnpm-debug.log*
+ 
+# Vercel
+.vercel/
+ 
