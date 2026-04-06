@@ -1,9 +1,11 @@
 {
   "name": "hyakuto-engine-demo",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "type": "module",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "tsx src/engine.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
