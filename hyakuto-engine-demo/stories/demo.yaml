@@ -1,0 +1,51 @@
+# A minimal Hyakutō demo segment
+segment: candle_99_morning
+
+messages:
+  - id: msg_1
+    type: message
+    character: ao
+    text: "Good morning. You're up early."
+    delay_ms: 0
+    typing_ms: 1400
+
+  - id: msg_2
+    type: message
+    character: haruki
+    text: "okay i couldn't sleep tbh"
+    delay_ms: 2000
+    typing_ms: 900
+
+  - id: choice_1
+    type: choice
+    prompt: "How do you respond?"
+    options:
+      - id: opt_a
+        text: "Same. The last story got to me."
+        next: branch_honest
+      - id: opt_b
+        text: "I sleep fine. You okay?"
+        next: branch_deflect
+
+  - id: branch_honest
+    type: message
+    character: haruki
+    text: "RIGHT?? okay good it wasn't just me"
+    delay_ms: 800
+    typing_ms: 1100
+    next: msg_end
+
+  - id: branch_deflect
+    type: message
+    character: haruki
+    text: "yeah probably just tired lol"
+    delay_ms: 1200
+    typing_ms: 800
+    next: msg_end
+
+  - id: msg_end
+    type: message
+    character: ao
+    text: "The next candle is waiting when you're ready. ☺"
+    delay_ms: 1500
+    typing_ms: 1800
