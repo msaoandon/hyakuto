@@ -1,0 +1,306 @@
+[
+  {
+    "block_id": "demo_1",
+    "items": [
+      {
+        "type": "status",
+        "text": "{MC} joined the room."
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "Welcome, {MC}.\nI'm Ao — I host these sessions. Thank you for accepting the invitation. I know the description was vague; that's intentional, and I appreciate your trust in joining anyway.\nA brief introduction, since you're the third to arrive today: Kō joined us this afternoon, and Haruki not long after. We're still expecting a few others over the coming days. Please make yourself comfortable."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "hi {MC} 👋\nao that was so formal. is that the same speech you gave me"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "Word for word, Kō."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "incredible. consistency. i respect it {MC} hi again, properly. i'm Kō. don't let the welcome packet scare you, it's nicer in here than it sounds"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "hi {MC} 🙇‍♂️ i'm haruki. i got here a couple hours ago so i am also extremely new, do not look to me for guidance"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Hi everyone. Thanks for having me.",
+            "effects": [
+              {
+                "axis": "story",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": "Three of us and Kō's already testing the host. Promising."
+          },
+          {
+            "text": "What exactly did I just sign up for?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "{@MC}\nTo answer plainly: this is a modern adaptation of Hyakumonogatari Kaidankai — an old parlor game. One hundred ghost stories, told over many evenings. After each accepted story, one of the lanterns above goes out. When the hundredth is extinguished, the game ends.\nMy role is to host. I don't grade the stories, and I don't choose which ones count. I only listen carefully, and I ask that you do the same."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "ao what happens when the last one goes out"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "That depends on the stories, Kō."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "{MC} are you seeing this. two hours in and i still can't get a straight answer out of her"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "honestly i'm kind of glad she won't say. i feel like if she told us i'd just leave 😅"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "What kind of stories count? Urban legends? Family stuff?",
+            "effects": [
+              {
+                "axis": "story",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": "Be honest — how scary are we talking?"
+          },
+          {
+            "text": "Haruki, you're allowed to be a little scared. I think that's the point."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "{@MC} ok yeah you might be right {MC} for what it's worth — i joined on a dare from coworkers like four hours ago and i was 100% planning to leave after one night. but ao's actually really nice and kō is. well. kō is here. and i'm curious now"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "Any kind of story is welcome, {MC}. Folktales. Things passed down in your family. Something a friend swore happened to them. The only requirement is that you tell it sincerely. Stories told for effect tend not to land."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "\"tend not to land\" is ao-speak for \"the candle stays lit and it gets weird\""
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "Kō."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "sorry sorry 🦊 {MC} ignore me. ao runs a tight ship. you're in good hands",
+          "ok important onboarding question {MC}, since ao won't ask it horror tolerance. 1 to 10. 1 is \"i sleep with the light on after a pixar movie\", 10 is \"please ruin my week\" where are you"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Maybe a 4. I scare easy, but I want to be here."
+          },
+          {
+            "text": "7. I came here on purpose."
+          },
+          {
+            "text": "Ask me again at candle 50.",
+            "effects": [
+              {
+                "axis": "story",
+                "delta": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "{@MC} oh i like this one already ao take note. we have a good one"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "Noted, Kō. Though I'd ask you not to set expectations on {MC}'s behalf. {MC} — there is no obligation to tell a story tonight, or this week. Some participants prefer to listen for several sessions before contributing. That is entirely acceptable. The first lantern won't go out until someone is ready."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "^ that is genuinely such a relief to hear bc i was sweating about this"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "haruki you've been sweating since you got here"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "correct and i will continue to do so 🫡"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "A few practical notes, {@MC}. The sessions take place in the evenings. Outside of those hours, this hall stays open for casual conversation — I encourage it. The people here are part of why the game works, and you'll get to know them better between sessions than during them. I'm counting on good stories from all of you. But more than that, I'm counting on honest ones. That's the part that matters."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "ok that was kind of beautiful ao"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "she does that. saves it up all day and then drops one line and you have to sit with it"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "I don't \"save it up,\" Kō."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "sure 💙"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "This already feels like a good place to be.",
+            "effects": [
+              {
+                "axis": "story",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": "Got it. Evenings for stories, the rest for getting to know everyone."
+          },
+          {
+            "text": "Ao — thank you. For the welcome."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ao",
+        "messages": [
+          "{@MC} I'm glad you're here, {MC}. The lanterns are lit. Tonight, you may simply listen."
+        ]
+      },
+      {
+        "type": "status",
+        "text": "Sayo is online."
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "oh {MC} heads up. that one is interesting"
+        ],
+        "condition": "story>4"
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "kō don't make it weird for {MC}'s first day"
+        ],
+        "condition": "story>4"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "i'm not making it weird i'm making it informative"
+        ],
+        "condition": "story>4"
+      },
+      {
+        "type": "status",
+        "text": "Chat ended."
+      }
+    ]
+  }
+]
