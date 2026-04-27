@@ -8,6 +8,7 @@
     "typescript-eslint": "^8.58.0"
   },
   "scripts": {
+    "play": "tsx src/engine.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

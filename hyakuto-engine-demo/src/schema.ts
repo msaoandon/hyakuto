@@ -1,39 +1,61 @@
 import { z } from 'zod';
 
-// A regular dialogue message
-const MessageNode = z.object({
-  id: z.string(),
+// An effect like { axis: "story", delta: 1 }
+export const Effect = z.object({
+  axis: z.string(),
+  delta: z.number().int(),
+});
+export type Effect = z.infer<typeof Effect>;
+
+// A status event: "{MC} joined the room."
+export const StatusItem = z.object({
+  type: z.literal('status'),
+  text: z.string(),
+  condition: z.string().optional(),
+});
+
+// A grouped run of messages from one character.
+// `messages` always has at least one entry.
+export const MessageItem = z.object({
   type: z.literal('message'),
   character: z.string(),
-  text: z.string(),
-  delay_ms: z.number().default(0),
-  typing_ms: z.number().default(1000),
-  next: z.string().optional(), // explicit jump; if absent, use array successor
+  messages: z.array(z.string()).min(1),
+  condition: z.string().optional(),
+  effects: z.array(Effect).optional(),
 });
 
-// A choice (player input pause)
-const ChoiceNode = z.object({
-  id: z.string(),
+// A choice point with N options.
+export const ChoiceItem = z.object({
   type: z.literal('choice'),
-  prompt: z.string(),
-  options: z.array(z.object({
-    id: z.string(),
-    text: z.string(),
-    next: z.string() // choices always require an explicit target
-  })),
+  options: z.array(
+    z.object({
+      text: z.string(),
+      condition: z.string().optional(),
+      effects: z.array(Effect).optional(),
+    })
+  ).min(1),
 });
 
-export const DialogueItemNode = z.discriminatedUnion('type', [
-  ChoiceNode,
-  MessageNode,
+export const TypingItem = z.object({
+  type: z.literal('typing'),
+  character: z.string(),
+});
+
+export const BlockItem = z.discriminatedUnion('type', [
+  StatusItem,
+  MessageItem,
+  ChoiceItem,
+  TypingItem,
 ]);
 
-export const StoryFile = z.object({
-  segment: z.string(),
-  messages: z.array(DialogueItemNode),
-});
+export type BlockItem = z.infer<typeof BlockItem>;
 
-export type DialogueItemNode = z.infer<typeof DialogueItemNode>;
+export const Block = z.object({
+  block_id: z.string(),
+  items: z.array(BlockItem),
+});
+export type Block = z.infer<typeof Block>;
+
+// The exporter produces an array of blocks at the top level.
+export const StoryFile = z.array(Block);
 export type StoryFile = z.infer<typeof StoryFile>;
-export type ChoiceNode = z.infer<typeof ChoiceNode>;
-export type MessageNode = z.infer<typeof MessageNode>;

@@ -1,33 +1,55 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as yaml from 'js-yaml';
 import * as readline from 'readline';
-import { StoryFile, DialogueItemNode } from './schema.js';
+import { StoryFile, Block, BlockItem, Effect } from './schema.js';
+
+// ─── CONFIG ──────────────────────────────────────────────────
+
+const MC_NAME = 'You';
+
+// Timing tuned for "feels like a chat app" without being painful in tests.
+// Bump these up later for real playthroughs.
+const TIMING = {
+  beforeMessage: 1500,    // pause before typing indicator appears
+  betweenGrouped: 800,   // gap between consecutive messages in a group
+  beforeChoice: 1200,
+};
 
 // ─── UTILITIES ───────────────────────────────────────────────
 
-// sleep() is the engine's clock. Everything that feels "realtime"
-// is just this function being awaited.
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// ANSI escape codes for terminal styling.
-// These are the only "UI" we have in Node.js CLI.
 const color = {
   dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
   bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
   cyan: (s: string) => `\x1b[36m${s}\x1b[0m`,
+  magenta: (s: string) => `\x1b[35m${s}\x1b[0m`,
   yellow: (s: string) => `\x1b[33m${s}\x1b[0m`,
-  reset: '\x1b[0m',
+  green: (s: string) => `\x1b[32m${s}\x1b[0m`,
 };
 
-// ─── LOADING & VALIDATION ─────────────────────────────────────
+// Substitute {MC} and {@MC} placeholders.
+// {@MC} is the "addressed" form — same substitution for now, the
+// engine spec leaves room for it to mean something different later.
+function substitute(text: string): string {
+  return text.replace(/\{@?MC\}/g, MC_NAME);
+}
+
+// Per-character color so the transcript is scannable.
+// Hash the name to a stable color so new characters auto-assign.
+function characterColor(name: string): (s: string) => string {
+  const palette = [color.cyan, color.magenta, color.yellow, color.green];
+  let hash = 0;
+  for (const c of name) hash = (hash + c.charCodeAt(0)) >>> 0;
+  return palette[hash % palette.length]!;
+}
+
+// ─── LOADING & VALIDATION ────────────────────────────────────
 
 function loadStory(filePath: string): StoryFile {
   const raw = fs.readFileSync(filePath, 'utf-8');
-  const parsed = yaml.load(raw); // js-yaml returns 'unknown'
+  const parsed = JSON.parse(raw);
 
-  // Zod validates AND narrows the type in one step.
-  // If this throws, the story file is malformed — fail loudly.
   const result = StoryFile.safeParse(parsed);
   if (!result.success) {
     console.error('Story validation failed:');
@@ -37,131 +59,162 @@ function loadStory(filePath: string): StoryFile {
   return result.data;
 }
 
-// ─── NODE LOOKUP ──────────────────────────────────────────────
+// ─── DISPLAY ─────────────────────────────────────────────────
 
-// Build a Map for O(1) node lookup by id.
-// This is why every node has an id — the engine navigates by id,
-// not by array index. Branching requires jumping to arbitrary nodes.
-function buildNodeMap(messages: DialogueItemNode[]): Map<string, DialogueItemNode> {
-  const map = new Map<string, DialogueItemNode>();
-  for (const node of messages) {
-    map.set(node.id, node);
-  }
-  return map;
+async function displayStatus(item: Extract<BlockItem, { type: 'status' }>) {
+  const text = substitute(item.text);
+  console.log('\n' + color.dim(`── ${text} ──`) + '\n');
 }
 
-// Given a node, find what comes next in the linear array.
-// This is the "default flow" when no explicit 'next' is set.
-function getArraySuccessor(
-  node: DialogueItemNode,
-  messages: DialogueItemNode[]
-): DialogueItemNode | null {
-  const idx = messages.findIndex(m => m.id === node.id);
-  return messages[idx + 1] ?? null;
-}
+async function displayMessageGroup(item: Extract<BlockItem, { type: 'message' }>) {
+  const paint = characterColor(item.character);
+  const sender = paint(color.bold(item.character));
 
-// ─── DISPLAY ──────────────────────────────────────────────────
-
-async function displayMessage(node: Extract<DialogueItemNode, { character: string }>) {
-  // Simulate the delay before typing starts
-  if (node.delay_ms > 0) {
-    await sleep(node.delay_ms);
+  for (let i = 0; i < item.messages.length; i++) {
+    const text = substitute(item.messages[i]!);
+    await sleep(i === 0 ? TIMING.beforeMessage : TIMING.betweenGrouped);
+    console.log(`${sender}: ${text}`);
   }
 
-  // Show typing indicator
-  process.stdout.write(color.dim(`  ${node.character} is typing...`));
+  if (item.effects?.length) {
+    console.log('  ' + color.dim(formatEffects(item.effects)));
+  }
+}
 
-  await sleep(node.typing_ms);
-
-  // Clear the typing indicator (move cursor to line start, clear line)
-  process.stdout.write('\r\x1b[K');
-
-  // Print the message
-  const sender = color.cyan(color.bold(node.character));
-  console.log(`${sender}: ${node.text}`);
+function formatEffects(effects: Effect[]): string {
+  return effects
+    .map(e => `${e.delta >= 0 ? '+' : ''}${e.delta} ${e.axis}`)
+    .join(', ');
 }
 
 // ─── CHOICE HANDLING ─────────────────────────────────────────
 
 async function presentChoice(
-  node: Extract<DialogueItemNode, { type: 'choice' }>
-): Promise<string> {
-  console.log('\n' + color.yellow(`❯ ${node.prompt}`));
+  item: Extract<BlockItem, { type: 'choice' }>,
+  state: GameState
+): Promise<void> {
+  await sleep(TIMING.beforeChoice);
+  console.log('\n' + color.yellow('  ❯ Your turn:'));
 
-  node.options.forEach((opt, i) => {
-    console.log(`  ${color.dim(`[${i + 1}]`)} ${opt.text}`);
+  item.options.forEach((opt, i) => {
+    const text = substitute(opt.text);
+    const effectHint = opt.effects?.length
+      ? color.dim(`  (${formatEffects(opt.effects)})`)
+      : '';
+    console.log(`    ${color.dim(`[${i + 1}]`)} ${text}${effectHint}`);
   });
 
-  // readline is Node's built-in way to read user input from stdin.
-  // We create it, read ONE line, then immediately close it.
-  // Why close it? Leaving readline open keeps the process alive.
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  return new Promise(resolve => {
-    rl.question('\n  Your choice: ', (answer) => {
+  const answer: string = await new Promise(resolve => {
+    rl.question('\n  > ', (a) => {
       rl.close();
-      const idx = parseInt(answer.trim(), 10) - 1;
-      const chosen = node.options[idx];
-
-      if (!chosen) {
-        // Invalid input — default to first option
-        console.log(color.dim('  (invalid input — defaulting to option 1)'));
-        const fallback = node.options[0];
-        if(!fallback) {
-            rl.close();
-            resolve('');
-            return;
-        }
-        resolve(fallback.next);
-      } else {
-        resolve(chosen.next);
-      }
+      resolve(a);
     });
   });
+
+  let idx = parseInt(answer.trim(), 10) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= item.options.length) {
+    console.log(color.dim('  (invalid input — defaulting to option 1)'));
+    idx = 0;
+  }
+
+  const chosen = item.options[idx]!;
+  const chosenText = substitute(chosen.text);
+
+  // Echo MC's choice as a message in the transcript
+  const mcPaint = characterColor(MC_NAME);
+  console.log(`\n  ${mcPaint(color.bold(MC_NAME))}: ${chosenText}`);
+
+  // Apply effects to game state
+  if (chosen.effects?.length) {
+    applyEffects(state, chosen.effects);
+    console.log('  ' + color.dim(formatEffects(chosen.effects)));
+  }
+}
+
+// ─── GAME STATE ──────────────────────────────────────────────
+
+// Minimal state for the prototype: just the affinity/counter axes.
+// Expands later when the real engine arrives.
+type GameState = {
+  axes: Record<string, number>;
+};
+
+function newGameState(): GameState {
+  return { axes: {} };
+}
+
+function applyEffects(state: GameState, effects: Effect[]) {
+  for (const eff of effects) {
+    state.axes[eff.axis] = (state.axes[eff.axis] ?? 0) + eff.delta;
+  }
 }
 
 // ─── THE ENGINE LOOP ─────────────────────────────────────────
 
-// This is the state machine. It runs until there are no more nodes.
-// State: { currentNodeId }
-// The map + array give us everything else.
-async function run(story: StoryFile) {
-  console.log(color.dim(`\n── ${story.segment} ──\n`));
+async function playBlock(block: Block, state: GameState) {
+  console.log(color.dim(`\n══ block: ${block.block_id} ══`));
 
-  const nodeMap = buildNodeMap(story.messages);
-  let current: DialogueItemNode | null = story.messages[0] ?? null; // start at the top
+  for (const item of block.items) {
+    // Conditions are passed through but not yet evaluated.
+    // The real engine has a boolean expression parser; we just log here.
+    if ('condition' in item && item.condition) {
+      console.log(color.dim(`  [condition: ${item.condition}]`));
+    }
 
-  while (current !== null) {
-    if (current.type === 'choice') {
-      // CHOICE: pause, get input, jump to the chosen branch
-      const nextId = await presentChoice(current);
-      current = nodeMap.get(nextId) ?? null;
-    } else {
-      // DIALOGUE: display and advance
-      await displayMessage(current);
-
-      // Explicit 'next' overrides array order
-      if ('next' in current && current.next) {
-        current = nodeMap.get(current.next) ?? null;
-      } else {
-        current = getArraySuccessor(current, story.messages);
-      }
+    switch (item.type) {
+      case 'status':
+        await displayStatus(item);
+        break;
+      case 'message':
+        await displayMessageGroup(item);
+        break;
+      case 'choice':
+        await presentChoice(item, state);
+        break;
+      case 'typing':
+        console.log(color.dim(`  [${item.character} is typing...]`));
+        break;
     }
   }
 
-  console.log(color.dim('\n── end of segment ──\n'));
+  console.log(color.dim(`\n══ end of block ══`));
+  console.log(color.dim(`  state: ${JSON.stringify(state.axes)}\n`));
 }
 
 // ─── ENTRY POINT ─────────────────────────────────────────────
 
-const filePath = process.argv[2];
-if (!filePath) {
-  console.error('Usage: ts-node src/engine.ts <story-file.yaml>');
-  process.exit(1);
+async function main() {
+  const filePath = process.argv[2];
+  const blockIdArg = process.argv[3];
+
+  if (!filePath) {
+    console.error('Usage: ts-node src/engine.ts <story-file.json> [block_id]');
+    process.exit(1);
+  }
+
+  const story = loadStory(path.resolve(filePath));
+
+  const blocks = blockIdArg
+    ? story.filter(b => b.block_id === blockIdArg)
+    : story;
+
+  if (blocks.length === 0) {
+    console.error(`No block with id "${blockIdArg}" found.`);
+    process.exit(1);
+  }
+
+  const state = newGameState();
+  for (const block of blocks) {
+    await playBlock(block, state);
+  }
 }
 
-const story = loadStory(path.resolve(filePath));
-run(story).catch(console.error);
+main().catch(err => {
+  console.error(err);
+  process.exit(1);
+});
