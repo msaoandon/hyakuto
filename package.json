@@ -1,4 +1,6 @@
 {
+  "name": "hyakuto",
+  "private": true,
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -9,8 +11,9 @@
   },
   "scripts": {
     "play": "tsx src/engine.ts",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "dev": "pnpm --filter @hyakuto/web dev",
+    "build": "pnpm --filter @hyakuto/web build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
   }
 }
