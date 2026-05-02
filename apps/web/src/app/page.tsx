@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
   const [progress, setProgress] = useState(1);
@@ -17,6 +18,7 @@ export default function Home() {
         '--candle-progress': progress,
       }}
     >
+      <Link href="/chat">Go to Chat</Link>
       <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
       <input
         type="range"
@@ -29,4 +31,5 @@ export default function Home() {
       />
     </main>
   );
+
 }
