@@ -18,7 +18,7 @@ export default function Home() {
         '--candle-progress': progress,
       }}
     >
-      <Link href="/chat">Go to Chat</Link>
+      <Link href="/chat">Start</Link>
       <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
       <input
         type="range"
