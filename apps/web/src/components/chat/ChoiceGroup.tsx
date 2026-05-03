@@ -22,7 +22,7 @@ export function ChoiceGroup({ options, onChoose, disabled = false, chosenIndex }
             key={i}
             onClick={() => onChoose(i)}
             disabled={disabled}
-            className={`text-left text-sm px-4 py-3 rounded-xl border transition-colors
+            className={`text-left text-base px-4 py-3 rounded-xl border transition-colors
               ${isChosen
                 ? 'border-gold bg-gold/20 text-gold'
                 : disabled
