@@ -9,11 +9,11 @@ export function AppHeader() {
   if (pathname === "/") return null;
 
   return (
-    <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)]">
+    <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)] bg-harcoal-blue">
       <Link href="/" className="mr-3">
         ←
       </Link>
-      <span>百灯</span>
+      <span>Are they that bad?</span>
     </header>
   );
 }

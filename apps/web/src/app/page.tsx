@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Shippori_Mincho } from 'next/font/google';
+
+const shipporiMincho = Shippori_Mincho({
+  weight: '800',
+  subsets: ['latin'],
+});
 
 export default function Home() {
   const [progress, setProgress] = useState(1);
@@ -12,14 +18,10 @@ export default function Home() {
   return (
     <main
       className="min-h-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500"
-      style={{
-        backgroundColor: bg,
-        // @ts-expect-error CSS custom property
-        '--candle-progress': progress,
-      }}
     >
-      <Link href="/chat">Start</Link>
-      <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
+      <span className={`${shipporiMincho.className} text-[72px]`}>百灯</span>
+      <Link href="/chat" className="w-64 text-center py-2 bg-papaya-whip text-ink-black rounded-lg">Start</Link>
+      {/* <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
       <input
         type="range"
         min={0}
@@ -28,7 +30,7 @@ export default function Home() {
         value={progress}
         onChange={(e) => setProgress(Number(e.target.value))}
         className="w-64"
-      />
+      /> */}
     </main>
   );
 
