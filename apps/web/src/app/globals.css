@@ -5,9 +5,13 @@
 @tailwind utilities;
 
 @theme inline {
-  --color-dark-gray: #222b3c;
-  --color-beige: #e3e1dc;
-  --color-gold: #ffbd59;
+  --color-silver: #cec0baff;
+  --color-papaya-whip: #feefd6ff;
+  --color-air-force-blue: #5b8aacff;
+  --color-dusk-blue: #30547aff;
+  --color-cool-steel: #96a9b4ff;
+  --color-harcoal-blue: #2c4156ff;
+  --color-ink-black: #0d1d29ff;
 }
 
 :root {
@@ -24,7 +28,7 @@
 }
 
 body {
-  background-color: var(--color-dark-gray);
-  color: var(--color-beige);
+  background-color: var(--color-ink-black);
+  color: var(--color-silver);
   font-family: Arial, Helvetica, sans-serif;
 }
