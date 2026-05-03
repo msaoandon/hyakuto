@@ -47,7 +47,7 @@ export default function ChatPage() {
         chosenText={chosenText}
         onChosenRendered={handleChosenRendered}
       />
-      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)] border-t border-beige/10">
+      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
         <button
           onClick={handleReplyTap}
           disabled={!replyEnabled}
