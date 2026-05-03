@@ -108,38 +108,39 @@ export function ChatFeed({
         const item = items[i];
 
         switch (item.type) {
-          case "status":
-            await sleep(TIMING.beforeMessage);
-            addItem({ kind: "status", text: substitute(item.text) });
-            break;
-
           case "message": {
             const messages = item.messages;
             const isMC = item.character === "MC";
 
-            for (let m = 0; m < messages.length; m++) {
-              if (cancelled) return;
-              await sleep(m === 0 ? TIMING.beforeMessage : TIMING.betweenGrouped);
-              if (!isMC) {
-                await showTyping(item.character);
+            if (messages) {
+              for (let m = 0; m < messages.length; m++) {
+                if (cancelled) return;
+                await sleep(m === 0 ? TIMING.beforeMessage : TIMING.betweenGrouped);
+                if (!isMC) {
+                  await showTyping(item.character);
+                }
+                addItem({
+                  kind: "message",
+                  character: item.character,
+                  text: substitute(messages[m]),
+                  isMC,
+                });
               }
-              addItem({
-                kind: "message",
-                character: item.character,
-                text: substitute(messages[m]),
-                isMC,
-              });
             }
             break;
           }
 
           case "choice":
             await sleep(TIMING.beforeChoice);
-            await waitForChoice(item.options);
+            if (item.options) {
+              await waitForChoice(item.options);
+            }
             break;
 
           case "typing":
-            await showTyping(item.character);
+            if (item.character) {
+              await showTyping(item.character);
+            }
             break;
         }
       }
