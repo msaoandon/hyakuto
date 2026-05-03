@@ -7,11 +7,12 @@
 @theme inline {
   --color-silver: #cec0baff;
   --color-papaya-whip: #feefd6ff;
-  --color-air-force-blue: #5b8aacff;
+  --color-air-force-blue: #C1CCD7;
   --color-dusk-blue: #30547aff;
   --color-cool-steel: #96a9b4ff;
   --color-harcoal-blue: #2c4156ff;
   --color-ink-black: #0d1d29ff;
+  --color-lavelnder-veil: #e5d4ed;
 }
 
 :root {

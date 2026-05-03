@@ -1,0 +1,114 @@
+[
+  {
+    "block_id": "demo_2",
+    "items": [
+      {
+        "type": "message",
+        "character": "MC",
+        "messages": [
+          "wait so are kitsune actually dangerous"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Yes."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "statistically no"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Five hundred years of documented incidents —"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "five hundred years, like three bad days. do you know how long five hundred years is"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Yes."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "…right, you do",
+          "okay. look — dangerous implies intent. I don’t want to hurt anyone",
+          "things just happen"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Things happen around you specifically."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "I'm a very interesting person!"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Should I be worried?"
+          },
+          {
+            "text": "yeah, someone's exaggerating))"
+          },
+          {
+            "text": "idk, sounds like some serious stuff happened"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Moderately."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "absolutely not 🦊✨"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Do not trust the fox."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "okay he’s being dramatic 🤦‍♂️"
+        ]
+      }
+    ]
+  }
+]
