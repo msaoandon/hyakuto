@@ -4,9 +4,11 @@ type ChatBubbleProps = {
   character: string;
   text: string;
   isMC?: boolean;
+  showName?: boolean;
+  showAvatar?: boolean;
 };
 
-export function ChatBubble({ character, text, isMC = false }: ChatBubbleProps) {
+export function ChatBubble({ character, text, isMC = false, showName = true, showAvatar = true }: ChatBubbleProps) {
   if (isMC) {
     return (
       <div className="flex justify-end">
@@ -19,9 +21,11 @@ export function ChatBubble({ character, text, isMC = false }: ChatBubbleProps) {
 
   return (
     <div className="flex gap-2 items-end">
-      <Avatar name={character} />
+      <div className="w-8 shrink-0">
+        {showAvatar && <Avatar name={character} />}
+      </div>
       <div className="max-w-[75%]">
-        <span className="text-xs text-beige/60 ml-1">{character}</span>
+        {showName && <span className="text-xs text-beige/60 ml-1">{character}</span>}
         <div className="rounded-2xl rounded-bl-sm bg-beige/10 text-beige px-3 py-2">
           <p className="text-sm">{text}</p>
         </div>
