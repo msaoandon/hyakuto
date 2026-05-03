@@ -1,4 +1,3 @@
-// app/(authorized)/chat/page.tsx
 'use client';
 
 import { useState } from 'react';

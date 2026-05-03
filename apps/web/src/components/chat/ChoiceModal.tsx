@@ -1,4 +1,3 @@
-// components/chat/ChoiceModal.tsx
 'use client';
 
 type ChoiceModalProps = {
