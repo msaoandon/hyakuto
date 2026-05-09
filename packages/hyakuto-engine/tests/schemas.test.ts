@@ -188,8 +188,8 @@ describe("Block schema", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       const pool = result.data.items[0];
-      if (pool.type === "pool") {
-        expect(pool.variants[0].weight).toBe(1);
+      if (pool?.type === "pool") {
+        expect(pool?.variants[0]?.weight).toBe(1);
       }
     }
   });
