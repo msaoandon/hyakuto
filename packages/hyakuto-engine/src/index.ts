@@ -15,3 +15,6 @@ export type { GameState } from './state/game-state.js';
 
 // Parsers
 export { parseCondition, evaluateCondition } from './conditions/parser.js';
+
+// Pool message selector
+export { selectFromPool, type PoolVariant } from './pools/selector.js';
