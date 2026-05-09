@@ -1,1 +1,1 @@
-export {};
+export { gameConfig } from './config';

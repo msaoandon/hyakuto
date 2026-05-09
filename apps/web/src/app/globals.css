@@ -29,8 +29,13 @@
 }
 
 body {
-  background-color: var(--color-ink-black);
+  background-color: color-mix(
+    in srgb,
+    #222b3c calc(var(--candle-progress) * 100%),
+    #0a0a0b
+  );
   color: var(--color-silver);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 18px;
+  transition: background-color 2s ease;
 }

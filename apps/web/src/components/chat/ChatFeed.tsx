@@ -8,24 +8,9 @@ import { TypingIndicator } from "./TypingIndicator";
 import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
 import type { Block, GameConfig } from "@hyakuto/engine";
 import demoData from "@/data/demo.json";
+import { gameConfig } from '@hyakuto/game';
 
 const MC_NAME = "You";
-
-// ─── GAME CONFIG ─────────────────────────────────────────
-// This moves to @hyakuto/game later. Hardcoded here for Phase 1.
-const gameConfig: GameConfig = {
-  axes: ["story", "kou", "tatsumi"],
-  characters: [
-    { id: "Ao", typing_rate: 1.0 },
-    { id: "Kou", typing_rate: 0.6 },
-    { id: "Haruki", typing_rate: 0.8 },
-    { id: "Tatsumi", typing_rate: 1.4 },
-    { id: "Ren", typing_rate: 1.2 },
-    { id: "Mio", typing_rate: 1.0 },
-    { id: "Kaname", typing_rate: 1.0 },
-  ],
-  counters: [{ id: "candles", start: 100, end: 0, direction: "down" as const }],
-};
 
 // ─── CONVERT DEMO JSON TO SEGMENT INPUT ──────────────────
 // Bridge between your current JSON format and the engine's SegmentInput.
@@ -99,6 +84,7 @@ type ChatFeedProps = {
     flags: string[];
   }) => void;
   onEngineEvent?: (event: string) => void;
+  onEngineReady?: (engine: { getCounterStart: (id: string) => number }) => void;
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
@@ -110,6 +96,7 @@ export function ChatFeed({
   onChosenRendered,
   onStateChange,
   onEngineEvent,
+  onEngineReady,
 }: ChatFeedProps) {
   const [visible, setVisible] = useState<VisibleItem[]>([]);
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
@@ -218,6 +205,15 @@ export function ChatFeed({
             onEngineEvent?.(`${event.axis} → ${event.value}`);
             break;
 
+          case "counter_changed":
+            onStateChange?.({
+              axes: { ...engine.getState().axes },
+              counters: { ...engine.getState().counters },
+              flags: Array.from(engine.getState().flags),
+            });
+            onEngineEvent?.(`${event.counterId} → ${event.value}`);
+            break;
+
           case "flag_set":
             onStateChange?.({
               axes: { ...engine.getState().axes },
@@ -238,6 +234,8 @@ export function ChatFeed({
         }
       },
     });
+
+    onEngineReady?.({ getCounterStart: engine.getCounterStart });
 
     engineRef.current = engine;
 

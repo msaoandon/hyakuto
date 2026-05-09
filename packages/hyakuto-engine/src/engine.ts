@@ -9,7 +9,7 @@ import {
 } from "./state/game-state";
 import { resolveQueue, type QueuedMessage, type RawMessage } from "./queue/message-queue";
 import type { PaceLevel } from "./queue/timing";
-import { evaluateCondition } from './conditions/parser';
+import { evaluateCondition } from "./conditions/parser";
 
 // ─── EVENTS ──────────────────────────────────────────────
 
@@ -47,6 +47,7 @@ export interface Engine {
   getState(): GameState;
   getPace(): PaceLevel;
   serialize(): SaveState;
+  getCounterStart(counterId: string): number;
 }
 
 export interface SaveState {
@@ -87,12 +88,31 @@ export function createEngine(options: CreateEngineOptions): Engine {
   function applyMessageEffects(msg: QueuedMessage): void {
     if (msg.effects) {
       for (const effect of msg.effects) {
-        applyEffect(state, effect.axis, effect.delta, config.axes);
-        onEvent({
-          type: "affinity_changed",
-          axis: effect.axis,
-          value: state.axes[effect.axis] ?? 0,
-        });
+        // Try axis first, then counter
+        if (config.axes.includes(effect.axis)) {
+          applyEffect(state, effect.axis, effect.delta, config.axes);
+          onEvent({
+            type: "affinity_changed",
+            axis: effect.axis,
+            value: state.axes[effect.axis] ?? 0,
+          });
+        } else if (effect.axis in state.counters) {
+          const newValue = updateCounter(state, effect.axis, effect.delta);
+          // Find tier if applicable
+          const counterConfig = config.counters.find((c) => c.id === effect.axis);
+          const tier = counterConfig?.tiers?.find((t) => {
+            if (counterConfig.direction === "down") return newValue <= t.value;
+            return newValue >= t.value;
+          });
+          onEvent({
+            type: "counter_changed",
+            counterId: effect.axis,
+            value: newValue,
+            tier: tier?.name,
+          });
+        } else {
+          throw new Error(`Unknown axis or counter: "${effect.axis}"`);
+        }
       }
     }
 
@@ -110,6 +130,12 @@ export function createEngine(options: CreateEngineOptions): Engine {
     loadSegment(segment: SegmentInput): void {
       currentSegment = segment;
       queue = resolveQueue(segment.messages, state, config.characters, pace);
+    },
+
+    getCounterStart(counterId: string): number {
+      const counter = config.counters.find((c) => c.id === counterId);
+      if (!counter) throw new Error(`Unknown counter: "${counterId}"`);
+      return counter.start;
     },
 
     async play(): Promise<void> {
@@ -158,12 +184,27 @@ export function createEngine(options: CreateEngineOptions): Engine {
           const chosen = availableOptions[chosenIndex];
           if (chosen?.effects) {
             for (const effect of chosen.effects) {
-              applyEffect(state, effect.axis, effect.delta, config.axes);
-              onEvent({
-                type: "affinity_changed",
-                axis: effect.axis,
-                value: state.axes[effect.axis] ?? 0,
-              });
+              if (config.axes.includes(effect.axis)) {
+                applyEffect(state, effect.axis, effect.delta, config.axes);
+                onEvent({
+                  type: "affinity_changed",
+                  axis: effect.axis,
+                  value: state.axes[effect.axis] ?? 0,
+                });
+              } else if (effect.axis in state.counters) {
+                const newValue = updateCounter(state, effect.axis, effect.delta);
+                const counterConfig = config.counters.find((c) => c.id === effect.axis);
+                const tier = counterConfig?.tiers?.find((t) => {
+                  if (counterConfig.direction === "down") return newValue <= t.value;
+                  return newValue >= t.value;
+                });
+                onEvent({
+                  type: "counter_changed",
+                  counterId: effect.axis,
+                  value: newValue,
+                  tier: tier?.name,
+                });
+              }
             }
           }
         }

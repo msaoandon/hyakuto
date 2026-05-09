@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
+import { gameConfig } from '@hyakuto/game';
 
 type PendingChoice = {
   options: { text: string }[];
 };
 
 export default function ChatPage() {
+  const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [chosenText, setChosenText] = useState<string | null>(null);
@@ -19,6 +21,23 @@ export default function ChatPage() {
     flags: [] as string[],
   });
   const [lastEvent, setLastEvent] = useState<string>();
+
+  const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
+
+  useEffect(() => {
+    document.body.style.setProperty("--candle-progress", String(candleProgress));
+  }, [candleProgress]);
+
+  const handleStateChange = (state: {
+    axes: Record<string, number>;
+    counters: Record<string, number>;
+    flags: string[];
+  }) => {
+    setDevState(state);
+    if ("candles" in state.counters) {
+      setCandleProgress(state.counters.candles / candleStart);
+    }
+  };
 
   const handleChoiceAvailable = (choice: PendingChoice) => {
     setPendingChoice(choice);
@@ -49,11 +68,11 @@ export default function ChatPage() {
   return (
     <>
       <ChatFeed
+        onStateChange={handleStateChange}
         onChoiceAvailable={handleChoiceAvailable}
         onChoiceConsumed={handleChoiceConsumed}
         chosenText={chosenText}
         onChosenRendered={handleChosenRendered}
-        onStateChange={setDevState}
         onEngineEvent={setLastEvent}
       />
       <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)] border-t border-beige/10">

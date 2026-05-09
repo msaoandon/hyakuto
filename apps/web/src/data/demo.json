@@ -41,6 +41,12 @@
         "character": "Kou",
         "messages": [
           "five hundred years, like three bad days. do you know how long five hundred years is"
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -50
+          }
         ]
       },
       {
