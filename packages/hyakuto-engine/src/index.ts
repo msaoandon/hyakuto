@@ -18,3 +18,7 @@ export { parseCondition, evaluateCondition } from './conditions/parser.js';
 
 // Pool message selector
 export { selectFromPool, type PoolVariant } from './pools/selector.js';
+
+// Queue
+export { calculateTypingMs, calculateDelayMs, type PaceLevel } from './queue/timing.js';
+export { resolveQueue, type QueuedMessage, type RawMessage } from './queue/message-queue.js';
