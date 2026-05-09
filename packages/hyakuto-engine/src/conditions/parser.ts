@@ -1,0 +1,256 @@
+import type { GameState } from '../state/game-state.js';
+
+type Comparison = '>' | '>=' | '<' | '<=' | '==' | '!=';
+
+interface ComparisonExpr {
+  kind: 'comparison';
+  left: string;
+  op: Comparison;
+  right: number;
+}
+
+interface FlagExpr {
+  kind: 'flag';
+  flag: string;
+}
+
+interface NotExpr {
+  kind: 'not';
+  expr: Expr;
+}
+
+interface AndExpr {
+  kind: 'and';
+  left: Expr;
+  right: Expr;
+}
+
+interface OrExpr {
+  kind: 'or';
+  left: Expr;
+  right: Expr;
+}
+
+type Expr = ComparisonExpr | FlagExpr | NotExpr | AndExpr | OrExpr;
+
+// ─── TOKENIZER ───────────────────────────────────────────
+
+type Token =
+  | { type: 'ident'; value: string }
+  | { type: 'number'; value: number }
+  | { type: 'op'; value: Comparison }
+  | { type: 'and' }
+  | { type: 'or' }
+  | { type: 'not' }
+  | { type: 'flag'; value: string }
+  | { type: 'lparen' }
+  | { type: 'rparen' };
+
+function tokenize(input: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  const s = input.trim();
+
+  while (i < s.length) {
+    // Skip whitespace
+    if (s[i] === ' ' || s[i] === '\t') {
+      i++;
+      continue;
+    }
+
+    // Parentheses
+    if (s[i] === '(') { tokens.push({ type: 'lparen' }); i++; continue; }
+    if (s[i] === ')') { tokens.push({ type: 'rparen' }); i++; continue; }
+
+    // Comparison operators (must check two-char before one-char)
+    if (s[i] === '>' && s[i + 1] === '=') { tokens.push({ type: 'op', value: '>=' }); i += 2; continue; }
+    if (s[i] === '<' && s[i + 1] === '=') { tokens.push({ type: 'op', value: '<=' }); i += 2; continue; }
+    if (s[i] === '!' && s[i + 1] === '=') { tokens.push({ type: 'op', value: '!=' }); i += 2; continue; }
+    if (s[i] === '=' && s[i + 1] === '=') { tokens.push({ type: 'op', value: '==' }); i += 2; continue; }
+    if (s[i] === '>') { tokens.push({ type: 'op', value: '>' }); i++; continue; }
+    if (s[i] === '<') { tokens.push({ type: 'op', value: '<' }); i++; continue; }
+
+    // Numbers (including negative)
+    if (s[i] === '-' && i + 1 < s.length && s[i + 1] >= '0' && s[i + 1] <= '9') {
+      let num = '-';
+      i++;
+      while (i < s.length && s[i] >= '0' && s[i] <= '9') { num += s[i]; i++; }
+      tokens.push({ type: 'number', value: parseInt(num, 10) });
+      continue;
+    }
+
+    if (s[i] >= '0' && s[i] <= '9') {
+      let num = '';
+      while (i < s.length && s[i] >= '0' && s[i] <= '9') { num += s[i]; i++; }
+      tokens.push({ type: 'number', value: parseInt(num, 10) });
+      continue;
+    }
+
+    // Identifiers, keywords, flags
+    if (/[a-zA-Z_]/.test(s[i])) {
+      let word = '';
+      while (i < s.length && /[a-zA-Z0-9_:]/.test(s[i])) { word += s[i]; i++; }
+
+      if (word === 'AND') { tokens.push({ type: 'and' }); continue; }
+      if (word === 'OR') { tokens.push({ type: 'or' }); continue; }
+      if (word === 'NOT') { tokens.push({ type: 'not' }); continue; }
+      if (word.startsWith('flag:')) {
+        tokens.push({ type: 'flag', value: word.slice(5) });
+        continue;
+      }
+      tokens.push({ type: 'ident', value: word });
+      continue;
+    }
+
+    throw new Error(`Unexpected character "${s[i]}" at position ${i} in condition: "${input}"`);
+  }
+
+  return tokens;
+}
+
+// ─── PARSER (recursive descent) ──────────────────────────
+
+class Parser {
+  private pos = 0;
+
+  constructor(private tokens: Token[], private raw: string) {}
+
+  parse(): Expr {
+    const expr = this.parseOr();
+    if (this.pos < this.tokens.length) {
+      throw new Error(`Unexpected token at position ${this.pos} in condition: "${this.raw}"`);
+    }
+    return expr;
+  }
+
+  private parseOr(): Expr {
+    let left = this.parseAnd();
+    while (this.peek()?.type === 'or') {
+      this.advance();
+      const right = this.parseAnd();
+      left = { kind: 'or', left, right };
+    }
+    return left;
+  }
+
+  private parseAnd(): Expr {
+    let left = this.parseNot();
+    while (this.peek()?.type === 'and') {
+      this.advance();
+      const right = this.parseNot();
+      left = { kind: 'and', left, right };
+    }
+    return left;
+  }
+
+  private parseNot(): Expr {
+    if (this.peek()?.type === 'not') {
+      this.advance();
+      const expr = this.parseNot();
+      return { kind: 'not', expr };
+    }
+    return this.parsePrimary();
+  }
+
+  private parsePrimary(): Expr {
+    const token = this.peek();
+
+    if (!token) {
+      throw new Error(`Unexpected end of condition: "${this.raw}"`);
+    }
+
+    // Parenthesized expression
+    if (token.type === 'lparen') {
+      this.advance();
+      const expr = this.parseOr();
+      const closing = this.peek();
+      if (!closing || closing.type !== 'rparen') {
+        throw new Error(`Missing closing parenthesis in condition: "${this.raw}"`);
+      }
+      this.advance();
+      return expr;
+    }
+
+    // Flag
+    if (token.type === 'flag') {
+      this.advance();
+      return { kind: 'flag', flag: token.value };
+    }
+
+    // Comparison: identifier op number
+    if (token.type === 'ident') {
+      this.advance();
+      const op = this.peek();
+      if (!op || op.type !== 'op') {
+        throw new Error(`Expected comparison operator after "${token.value}" in condition: "${this.raw}"`);
+      }
+      this.advance();
+      const num = this.peek();
+      if (!num || num.type !== 'number') {
+        throw new Error(`Expected number after operator in condition: "${this.raw}"`);
+      }
+      this.advance();
+      return { kind: 'comparison', left: token.value, op: op.value, right: num.value };
+    }
+
+    throw new Error(`Unexpected token "${JSON.stringify(token)}" in condition: "${this.raw}"`);
+  }
+
+  private peek(): Token | undefined {
+    return this.tokens[this.pos];
+  }
+
+  private advance(): Token {
+    return this.tokens[this.pos++];
+  }
+}
+
+// ─── EVALUATOR ───────────────────────────────────────────
+
+function evaluate(expr: Expr, state: GameState): boolean {
+  switch (expr.kind) {
+    case 'comparison': {
+      // Look up value in axes first, then counters
+      const value = expr.left in state.axes
+        ? state.axes[expr.left]
+        : expr.left in state.counters
+          ? state.counters[expr.left]
+          : undefined;
+
+      if (value === undefined) {
+        throw new Error(`Unknown variable "${expr.left}" in condition. Not found in axes or counters.`);
+      }
+
+      switch (expr.op) {
+        case '>': return value > expr.right;
+        case '>=': return value >= expr.right;
+        case '<': return value < expr.right;
+        case '<=': return value <= expr.right;
+        case '==': return value === expr.right;
+        case '!=': return value !== expr.right;
+      }
+      break;
+    }
+    case 'flag':
+      return state.flags.has(expr.flag);
+    case 'not':
+      return !evaluate(expr.expr, state);
+    case 'and':
+      return evaluate(expr.left, state) && evaluate(expr.right, state);
+    case 'or':
+      return evaluate(expr.left, state) || evaluate(expr.right, state);
+  }
+}
+
+// ─── PUBLIC API ──────────────────────────────────────────
+
+export function parseCondition(condition: string): Expr {
+  const tokens = tokenize(condition);
+  const parser = new Parser(tokens, condition);
+  return parser.parse();
+}
+
+export function evaluateCondition(condition: string, state: GameState): boolean {
+  const expr = parseCondition(condition);
+  return evaluate(expr, state);
+}

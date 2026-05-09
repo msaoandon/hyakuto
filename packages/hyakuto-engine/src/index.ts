@@ -12,3 +12,6 @@ export { GameConfig } from './schemas/game-config.js';
 // State
 export { createGameState, applyEffect, setFlag, updateCounter } from './state/game-state.js';
 export type { GameState } from './state/game-state.js';
+
+// Parsers
+export { parseCondition, evaluateCondition } from './conditions/parser.js';
