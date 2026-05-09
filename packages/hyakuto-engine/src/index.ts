@@ -22,3 +22,14 @@ export { selectFromPool, type PoolVariant } from './pools/selector.js';
 // Queue
 export { calculateTypingMs, calculateDelayMs, type PaceLevel } from './queue/timing.js';
 export { resolveQueue, type QueuedMessage, type RawMessage } from './queue/message-queue.js';
+
+// Engine
+export {
+  createEngine,
+  type Engine,
+  type EngineEvent,
+  type ChoiceOption,
+  type SegmentInput,
+  type SaveState,
+  type CreateEngineOptions,
+} from './engine.js';
