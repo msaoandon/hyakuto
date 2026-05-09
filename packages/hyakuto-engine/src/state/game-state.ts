@@ -1,4 +1,4 @@
-import type { GameConfig } from '../schemas/game-config.js';
+import type { GameConfig } from '../schemas/game-config';
 
 export type GameState = {
   axes: Record<string, number>;

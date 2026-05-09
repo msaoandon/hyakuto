@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { selectFromPool, type PoolVariant } from "../src/pools/selector.js";
-import { createGameState } from "../src/state/game-state.js";
-import type { GameConfig } from "../src/schemas/game-config.js";
+import { selectFromPool, type PoolVariant } from "../src/pools/selector";
+import { createGameState } from "../src/state/game-state";
+import type { GameConfig } from "../src/schemas/game-config";
 
 const config: GameConfig = {
   axes: ["story"],

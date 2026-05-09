@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveQueue, type RawMessage } from "../src/queue/message-queue.js";
-import { createGameState } from "../src/state/game-state.js";
-import type { GameConfig } from "../src/schemas/game-config.js";
-import type { CharacterConfig } from "../src/schemas/character.js";
+import { resolveQueue, type RawMessage } from "../src/queue/message-queue";
+import { createGameState } from "../src/state/game-state";
+import type { GameConfig } from "../src/schemas/game-config";
+import type { CharacterConfig } from "../src/schemas/character";
 
 const config: GameConfig = {
   axes: ["story", "mio_closeness"],

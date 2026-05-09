@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { CharacterConfig } from './character.js';
-import { CounterConfig } from './counter.js';
+import { CharacterConfig } from './character';
+import { CounterConfig } from './counter';
 
 export const GameConfig = z.object({
   axes: z.array(z.string().min(1)).min(1),  // valid affinity axis names

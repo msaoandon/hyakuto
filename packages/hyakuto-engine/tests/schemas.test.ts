@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { MessageDef } from '../src/schemas/message.js';
-import { SegmentDef } from '../src/schemas/segment.js';
-import { GameConfig } from '../src/schemas/game-config.js';
-import { SeasonConfig } from '../src/schemas/season.js';
-import { RouteConfig } from '../src/schemas/route.js';
-import { DayConfig } from '../src/schemas/day.js';
+import { MessageDef } from '../src/schemas/message';
+import { SegmentDef } from '../src/schemas/segment';
+import { GameConfig } from '../src/schemas/game-config';
+import { SeasonConfig } from '../src/schemas/season';
+import { RouteConfig } from '../src/schemas/route';
+import { DayConfig } from '../src/schemas/day';
 
 describe('MessageDef', () => {
   it('parses a standard message', () => {

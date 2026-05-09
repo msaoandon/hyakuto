@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EffectDef } from './effect.js';
+import { EffectDef } from './effect';
 
 // A single pool variant
 const PoolVariant = z.object({

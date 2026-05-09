@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MessageDef } from './message.js';
+import { MessageDef } from './message';
 
 const ChoiceOption = z.object({
   text: z.string().min(1),

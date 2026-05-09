@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { parseCondition, evaluateCondition } from '../src/conditions/parser.js';
-import { createGameState } from '../src/state/game-state.js';
-import type { GameConfig } from '../src/schemas/game-config.js';
+import { parseCondition, evaluateCondition } from '../src/conditions/parser';
+import { createGameState } from '../src/state/game-state';
+import type { GameConfig } from '../src/schemas/game-config';
 
 const config: GameConfig = {
   axes: ['story', 'tatsumi_closeness', 'mio_closeness'],

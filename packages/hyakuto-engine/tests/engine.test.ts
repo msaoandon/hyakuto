@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { createEngine, type EngineEvent, type SegmentInput } from "../src/engine.js";
-import type { GameConfig } from "../src/schemas/game-config.js";
+import { createEngine, type EngineEvent, type SegmentInput } from "../src/engine";
+import type { GameConfig } from "../src/schemas/game-config";
 
 const config: GameConfig = {
   axes: ["story", "trust"],

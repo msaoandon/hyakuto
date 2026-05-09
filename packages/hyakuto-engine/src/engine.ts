@@ -1,15 +1,15 @@
-import type { GameConfig } from "./schemas/game-config.js";
-import type { CharacterConfig } from "./schemas/character.js";
+import type { GameConfig } from "./schemas/game-config";
+import type { CharacterConfig } from "./schemas/character";
 import {
   createGameState,
   applyEffect,
   setFlag,
   updateCounter,
   type GameState,
-} from "./state/game-state.js";
-import { resolveQueue, type QueuedMessage, type RawMessage } from "./queue/message-queue.js";
-import type { PaceLevel } from "./queue/timing.js";
-import { evaluateCondition } from './conditions/parser.js';
+} from "./state/game-state";
+import { resolveQueue, type QueuedMessage, type RawMessage } from "./queue/message-queue";
+import type { PaceLevel } from "./queue/timing";
+import { evaluateCondition } from './conditions/parser';
 
 // ─── EVENTS ──────────────────────────────────────────────
 

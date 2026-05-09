@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { createGameState, applyEffect, setFlag, updateCounter } from '../src/state/game-state.js';
-import { GameConfig } from '../src/schemas/game-config.js';
+import { createGameState, applyEffect, setFlag, updateCounter } from '../src/state/game-state';
+import { GameConfig } from '../src/schemas/game-config';
 
 const testConfig: GameConfig = {
   axes: ['story', 'suspense', 'trust'],

@@ -1,27 +1,27 @@
 // Schemas
-export { EffectDef } from './schemas/effect.js';
-export { MessageDef } from './schemas/message.js';
-export { SegmentDef } from './schemas/segment.js';
-export { DayConfig } from './schemas/day.js';
-export { CharacterConfig } from './schemas/character.js';
-export { CounterConfig } from './schemas/counter.js';
-export { RouteConfig } from './schemas/route.js';
-export { SeasonConfig } from './schemas/season.js';
-export { GameConfig } from './schemas/game-config.js';
+export { EffectDef } from './schemas/effect';
+export { MessageDef } from './schemas/message';
+export { SegmentDef } from './schemas/segment';
+export { DayConfig } from './schemas/day';
+export { CharacterConfig } from './schemas/character';
+export { CounterConfig } from './schemas/counter';
+export { RouteConfig } from './schemas/route';
+export { SeasonConfig } from './schemas/season';
+export { GameConfig } from './schemas/game-config';
 
 // State
-export { createGameState, applyEffect, setFlag, updateCounter } from './state/game-state.js';
-export type { GameState } from './state/game-state.js';
+export { createGameState, applyEffect, setFlag, updateCounter } from './state/game-state';
+export type { GameState } from './state/game-state';
 
 // Parsers
-export { parseCondition, evaluateCondition } from './conditions/parser.js';
+export { parseCondition, evaluateCondition } from './conditions/parser';
 
 // Pool message selector
-export { selectFromPool, type PoolVariant } from './pools/selector.js';
+export { selectFromPool, type PoolVariant } from './pools/selector';
 
 // Queue
-export { calculateTypingMs, calculateDelayMs, type PaceLevel } from './queue/timing.js';
-export { resolveQueue, type QueuedMessage, type RawMessage } from './queue/message-queue.js';
+export { calculateTypingMs, calculateDelayMs, type PaceLevel } from './queue/timing';
+export { resolveQueue, type QueuedMessage, type RawMessage } from './queue/message-queue';
 
 // Engine
 export {
@@ -32,4 +32,4 @@ export {
   type SegmentInput,
   type SaveState,
   type CreateEngineOptions,
-} from './engine.js';
+} from './engine';

@@ -1,4 +1,4 @@
-import type { GameState } from '../state/game-state.js';
+import type { GameState } from '../state/game-state';
 
 export interface PoolVariant {
   idx: number;

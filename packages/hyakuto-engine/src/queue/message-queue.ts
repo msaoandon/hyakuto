@@ -1,8 +1,8 @@
-import type { GameState } from '../state/game-state.js';
-import type { CharacterConfig } from '../schemas/character.js';
-import { calculateTypingMs, calculateDelayMs, type PaceLevel } from './timing.js';
-import { evaluateCondition } from '../conditions/parser.js';
-import { selectFromPool } from '../pools/selector.js';
+import type { GameState } from '../state/game-state';
+import type { CharacterConfig } from '../schemas/character';
+import { calculateTypingMs, calculateDelayMs, type PaceLevel } from './timing';
+import { evaluateCondition } from '../conditions/parser';
+import { selectFromPool } from '../pools/selector';
 
 export interface QueuedMessage {
   id: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateTypingMs, calculateDelayMs } from '../src/queue/timing.js';
+import { calculateTypingMs, calculateDelayMs } from '../src/queue/timing';
 
 describe('calculateTypingMs', () => {
   it('scales with text length', () => {
