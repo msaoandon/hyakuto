@@ -8,7 +8,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
 import type { Block, GameConfig } from "@hyakuto/engine";
 import demoData from "@/data/demo.json";
-import { gameConfig } from '@hyakuto/game';
+import { gameConfig } from "@hyakuto/game";
 
 const MC_NAME = "You";
 
@@ -48,6 +48,23 @@ function convertBlockToSegment(block: Block): SegmentInput {
             text: opt.text,
             effects: opt.effects,
           }));
+        }
+        break;
+      }
+      case "pool": {
+        if ("variants" in item) {
+          const id = `${block.block_id}_pool_${msgIndex++}`;
+          messages.push({
+            id,
+            character: item.character,
+            pool: item.variants.map((v, i) => ({
+              idx: i,
+              text: v.text,
+              weight: v.weight ?? 1,
+            })),
+            condition: item.condition,
+            effects: item.effects,
+          });
         }
         break;
       }

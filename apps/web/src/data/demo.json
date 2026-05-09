@@ -23,10 +23,21 @@
         ]
       },
       {
-        "type": "message",
+        "type": "pool",
         "character": "Kou",
-        "messages": [
-          "statistically no"
+        "variants": [
+          {
+            "text": "statistically no",
+            "weight": 1
+          },
+          {
+            "text": "depends on your definition of dangerous",
+            "weight": 1
+          },
+          {
+            "text": "i prefer the word 'unpredictable'",
+            "weight": 1
+          }
         ]
       },
       {
