@@ -176,7 +176,9 @@ export function ChatFeed({
 
         switch (event.type) {
           case "typing_start":
-            setTypingCharacter(event.character);
+            if (event.character !== "MC") {
+              setTypingCharacter(event.character);
+            }
             break;
 
           case "typing_end":
