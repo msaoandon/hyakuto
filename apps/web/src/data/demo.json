@@ -7,6 +7,12 @@
         "character": "MC",
         "messages": [
           "wait so are kitsune actually dangerous"
+        ],
+        "effects": [
+          {
+            "axis": "story",
+            "delta": 1
+          }
         ]
       },
       {
@@ -71,13 +77,31 @@
         "type": "choice",
         "options": [
           {
-            "text": "Should I be worried?"
+            "text": "Should I be worried?",
+            "effects": [
+              {
+                "axis": "story",
+                "delta": 1
+              }
+            ]
           },
           {
-            "text": "yeah, someone's exaggerating))"
+            "text": "yeah, someone's exaggerating))",
+            "effects": [
+              {
+                "axis": "kou",
+                "delta": 1
+              }
+            ]
           },
           {
-            "text": "idk, sounds like some serious stuff happened"
+            "text": "idk, sounds like some serious stuff happened",
+            "effects": [
+              {
+                "axis": "tatsumi",
+                "delta": 1
+              }
+            ]
           }
         ]
       },
@@ -106,7 +130,7 @@
         "type": "message",
         "character": "Kou",
         "messages": [
-          "okay he’s being dramatic 🤦‍♂️"
+          "okay he’s being dramatic. slightly trust the fox"
         ]
       }
     ]

@@ -5,8 +5,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { ChatBubble } from "./ChatBubble";
 import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
-import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
-import type { GameConfig } from "@hyakuto/engine";
+import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
+import type { Block, GameConfig } from "@hyakuto/engine";
 import demoData from "@/data/demo.json";
 
 const MC_NAME = "You";
@@ -14,7 +14,7 @@ const MC_NAME = "You";
 // ─── GAME CONFIG ─────────────────────────────────────────
 // This moves to @hyakuto/game later. Hardcoded here for Phase 1.
 const gameConfig: GameConfig = {
-  axes: ["story", "suspense", "trust"],
+  axes: ["story", "kou", "tatsumi"],
   characters: [
     { id: "Ao", typing_rate: 1.0 },
     { id: "Kou", typing_rate: 0.6 },
@@ -31,7 +31,7 @@ const gameConfig: GameConfig = {
 // Bridge between your current JSON format and the engine's SegmentInput.
 // This adapter disappears when the Apps Script exporter outputs the engine format directly.
 
-function convertBlockToSegment(block: (typeof demoData)[0]): SegmentInput {
+function convertBlockToSegment(block: Block): SegmentInput {
   const messages: SegmentInput["messages"] = [];
   const choices: Record<string, { text: string; effects?: { axis: string; delta: number }[] }[]> =
     {};
@@ -93,6 +93,12 @@ type ChatFeedProps = {
   onChoiceConsumed: () => void;
   chosenText: string | null;
   onChosenRendered: () => void;
+  onStateChange?: (state: {
+    axes: Record<string, number>;
+    counters: Record<string, number>;
+    flags: string[];
+  }) => void;
+  onEngineEvent?: (event: string) => void;
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
@@ -102,6 +108,8 @@ export function ChatFeed({
   onChoiceConsumed,
   chosenText,
   onChosenRendered,
+  onStateChange,
+  onEngineEvent,
 }: ChatFeedProps) {
   const [visible, setVisible] = useState<VisibleItem[]>([]);
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
@@ -109,6 +117,8 @@ export function ChatFeed({
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
   const choiceResolveRef = useRef<((index: number) => void) | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
+  const blocks = demoData as StoryFile;
+  const block = blocks[0]!;
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -143,7 +153,6 @@ export function ChatFeed({
   // Start engine playback
   useEffect(() => {
     let cancelled = false;
-    const block = demoData[0];
 
     // Add any status items before engine starts
     for (const item of block.items) {
@@ -199,11 +208,30 @@ export function ChatFeed({
           }
 
           case "affinity_changed":
-            // Could update a debug display later
+            onStateChange?.({
+              axes: { ...engine.getState().axes },
+              counters: { ...engine.getState().counters },
+              flags: Array.from(engine.getState().flags),
+            });
+            onEngineEvent?.(`${event.axis} → ${event.value}`);
+            break;
+
+          case "flag_set":
+            onStateChange?.({
+              axes: { ...engine.getState().axes },
+              counters: { ...engine.getState().counters },
+              flags: Array.from(engine.getState().flags),
+            });
+            onEngineEvent?.(`flag: ${event.flag}`);
+            break;
+
+          case "message_shown":
+            onEngineEvent?.(`${event.message.character}: ${event.message.text.slice(0, 30)}...`);
+            // ...existing message_shown handling
             break;
 
           case "segment_complete":
-            // Could trigger next segment later
+            onEngineEvent?.(`segment complete: ${event.segmentId}`);
             break;
         }
       },

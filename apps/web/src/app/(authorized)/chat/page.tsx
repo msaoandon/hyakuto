@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { ChatFeed } from '@/components/chat/ChatFeed';
-import { ChoiceModal } from '@/components/chat/ChoiceModal';
+import { useState } from "react";
+import { ChatFeed } from "@/components/chat/ChatFeed";
+import { ChoiceModal } from "@/components/chat/ChoiceModal";
+import { DevConsole } from "@/components/debug/DevConsole";
 
 type PendingChoice = {
   options: { text: string }[];
@@ -12,6 +13,12 @@ export default function ChatPage() {
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [chosenText, setChosenText] = useState<string | null>(null);
+  const [devState, setDevState] = useState({
+    axes: {} as Record<string, number>,
+    counters: {} as Record<string, number>,
+    flags: [] as string[],
+  });
+  const [lastEvent, setLastEvent] = useState<string>();
 
   const handleChoiceAvailable = (choice: PendingChoice) => {
     setPendingChoice(choice);
@@ -25,7 +32,7 @@ export default function ChatPage() {
 
   const handleChoose = (index: number) => {
     if (!pendingChoice) return;
-    setChosenText(pendingChoice.options[index].text);
+    setChosenText(pendingChoice.options[index]!.text);
     setModalOpen(false);
   };
 
@@ -46,15 +53,18 @@ export default function ChatPage() {
         onChoiceConsumed={handleChoiceConsumed}
         chosenText={chosenText}
         onChosenRendered={handleChosenRendered}
+        onStateChange={setDevState}
+        onEngineEvent={setLastEvent}
       />
-      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)] border-t border-beige/10">
         <button
           onClick={handleReplyTap}
           disabled={!replyEnabled}
           className={`w-full py-2 rounded-lg font-medium transition-colors
-            ${replyEnabled
-              ? 'bg-papaya-whip text-ink-black'
-              : 'bg-papaya-whip/10 text-silver/30 cursor-not-allowed'
+            ${
+              replyEnabled
+                ? "bg-papaya-whip text-ink-black"
+                : "bg-papaya-whip/10 text-papaya-whip/30 cursor-not-allowed"
             }`}
         >
           Reply
@@ -65,6 +75,14 @@ export default function ChatPage() {
           options={pendingChoice.options}
           onChoose={handleChoose}
           onClose={() => setModalOpen(false)}
+        />
+      )}
+      {process.env.NODE_ENV === "development" && (
+        <DevConsole
+          axes={devState.axes}
+          counters={devState.counters}
+          flags={devState.flags}
+          lastEvent={lastEvent}
         />
       )}
     </>

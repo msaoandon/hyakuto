@@ -8,6 +8,7 @@ export { CounterConfig } from './schemas/counter';
 export { RouteConfig } from './schemas/route';
 export { SeasonConfig } from './schemas/season';
 export { GameConfig } from './schemas/game-config';
+export { Block, BlockItem, StoryFile } from './schemas/block';
 
 // State
 export { createGameState, applyEffect, setFlag, updateCounter } from './state/game-state';
