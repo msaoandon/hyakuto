@@ -83,8 +83,8 @@ export default function ChatPage() {
           className={`w-full py-2 rounded-lg font-medium transition-colors
             ${
               replyEnabled
-                ? "bg-papaya-whip text-ink-black"
-                : "bg-papaya-whip/10 text-papaya-whip/30 cursor-not-allowed"
+                ? "bg-amethyst-smoke text-white"
+                : "bg-amethyst-smoke/10 text-white/30 cursor-not-allowed"
             }`}
         >
           Reply

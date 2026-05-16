@@ -9,6 +9,8 @@ import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } fro
 import type { Block, GameConfig } from "@hyakuto/engine";
 import demoData from "@/data/demo_3.json";
 import { gameConfig } from "@hyakuto/game";
+import { groupItems } from "./groupMessages";
+import type { VisibleItem } from "./types";
 
 const MC_NAME = "You";
 
@@ -85,11 +87,6 @@ function convertBlockToSegment(block: Block): SegmentInput {
 }
 
 // ─── TYPES ───────────────────────────────────────────────
-
-type VisibleItem =
-  | { kind: "message"; character: string; text: string; isMC: boolean; isDev: boolean }
-  | { kind: "status"; text: string }
-  | { kind: "mc-reply"; text: string; isDev: boolean };
 
 type PendingChoice = {
   options: { text: string }[];
@@ -303,14 +300,14 @@ export function ChatFeed({
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="min-h-full flex flex-col justify-end gap-1">
-        {visible.map((item, i) => {
+        {groupItems(visible).map((item, i) => {
           switch (item.kind) {
             case "status":
-              return <StatusMessage key={i} text={item.text} />;
+              return <StatusMessage key={item.index} text={item.text} />;
 
             case "mc-reply":
               return (
-                <div key={i} className="mt-3">
+                <div key={item.index} className="mt-3">
                   <ChatBubble
                     character={item.isDev ? "dev" : MC_NAME}
                     text={item.text}
@@ -320,46 +317,43 @@ export function ChatFeed({
                 </div>
               );
 
-            case "message": {
-              if (item.isMC || item.isDev) {
-                return (
-                  <div key={i} className="mt-3">
-                    <ChatBubble
-                      character={MC_NAME}
-                      text={item.text}
-                      isMC={item.isMC}
-                      isDev={item.isDev}
-                    />
-                  </div>
-                );
-              }
-
-              const prev = visible[i - 1];
-              const next = visible[i + 1];
-              const isFirst =
-                !prev || prev.kind !== "message" || prev.character !== item.character || prev.isMC;
-              const isLast =
-                !next || next.kind !== "message" || next.character !== item.character || next.isMC;
-
+            case "group": {
+              const { group } = item;
+              const continuesWithTyping = typingCharacter === group.character;
               return (
-                <div key={i} className={isFirst && i > 0 ? "mt-3" : ""}>
-                  <ChatBubble
-                    character={item.character}
-                    text={item.text}
-                    isMC={false}
-                    showName={isFirst}
-                    showAvatar={isLast}
-                  />
+                <div key={group.messages[0].index} className={i > 0 ? "mt-3" : ""}>
+                  {group.messages.map((msg, mi) => {
+                    const isLast = mi === group.messages.length - 1;
+                    return (
+                      <ChatBubble
+                        key={msg.index}
+                        character={group.character}
+                        text={msg.text}
+                        isMC={false}
+                        showName={mi === 0}
+                        showAvatar={isLast && !continuesWithTyping}
+                      />
+                    );
+                  })}
                 </div>
               );
             }
           }
         })}
-        {typingCharacter && (
-          <div className="mt-3">
-            <TypingIndicator character={typingCharacter} />
-          </div>
-        )}
+        {typingCharacter &&
+          (() => {
+            const last = visible[visible.length - 1];
+            const sameCharacter =
+              last?.kind === "message" &&
+              !last.isMC &&
+              !last.isDev &&
+              last.character === typingCharacter;
+            return (
+              <div className={sameCharacter ? "" : "mt-3"}>
+                <TypingIndicator character={typingCharacter} showAvatar={!sameCharacter} />
+              </div>
+            );
+          })()}
         <div ref={bottomRef} />
       </div>
     </div>

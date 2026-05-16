@@ -19,7 +19,7 @@ export function ChatBubble({
   showAvatar = true,
 }: ChatBubbleProps) {
   if (isMC || isDev) {
-    const bubbleStyle = isMC ? "bg-lavelnder-veil text-ink-black " : "bg-silver text-ink-black";
+    const bubbleStyle = isMC ? "bg-lavelnder-veil text-ink-black " : "bg-dim-gray text-white";
     return (
       <div className="flex flex-col items-end">
         {isDev && showName && <span className="text-xs text-silver/60 mr-1 mb-0.5">dev</span>}
@@ -34,11 +34,11 @@ export function ChatBubble({
 
   return (
     <div className="flex gap-2 items-end">
-      <div className="w-8 shrink-0">{showAvatar && <Avatar name={character} />}</div>
+      <div className="w-8 shrink-0 mb-2">{showAvatar && <Avatar name={character} />}</div>
       <div className="max-w-[75%]">
         {showName && <span className="text-xs font-bold text-silver ml-1">{character}</span>}
         <div
-          className="bg-beige/10 rounded-xl rounded-bl-sm text-ink-black px-3 py-2"
+          className="bg-beige/10 rounded-xl rounded-bl-sm text-ink-black px-3 py-2 mb-2"
           style={{ backgroundColor: bubbleColor }}
         >
           <p className="text-base whitespace-pre-line">{text}</p>

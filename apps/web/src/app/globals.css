@@ -12,7 +12,10 @@
   --color-cool-steel: #96a9b4ff;
   --color-harcoal-blue: #2c4156ff;
   --color-ink-black: #0d1d29ff;
-  --color-lavelnder-veil: #e5d4ed;
+  --color-lavelnder-veil: #e5d4edff;
+  --color-dim-gray: #746F72ff;
+  --color-white: #ffffffff;
+  --color-amethyst-smoke: #9F84BDff;
 }
 
 :root {
