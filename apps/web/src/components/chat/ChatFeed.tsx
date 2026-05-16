@@ -18,7 +18,10 @@ const MC_NAME = "You";
 
 function convertBlockToSegment(block: Block): SegmentInput {
   const messages: SegmentInput["messages"] = [];
-  const choices: Record<string, { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }> = {};
+  const choices: Record<
+    string,
+    { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }
+  > = {};
 
   let msgIndex = 0;
 
@@ -211,7 +214,6 @@ export function ChatFeed({
                 isDev,
               },
             ]);
-            onEngineEvent?.(`${event.message.character}: ${event.message.text.slice(0, 30)}...`);
             break;
           }
 
@@ -269,6 +271,13 @@ export function ChatFeed({
 
     engine.loadSegment(segment);
     engine.setPace(1.0);
+
+    // Emit initial state
+    onStateChange?.({
+      axes: { ...engine.getState().axes },
+      counters: { ...engine.getState().counters },
+      flags: Array.from(engine.getState().flags),
+    });
 
     // Wrap play to intercept choice_required
     const runEngine = async () => {

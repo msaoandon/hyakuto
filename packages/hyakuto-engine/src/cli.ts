@@ -10,15 +10,14 @@ import type { GameConfig } from './schemas/game-config';
 const MC_NAME = 'You';
 
 const gameConfig: GameConfig = {
-  axes: ['story', 'suspense', 'trust'],
+  axes: ['weirdness', 'patience', 'sanity'],
   characters: [
     { id: 'Ao', typing_rate: 1.0 },
     { id: 'Kou', typing_rate: 0.6 },
     { id: 'Haruki', typing_rate: 0.8 },
     { id: 'Tatsumi', typing_rate: 1.4 },
     { id: 'Ren', typing_rate: 1.2 },
-    { id: 'Mio', typing_rate: 1.0 },
-    { id: 'Kaname', typing_rate: 1.0 },
+    { id: 'Suzune', typing_rate: 1.0 },
   ],
   counters: [
     { id: 'candles', start: 100, end: 0, direction: 'down' },
