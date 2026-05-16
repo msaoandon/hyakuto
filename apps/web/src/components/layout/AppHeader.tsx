@@ -13,7 +13,7 @@ export function AppHeader() {
       <Link href="/" className="mr-3">
         ←
       </Link>
-      <span>Are they that bad?</span>
+      <span>dev, Haruki, Kou, Ren, Tatsumi</span>
     </header>
   );
 }
