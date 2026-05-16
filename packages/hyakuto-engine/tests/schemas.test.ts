@@ -5,7 +5,7 @@ import { GameConfig } from "../src/schemas/game-config";
 import { SeasonConfig } from "../src/schemas/season";
 import { RouteConfig } from "../src/schemas/route";
 import { DayConfig } from "../src/schemas/day";
-import { Block } from '../src/schemas/block';
+import { Block } from "../src/schemas/block";
 
 describe("MessageDef", () => {
   it("parses a standard message", () => {
@@ -210,6 +210,32 @@ describe("Block schema", () => {
         },
         { type: "choice", options: [{ text: "Option 1" }] },
         { type: "typing", character: "ao" },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+  it("parses choice with character", () => {
+    const result = Block.safeParse({
+      block_id: "demo_1",
+      items: [
+        {
+          type: "choice",
+          character: "dev",
+          options: [{ text: "Option A" }],
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("parses choice without character (defaults to MC)", () => {
+    const result = Block.safeParse({
+      block_id: "demo_1",
+      items: [
+        {
+          type: "choice",
+          options: [{ text: "Option A" }],
+        },
       ],
     });
     expect(result.success).toBe(true);

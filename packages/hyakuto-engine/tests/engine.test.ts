@@ -162,10 +162,12 @@ describe("choices", () => {
         { id: "msg_002", character: "ao", text: "Interesting choice." },
       ],
       choices: {
-        msg_001: [
-          { text: "Option A", effects: [{ axis: "story", delta: 1 }] },
-          { text: "Option B" },
-        ],
+        msg_001: {
+          options: [
+            { text: "Option A", effects: [{ axis: "story", delta: 1 }] },
+            { text: "Option B" },
+          ],
+        },
       },
     };
 
@@ -206,11 +208,13 @@ describe("choices", () => {
       id: "seg_cond_choice",
       messages: [{ id: "msg_001", character: "ao", text: "Choose." }],
       choices: {
-        msg_001: [
-          { text: "Always available" },
-          { text: "Only at high story", condition: "story > 10" },
-          { text: "Also always available" },
-        ],
+        msg_001: {
+          options: [
+            { text: "Always available" },
+            { text: "Only at high story", condition: "story > 10" },
+            { text: "Also always available" },
+          ],
+        },
       },
     };
 
@@ -235,6 +239,71 @@ describe("choices", () => {
       expect(choiceEvent.options).toHaveLength(2);
       expect(choiceEvent.options[0]!.text).toBe("Always available");
       expect(choiceEvent.options[1]!.text).toBe("Also always available");
+    }
+  });
+  it("passes choice character in event", async () => {
+    const segment: SegmentInput = {
+      id: "seg_dev_choice",
+      messages: [{ id: "msg_001", character: "ao", text: "What now?" }],
+      choices: {
+        msg_001: {
+          character: "dev",
+          options: [{ text: "Run test" }, { text: "Skip" }],
+        },
+      },
+    };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => {
+        events.push(e);
+        if (e.type === "choice_required") {
+          setTimeout(() => engine.chooseOption(0), 0);
+        }
+      },
+    });
+
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    const choiceEvent = events.find((e) => e.type === "choice_required");
+    expect(choiceEvent).toBeDefined();
+    if (choiceEvent?.type === "choice_required") {
+      expect(choiceEvent.character).toBe("dev");
+    }
+  });
+
+  it("omits character for MC choices", async () => {
+    const segment: SegmentInput = {
+      id: "seg_mc_choice",
+      messages: [{ id: "msg_001", character: "ao", text: "Choose." }],
+      choices: {
+        msg_001: {
+          options: [{ text: "Option A" }],
+        },
+      },
+    };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => {
+        events.push(e);
+        if (e.type === "choice_required") {
+          setTimeout(() => engine.chooseOption(0), 0);
+        }
+      },
+    });
+
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    const choiceEvent = events.find((e) => e.type === "choice_required");
+    if (choiceEvent?.type === "choice_required") {
+      expect(choiceEvent.character).toBeUndefined();
     }
   });
 });
