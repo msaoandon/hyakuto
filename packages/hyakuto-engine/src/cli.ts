@@ -51,7 +51,7 @@ function substitute(text: string): string {
 
 function convertBlockToSegment(block: { block_id: string; items: any[] }): SegmentInput {
   const messages: SegmentInput['messages'] = [];
-  const choices: Record<string, { text: string; effects?: { axis: string; delta: number }[] }[]> = {};
+  const choices: Record<string, { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }> = {};
   let msgIndex = 0;
 
   for (const item of block.items) {

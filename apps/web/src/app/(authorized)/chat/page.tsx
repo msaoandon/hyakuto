@@ -8,6 +8,7 @@ import { gameConfig } from '@hyakuto/game';
 
 type PendingChoice = {
   options: { text: string }[];
+  character?: string;
 };
 
 export default function ChatPage() {

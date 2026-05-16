@@ -15,7 +15,7 @@ import { evaluateCondition } from "./conditions/parser";
 
 export type EngineEvent =
   | { type: "message_shown"; message: QueuedMessage }
-  | { type: "choice_required"; options: ChoiceOption[] }
+  | { type: "choice_required"; options: ChoiceOption[]; character?: string }
   | { type: "counter_changed"; counterId: string; value: number; tier?: string }
   | { type: "flag_set"; flag: string }
   | { type: "affinity_changed"; axis: string; value: number }
@@ -32,7 +32,7 @@ export interface ChoiceOption {
 export interface SegmentInput {
   id: string;
   messages: RawMessage[];
-  choices?: Record<string, ChoiceOption[]>;
+  choices?: Record<string, { character?: string; options: ChoiceOption[] }>;
 }
 
 type EventHandler = (event: EngineEvent) => void;
@@ -162,7 +162,8 @@ export function createEngine(options: CreateEngineOptions): Engine {
 
         // Check if a choice point follows this message
         if (currentSegment.choices && currentSegment.choices[msg.id]) {
-          const allOptions = currentSegment.choices[msg.id];
+          const choiceBlock = currentSegment.choices[msg.id];
+          const allOptions = choiceBlock.options;
 
           // Filter options by condition
           const availableOptions = allOptions.filter((opt) => {
@@ -175,7 +176,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
             continue;
           }
 
-          onEvent({ type: "choice_required", options: availableOptions });
+          onEvent({ type: 'choice_required', options: availableOptions, character: choiceBlock.character });
 
           const chosenIndex = await new Promise<number>((resolve) => {
             waitingForChoice = resolve;

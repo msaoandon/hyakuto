@@ -1,0 +1,128 @@
+[
+  {
+    "block_id": "demo_3",
+    "items": [
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "anyway, what's that window?",
+          "it's been annoying me for quite some time now"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "It litteraly says \"DEV\"",
+          "Probably debug mode"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "testing affinity axes and stuff"
+          },
+          {
+            "text": "*ignore*"
+          }
+        ],
+        "character": "dev"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "what's there to debug?",
+          "i'm a perfect feature as is"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "lol"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "🤦"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "but whose axis is weirdness?",
+          "why does it keep growing?"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "yeah, our fox is a bit broken"
+          },
+          {
+            "text": "someone tell him"
+          },
+          {
+            "text": "*test option*"
+          }
+        ],
+        "character": "dev"
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "🥲"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "👀"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "🦊 It's yours."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "obviously",
+          "...wait WHAT?"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "tested successfully"
+          },
+          {
+            "text": "don't cry:)"
+          }
+        ],
+        "character": "dev"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "THATS NOT FAIR"
+        ]
+      }
+    ]
+  }
+]

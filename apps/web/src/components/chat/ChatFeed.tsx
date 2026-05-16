@@ -7,7 +7,7 @@ import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
 import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
 import type { Block, GameConfig } from "@hyakuto/engine";
-import demoData from "@/data/demo.json";
+import demoData from "@/data/demo_3.json";
 import { gameConfig } from "@hyakuto/game";
 
 const MC_NAME = "You";
@@ -18,8 +18,7 @@ const MC_NAME = "You";
 
 function convertBlockToSegment(block: Block): SegmentInput {
   const messages: SegmentInput["messages"] = [];
-  const choices: Record<string, { text: string; effects?: { axis: string; delta: number }[] }[]> =
-    {};
+  const choices: Record<string, { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }> = {};
 
   let msgIndex = 0;
 
@@ -44,10 +43,13 @@ function convertBlockToSegment(block: Block): SegmentInput {
         // Attach choice to the last message
         if (messages.length > 0 && item.options) {
           const lastMsgId = messages[messages.length - 1]!.id;
-          choices[lastMsgId] = item.options.map((opt) => ({
-            text: opt.text,
-            effects: opt.effects,
-          }));
+          choices[lastMsgId] = {
+            character: "character" in item ? item.character : undefined,
+            options: item.options.map((opt) => ({
+              text: opt.text,
+              effects: opt.effects,
+            })),
+          };
         }
         break;
       }
@@ -82,12 +84,13 @@ function convertBlockToSegment(block: Block): SegmentInput {
 // ─── TYPES ───────────────────────────────────────────────
 
 type VisibleItem =
-  | { kind: "message"; character: string; text: string; isMC: boolean }
+  | { kind: "message"; character: string; text: string; isMC: boolean; isDev: boolean }
   | { kind: "status"; text: string }
-  | { kind: "mc-reply"; text: string };
+  | { kind: "mc-reply"; text: string; isDev: boolean };
 
 type PendingChoice = {
   options: { text: string }[];
+  character?: string;
 };
 
 type ChatFeedProps = {
@@ -121,6 +124,7 @@ export function ChatFeed({
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
   const choiceResolveRef = useRef<((index: number) => void) | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
+  const pendingCharacterRef = useRef<string | undefined>(undefined);
   const blocks = demoData as StoryFile;
   const block = blocks[0]!;
 
@@ -137,17 +141,22 @@ export function ChatFeed({
     if (chosenText && pendingOptionsRef.current.length > 0) {
       const index = pendingOptionsRef.current.findIndex((o) => o.text === chosenText);
       if (index >= 0) {
-        // Add MC reply bubble
-        setVisible((prev) => [...prev, { kind: "mc-reply", text: chosenText }]);
+        const isDev = pendingCharacterRef.current === "dev";
+        setVisible((prev) => [
+          ...prev,
+          {
+            kind: "mc-reply" as const,
+            text: chosenText,
+            isDev,
+          },
+        ]);
 
-        // Tell the engine
         try {
           engineRef.current?.chooseOption(index);
-        } catch {
-          // No pending choice
-        }
+        } catch {}
 
         pendingOptionsRef.current = [];
+        pendingCharacterRef.current = undefined;
         onChoiceConsumed();
         onChosenRendered();
       }
@@ -191,6 +200,7 @@ export function ChatFeed({
 
           case "message_shown": {
             const isMC = event.message.character === "MC";
+            const isDev = event.message.character === "dev";
             setVisible((prev) => [
               ...prev,
               {
@@ -198,8 +208,10 @@ export function ChatFeed({
                 character: event.message.character,
                 text: event.message.text.replace(/\{@?MC\}/g, MC_NAME),
                 isMC,
+                isDev,
               },
             ]);
+            onEngineEvent?.(`${event.message.character}: ${event.message.text.slice(0, 30)}...`);
             break;
           }
 
@@ -209,7 +221,8 @@ export function ChatFeed({
               text: o.text.replace(/\{@?MC\}/g, MC_NAME),
             }));
             pendingOptionsRef.current = substituted;
-            onChoiceAvailable({ options: substituted });
+            pendingCharacterRef.current = event.character;
+            onChoiceAvailable({ options: substituted, character: event.character });
             break;
           }
 
@@ -238,11 +251,6 @@ export function ChatFeed({
               flags: Array.from(engine.getState().flags),
             });
             onEngineEvent?.(`flag: ${event.flag}`);
-            break;
-
-          case "message_shown":
-            onEngineEvent?.(`${event.message.character}: ${event.message.text.slice(0, 30)}...`);
-            // ...existing message_shown handling
             break;
 
           case "segment_complete":
@@ -283,20 +291,6 @@ export function ChatFeed({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Bridge: when choice is made, tell the engine
-  useEffect(() => {
-    if (chosenText && engineRef.current) {
-      const index = pendingOptionsRef.current.findIndex((o) => o.text === chosenText);
-      if (index >= 0) {
-        try {
-          engineRef.current.chooseOption(index);
-        } catch {
-          // Already handled or no pending choice
-        }
-      }
-    }
-  }, [chosenText]);
-
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="min-h-full flex flex-col justify-end gap-1">
@@ -308,15 +302,25 @@ export function ChatFeed({
             case "mc-reply":
               return (
                 <div key={i} className="mt-3">
-                  <ChatBubble character={MC_NAME} text={item.text} isMC={true} />
+                  <ChatBubble
+                    character={item.isDev ? "dev" : MC_NAME}
+                    text={item.text}
+                    isMC={!item.isDev}
+                    isDev={item.isDev}
+                  />
                 </div>
               );
 
             case "message": {
-              if (item.isMC) {
+              if (item.isMC || item.isDev) {
                 return (
                   <div key={i} className="mt-3">
-                    <ChatBubble character={MC_NAME} text={item.text} isMC={true} />
+                    <ChatBubble
+                      character={MC_NAME}
+                      text={item.text}
+                      isMC={item.isMC}
+                      isDev={item.isDev}
+                    />
                   </div>
                 );
               }

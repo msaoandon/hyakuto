@@ -28,6 +28,7 @@ const PoolItem = z.object({
 
 const ChoiceItem = z.object({
   type: z.literal('choice'),
+  character: z.string().optional(), // undefined = MC
   options: z.array(z.object({
     text: z.string(),
     condition: z.string().optional(),
