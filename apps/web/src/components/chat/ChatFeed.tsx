@@ -128,14 +128,6 @@ export function ChatFeed({
   const blocks = demoData as StoryFile;
   const block = blocks[0]!;
 
-  const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [visible, typingCharacter, scrollToBottom]);
-
   // Handle choice selection
   useEffect(() => {
     if (chosenText && pendingOptionsRef.current.length > 0) {
@@ -300,8 +292,8 @@ export function ChatFeed({
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4">
-      <div className="min-h-full flex flex-col justify-end gap-1">
+    <div className="flex-1 overflow-y-auto flex flex-col-reverse p-4">
+      <div className="flex flex-col gap-1 pb-4">
         {grouped.map((item, i) => {
           switch (item.kind) {
             case "status":
@@ -357,7 +349,6 @@ export function ChatFeed({
               </div>
             );
           })()}
-        <div ref={bottomRef} />
       </div>
     </div>
   );
