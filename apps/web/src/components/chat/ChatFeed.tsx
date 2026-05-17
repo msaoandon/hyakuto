@@ -1,7 +1,7 @@
 // components/chat/ChatFeed.tsx
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { ChatBubble } from "./ChatBubble";
 import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
@@ -297,10 +297,12 @@ export function ChatFeed({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const grouped = useMemo(() => groupItems(visible), [visible]);
+
   return (
     <div className="flex-1 overflow-y-auto p-4">
       <div className="min-h-full flex flex-col justify-end gap-1">
-        {groupItems(visible).map((item, i) => {
+        {grouped.map((item, i) => {
           switch (item.kind) {
             case "status":
               return <StatusMessage key={item.index} text={item.text} />;
@@ -319,7 +321,8 @@ export function ChatFeed({
 
             case "group": {
               const { group } = item;
-              const continuesWithTyping = typingCharacter === group.character;
+              const isLastGroup = i === grouped.length - 1;
+              const continuesWithTyping = isLastGroup && typingCharacter === group.character;
               return (
                 <div key={group.messages[0].index} className={i > 0 ? "mt-3" : ""}>
                   {group.messages.map((msg, mi) => {

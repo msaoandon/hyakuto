@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Avatar } from "./Avatar";
 import { CHARACTER_COLORS, DEFAULT_BUBBLE_COLOR } from "./colors";
 
@@ -10,7 +11,7 @@ type ChatBubbleProps = {
   showAvatar?: boolean;
 };
 
-export function ChatBubble({
+function ChatBubbleInner({
   character,
   text,
   isMC = false,
@@ -47,3 +48,5 @@ export function ChatBubble({
     </div>
   );
 }
+
+export const ChatBubble = memo(ChatBubbleInner);

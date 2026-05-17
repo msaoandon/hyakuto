@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
-import { gameConfig } from '@hyakuto/game';
+import { gameConfig } from "@hyakuto/game";
 
 type PendingChoice = {
   options: { text: string }[];
@@ -40,9 +40,9 @@ export default function ChatPage() {
     }
   };
 
-  const handleChoiceAvailable = (choice: PendingChoice) => {
+  const handleChoiceAvailable = useCallback((choice: PendingChoice) => {
     setPendingChoice(choice);
-  };
+  }, []);
 
   const handleReplyTap = () => {
     if (pendingChoice) {
@@ -56,13 +56,13 @@ export default function ChatPage() {
     setModalOpen(false);
   };
 
-  const handleChoiceConsumed = () => {
+  const handleChoiceConsumed = useCallback(() => {
     setPendingChoice(null);
-  };
+  }, []);
 
-  const handleChosenRendered = () => {
+  const handleChosenRendered = useCallback(() => {
     setChosenText(null);
-  };
+  }, []);
 
   const replyEnabled = pendingChoice !== null && chosenText === null;
 

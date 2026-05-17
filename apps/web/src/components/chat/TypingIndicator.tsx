@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Avatar } from "./Avatar";
 
 type TypingIndicatorProps = {
@@ -5,7 +6,7 @@ type TypingIndicatorProps = {
   showAvatar?: boolean;
 };
 
-export function TypingIndicator({ character, showAvatar = true }: TypingIndicatorProps) {
+function TypingIndicatorInner({ character, showAvatar = true }: TypingIndicatorProps) {
   return (
     <div className="flex gap-2 items-end">
       <div className="w-8 shrink-0">
@@ -24,3 +25,5 @@ export function TypingIndicator({ character, showAvatar = true }: TypingIndicato
     </div>
   );
 }
+
+export const TypingIndicator = memo(TypingIndicatorInner);
