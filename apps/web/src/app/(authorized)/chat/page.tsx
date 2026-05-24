@@ -76,16 +76,24 @@ export default function ChatPage() {
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
       />
-      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)] border-t border-beige/10">
+      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
         <button
           onClick={handleReplyTap}
           disabled={!replyEnabled}
-          className={`w-full py-2 rounded-lg font-medium transition-colors
+          className={`w-full py-2 rounded-xl font-medium transition-colors border-2 border-solid border-[#2f406d]
             ${
               replyEnabled
-                ? "bg-amethyst-smoke text-white"
-                : "bg-amethyst-smoke/10 text-white/30 cursor-not-allowed"
-            }`}
+                ? "bg-gradient-to-t from-[#162347] to-[#2f406d] text-[#daccd0]"
+                : "bg-gradient-to-t from-[#162347]/50 to-[#2f406d]/50 text-[#daccd0]/30 cursor-not-allowed"
+            }
+          `}
+          style={
+            replyEnabled
+              ? {
+                  textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)",
+                }
+              : {}
+          }
         >
           Reply
         </button>

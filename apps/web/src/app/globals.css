@@ -5,15 +5,17 @@
 @tailwind utilities;
 
 @theme inline {
-  --color-silver: #cec0baff;
-  --color-papaya-whip: #feefd6ff;
+  --color-brown: #4b3c3d; 
+  --color-yellow: #fae89e; 
+  --color-navy-light: #172c3f; 
+  --color-silver: #8b8899;
+
   --color-air-force-blue: #C1CCD7;
   --color-dusk-blue: #30547aff;
   --color-cool-steel: #96a9b4ff;
   --color-harcoal-blue: #2c4156ff;
   --color-ink-black: #0d1d29ff;
   --color-lavelnder-veil: #e5d4edff;
-  --color-dim-gray: #746F72ff;
   --color-white: #ffffffff;
   --color-amethyst-smoke: #9F84BDff;
 }
@@ -32,11 +34,7 @@
 }
 
 body {
-  background-color: color-mix(
-    in srgb,
-    #222b3c calc(var(--candle-progress) * 100%),
-    #0a0a0b
-  );
+  background-color: #14191c;
   color: var(--color-silver);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 18px;
