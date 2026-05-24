@@ -42,4 +42,4 @@ pnpm-debug.log*
  
 # Vercel
 .vercel/
- 
+ .idea/
