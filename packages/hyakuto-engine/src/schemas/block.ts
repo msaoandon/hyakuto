@@ -15,6 +15,20 @@ const MessageItem = z.object({
   effects: z.array(EffectDef).optional(),
 });
 
+const StickerItem = z.object({
+  type: z.literal('sticker'),
+  character: z.string(),
+  file: z.string().min(1),
+  condition: z.string().optional(),
+});
+
+const ImageItem = z.object({
+  type: z.literal('image'),
+  character: z.string(),
+  file: z.string().min(1),
+  condition: z.string().optional(),
+});
+
 const PoolItem = z.object({
   type: z.literal('pool'),
   character: z.string(),
@@ -47,6 +61,8 @@ export const BlockItem = z.discriminatedUnion('type', [
   PoolItem,
   ChoiceItem,
   TypingItem,
+  StickerItem,
+  ImageItem,
 ]);
 
 export const Block = z.object({
