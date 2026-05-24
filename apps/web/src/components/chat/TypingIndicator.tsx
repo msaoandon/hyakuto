@@ -9,7 +9,7 @@ type TypingIndicatorProps = {
 function TypingIndicatorInner({ character, showAvatar = true }: TypingIndicatorProps) {
   return (
     <div className="flex gap-2 items-end">
-      <div className="w-8 shrink-0">
+      <div className="w-10 shrink-0">
         <Avatar name={character} />
       </div>
       <div>
