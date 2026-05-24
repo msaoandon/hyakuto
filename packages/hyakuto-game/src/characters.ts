@@ -54,7 +54,7 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     textColor: "#121c25",
     borderColor: "#fff2e3",
     bgColor: "rgba(206, 192, 196, 0.9)",
-    shadow: "0 0 5px rgba(255,242,226,0.5)",
+    shadow: "0 0 10px rgba(255,242,226,0.5)",
   },
 };
 
