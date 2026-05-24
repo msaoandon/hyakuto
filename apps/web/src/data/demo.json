@@ -1,153 +1,107 @@
 [
   {
-    "block_id": "demo_2",
+    "block_id": "demo_4",
     "items": [
       {
         "type": "message",
-        "character": "MC",
+        "character": "Haruki",
         "messages": [
-          "wait so are kitsune actually dangerous"
-        ],
-        "effects": [
-          {
-            "axis": "story",
-            "delta": 1
-          }
+          "ok where do i actually start with japanese mythology?"
         ]
       },
       {
         "type": "message",
-        "character": "Tatsumi",
+        "character": "Haruki",
         "messages": [
-          "Yes."
-        ]
-      },
-      {
-        "type": "pool",
-        "character": "Kou",
-        "variants": [
-          {
-            "text": "statistically no",
-            "weight": 1
-          },
-          {
-            "text": "depends on your definition of dangerous",
-            "weight": 1
-          },
-          {
-            "text": "i prefer the word 'unpredictable'",
-            "weight": 1
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "Five hundred years of documented incidents —"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "five hundred years, like three bad days. do you know how long five hundred years is"
-        ],
-        "effects": [
-          {
-            "axis": "candles",
-            "delta": -50
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "Yes."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "…right, you do",
-          "okay. look — dangerous implies intent. I don’t want to hurt anyone",
-          "things just happen"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "Things happen around you specifically."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "I'm a very interesting person!"
+          "any book recommendations?"
         ]
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "Should I be worried?",
-            "effects": [
-              {
-                "axis": "story",
-                "delta": 1
-              }
-            ]
+            "text": "seconding this"
           },
           {
-            "text": "yeah, someone's exaggerating))",
-            "effects": [
-              {
-                "axis": "kou",
-                "delta": 1
-              }
-            ]
+            "text": "Suddenly into mythology?))"
+          }
+        ]
+      },
+      {
+        "type": "image",
+        "character": "Tatsumi",
+        "file": "kojiki1.jpg"
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "oh ok"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Looks kinda ancient T_T"
           },
           {
-            "text": "idk, sounds like some serious stuff happened",
-            "effects": [
-              {
-                "axis": "tatsumi",
-                "delta": 1
-              }
-            ]
+            "text": "what's this omg"
           }
         ]
       },
       {
         "type": "message",
-        "character": "Tatsumi",
+        "character": "Ren",
         "messages": [
-          "Moderately."
+          "\"The Kojiki: An Account of Ancient Matters\""
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "By Ō no Yasumaro"
+        ]
+      },
+      {
+        "type": "image",
+        "character": "Ren",
+        "file": "kojiki2.jpg"
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "thanks 🥲"
         ]
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "absolutely not 🦊✨"
+          "it's the one where two gods stir the ocean with a jeweled spear and accidentally invent Japan"
         ]
       },
       {
         "type": "message",
-        "character": "Tatsumi",
+        "character": "Ren",
         "messages": [
-          "Do not trust the fox."
+          "Guess you could put it like this."
         ]
       },
       {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "okay he’s being dramatic. slightly trust the fox"
+        "type": "choice",
+        "options": [
+          {
+            "text": "that was one hell of a description xD"
+          },
+          {
+            "text": "Thanks, Ren"
+          },
+          {
+            "text": "I should order one next week!"
+          }
         ]
       }
     ]

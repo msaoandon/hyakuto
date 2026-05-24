@@ -5,6 +5,7 @@ import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
+import { ImageModal } from "@/components/chat/ImageModal";
 
 type PendingChoice = {
   options: { text: string }[];
@@ -12,6 +13,7 @@ type PendingChoice = {
 };
 
 export default function ChatPage() {
+  const [openImage, setOpenImage] = useState<string | null>(null);
   const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -75,6 +77,7 @@ export default function ChatPage() {
         chosenText={chosenText}
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
+        onImageTap={setOpenImage}
       />
       <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
         <button
@@ -98,6 +101,7 @@ export default function ChatPage() {
           Reply
         </button>
       </footer>
+      {openImage && <ImageModal file={openImage} onClose={() => setOpenImage(null)} />}
       {modalOpen && pendingChoice && (
         <ChoiceModal
           options={pendingChoice.options}

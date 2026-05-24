@@ -12,6 +12,9 @@ type ChatBubbleProps = {
   showAvatar?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
+  contentType?: "message" | "sticker" | "image";
+  file?: string;
+  onImageTap?: (file: string) => void;
 };
 
 function ChatBubbleInner({
@@ -23,6 +26,9 @@ function ChatBubbleInner({
   showAvatar = true,
   isFirst,
   isLast,
+  contentType,
+  file,
+  onImageTap
 }: ChatBubbleProps) {
   const design = getCharacterDesign(isMC || isDev ? "mc" : character);
 
@@ -36,7 +42,7 @@ function ChatBubbleInner({
             backgroundColor: design.bgColor,
             color: design.textColor,
             border: `1px solid ${design.borderColor}`,
-            boxShadow: design.shadow
+            boxShadow: design.shadow,
           }}
         >
           <p className="text-lg whitespace-pre-line">{text}</p>
@@ -67,11 +73,23 @@ function ChatBubbleInner({
             backgroundColor: design.bgColor,
             color: design.textColor,
             border: `1px solid ${design.borderColor}`,
-            boxShadow: design.shadow
+            boxShadow: design.shadow,
           }}
         >
           {/* <MaskedDecor character={character} /> */}
-          <p className="text-lg whitespace-pre-line">{text}</p>
+          {contentType === "sticker" ? (
+            <img src={`/stickers/${file}`} alt="sticker" className="w-24 h-24 object-contain" />
+          ) : contentType === "image" ? (
+            <button onClick={() => onImageTap?.(file!)}>
+              <img
+                src={`/images/${file}`}
+                alt="shared image"
+                className="max-w-[200px] rounded-lg"
+              />
+            </button>
+          ) : (
+            <p className="text-lg whitespace-pre-line">{text}</p>
+          )}
         </div>
       </div>
     </div>

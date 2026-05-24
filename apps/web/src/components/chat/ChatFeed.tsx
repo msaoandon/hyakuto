@@ -7,7 +7,7 @@ import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
 import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
 import type { Block, GameConfig } from "@hyakuto/engine";
-import demoData from "@/data/demo_3.json";
+import demoData from "@/data/demo.json";
 import { gameConfig } from "@hyakuto/game";
 import { groupItems } from "./groupMessages";
 import type { VisibleItem } from "./types";
@@ -42,6 +42,26 @@ function convertBlockToSegment(block: Block): SegmentInput {
             });
           }
         }
+        break;
+      }
+      case "sticker": {
+        const id = `${block.block_id}_sticker_${msgIndex++}`;
+        messages.push({
+          id,
+          character: item.character,
+          text: `__sticker__:${item.file}`,
+          condition: item.condition,
+        });
+        break;
+      }
+      case "image": {
+        const id = `${block.block_id}_image_${msgIndex++}`;
+        messages.push({
+          id,
+          character: item.character,
+          text: `__image__:${item.file}`,
+          condition: item.condition,
+        });
         break;
       }
       case "choice": {
@@ -105,6 +125,7 @@ type ChatFeedProps = {
   }) => void;
   onEngineEvent?: (event: string) => void;
   onEngineReady?: (engine: { getCounterStart: (id: string) => number }) => void;
+  onImageTap?: (file: string) => void;
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
@@ -117,6 +138,7 @@ export function ChatFeed({
   onStateChange,
   onEngineEvent,
   onEngineReady,
+  onImageTap,
 }: ChatFeedProps) {
   const [visible, setVisible] = useState<VisibleItem[]>([]);
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
@@ -193,16 +215,37 @@ export function ChatFeed({
           case "message_shown": {
             const isMC = event.message.character === "MC";
             const isDev = event.message.character === "dev";
-            setVisible((prev) => [
-              ...prev,
-              {
-                kind: "message" as const,
-                character: event.message.character,
-                text: event.message.text.replace(/\{@?MC\}/g, MC_NAME),
-                isMC,
-                isDev,
-              },
-            ]);
+            const text = event.message.text;
+            if (text.startsWith("__sticker__:")) {
+              setVisible((prev) => [
+                ...prev,
+                {
+                  kind: "sticker" as const,
+                  character: event.message.character,
+                  file: text.replace("__sticker__:", ""),
+                },
+              ]);
+            } else if (text.startsWith("__image__:")) {
+              setVisible((prev) => [
+                ...prev,
+                {
+                  kind: "image" as const,
+                  character: event.message.character,
+                  file: text.replace("__image__:", ""),
+                },
+              ]);
+            } else {
+              setVisible((prev) => [
+                ...prev,
+                {
+                  kind: "message" as const,
+                  character: event.message.character,
+                  text: text.replace(/\{@?MC\}/g, MC_NAME),
+                  isMC,
+                  isDev,
+                },
+              ]);
+            }
             break;
           }
 
@@ -330,6 +373,9 @@ export function ChatFeed({
                         showAvatar={isLast && !continuesWithTyping}
                         isFirst={isFirst}
                         isLast={isLast}
+                        contentType={msg.kind as 'message' | 'sticker' | 'image' | undefined}
+                        file={msg.file!}
+                        onImageTap={onImageTap}
                       />
                     );
                   })}
