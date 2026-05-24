@@ -9,15 +9,12 @@
   --color-yellow: #fae89e; 
   --color-navy-light: #172c3f; 
   --color-silver: #8b8899;
-
-  --color-air-force-blue: #C1CCD7;
-  --color-dusk-blue: #30547aff;
-  --color-cool-steel: #96a9b4ff;
-  --color-harcoal-blue: #2c4156ff;
   --color-ink-black: #0d1d29ff;
-  --color-lavelnder-veil: #e5d4edff;
+
+  --color-harcoal-blue: #2c4156ff;
+  --color-air-force-blue: #C1CCD7;
   --color-white: #ffffffff;
-  --color-amethyst-smoke: #9F84BDff;
+
 }
 
 :root {

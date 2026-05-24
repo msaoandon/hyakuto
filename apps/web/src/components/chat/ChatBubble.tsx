@@ -27,7 +27,6 @@ function ChatBubbleInner({
   const design = getCharacterDesign(isMC || isDev ? "mc" : character);
 
   if (isMC || isDev) {
-    const bubbleStyle = isMC ? "bg-lavelnder-veil text-ink-black " : "bg-dim-gray text-white";
     return (
       <div className="flex flex-col items-end">
         {isDev && showName && <span className="text-sm text-silver/60 mr-1 mb-0.5">dev</span>}
