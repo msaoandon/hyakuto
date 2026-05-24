@@ -42,3 +42,10 @@ body {
   font-size: 18px;
   transition: background-color 2s ease;
 }
+
+.chat-bg {
+  background-image: url('/assets/images/chat.webp');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}

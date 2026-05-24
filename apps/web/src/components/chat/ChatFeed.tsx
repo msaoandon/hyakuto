@@ -292,7 +292,7 @@ export function ChatFeed({
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col-reverse p-4">
+    <div className="flex-1 overflow-y-auto flex flex-col-reverse p-4 chat-bg">
       <div className="flex flex-col gap-1 pb-4">
         {grouped.map((item, i) => {
           switch (item.kind) {
@@ -318,6 +318,7 @@ export function ChatFeed({
               return (
                 <div key={group.messages[0].index} className={i > 0 ? "mt-3" : ""}>
                   {group.messages.map((msg, mi) => {
+                    const isFirst = mi === 0;
                     const isLast = mi === group.messages.length - 1;
                     return (
                       <ChatBubble
@@ -327,6 +328,8 @@ export function ChatFeed({
                         isMC={false}
                         showName={mi === 0}
                         showAvatar={isLast && !continuesWithTyping}
+                        isFirst={isFirst}
+                        isLast={isLast}
                       />
                     );
                   })}

@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+import { getCharacterDesign } from "@hyakuto/game";
 
 type AvatarProps = {
   name: string;
@@ -9,10 +10,14 @@ type AvatarProps = {
 export function Avatar({ name }: AvatarProps) {
   const [failed, setFailed] = useState(false);
   const src = `/avatars/${name.toLowerCase()}.jpg`;
+  const design = getCharacterDesign(name);
 
   if (failed) {
     return (
-      <div className="w-8 h-8 rounded-full bg-gold flex items-center justify-center text-xs font-bold text-dark-gray">
+      <div
+        className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-xs font-bold text-dark-gray"
+        style={{ border: `1px solid ${design.borderColor}`, boxShadow: design.shadow }}
+      >
         {name.charAt(0).toUpperCase()}
       </div>
     );
@@ -22,7 +27,8 @@ export function Avatar({ name }: AvatarProps) {
     <img
       src={src}
       alt={name}
-      className="w-8 h-8 rounded-full object-cover"
+      className="w-10 h-10 rounded-full object-cover"
+      style={{ border: `1px solid ${design.borderColor}`, boxShadow: design.shadow }}
       onError={() => setFailed(true)}
     />
   );
