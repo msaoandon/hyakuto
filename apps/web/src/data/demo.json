@@ -54,7 +54,7 @@
         "type": "message",
         "character": "Ren",
         "messages": [
-          "\"The Kojiki: An Account of Ancient Matters\""
+          "\"The Kojiki: Records of Ancient Matters\""
         ]
       },
       {
@@ -102,6 +102,13 @@
           {
             "text": "I should order one next week!"
           }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "you're welcome ;)"
         ]
       }
     ]
