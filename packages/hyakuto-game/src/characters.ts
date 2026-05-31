@@ -4,6 +4,8 @@ export type CharacterDesign = {
   borderColor: string;
   bgColor: string;
   shadow: string;
+  tailUrl: string;
+  topRightUrl: string;
 };
 
 export const characterDesigns: Record<string, CharacterDesign> = {
@@ -13,6 +15,8 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     borderColor: "#5c90d4",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(59,130,246,0.5)",
+    tailUrl: '',
+    topRightUrl: ''
   },
   kou: {
     displayName: "Kō",
@@ -20,6 +24,8 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     borderColor: "#423228",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(0,0,0,0.5)",
+    tailUrl: 'tail_01.png',
+    topRightUrl: 'top_03.png'
   },
   haruki: {
     displayName: "Haruki",
@@ -27,6 +33,8 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     borderColor: "#5e656a",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(0,0,0,0.5)",
+    tailUrl: 'tail_02.png',
+    topRightUrl: 'top_01.png'
   },
   tatsumi: {
     displayName: "Tatsumi",
@@ -34,20 +42,26 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     borderColor: "#22524b",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(0,0,0,0.5)",
+    tailUrl: 'tail_03.png',
+    topRightUrl: 'top_02.png'
   },
   ren: {
     displayName: "Ren",
-    textColor: "#f8e282",
+    textColor: "#EADA90",
     borderColor: "#4b452d",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(0,0,0,0.5)",
+    tailUrl: 'tail_04.png',
+    topRightUrl: 'top_04.png'
   },
-  mio: {
+  suzune: {
     displayName: "Mio",
     textColor: "#e2a9f1",
     borderColor: "#4a374f",
     bgColor: "rgba(18, 28, 37, 0.9)",
     shadow: "0 0 5px rgba(0,0,0,0.5)",
+    tailUrl: 'tail_02.png',
+    topRightUrl: 'top_01.png'
   },
   mc: {
     displayName: "MC",
@@ -55,6 +69,8 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     borderColor: "#fff2e3",
     bgColor: "rgba(206, 192, 196, 0.9)",
     shadow: "0 0 10px rgba(255,242,226,0.5)",
+    tailUrl: '',
+    topRightUrl: 'top_01.png'
   },
 };
 
@@ -64,6 +80,8 @@ export const DEFAULT_DESIGN: CharacterDesign = {
   borderColor: "#fff2e3",
   bgColor: "rgba(206, 192, 196, 0.9)",
   shadow: "0 0 5px rgba(0,0,0,0.5)",
+  tailUrl: 'tail_01.png',
+  topRightUrl: 'top_01.png'
 };
 
 export function getCharacterDesign(character: string): CharacterDesign {
