@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Avatar } from "./Avatar";
 import { MaskedDecor } from "./MaskedDecor";
+import { Decor } from "./Decor";
 import { getCharacterDesign } from "@hyakuto/game";
 
 type ChatBubbleProps = {
@@ -28,7 +29,7 @@ function ChatBubbleInner({
   isLast,
   contentType,
   file,
-  onImageTap
+  onImageTap,
 }: ChatBubbleProps) {
   const design = getCharacterDesign(isMC || isDev ? "mc" : character);
 
@@ -61,35 +62,55 @@ function ChatBubbleInner({
         : "rounded-r-2xl";
 
   return (
-    <div className="flex gap-2 items-end">
+    <div className="flex gap-4 items-end">
       <div className="w-10 shrink-0 mb-2">{showAvatar && <Avatar name={character} />}</div>
       <div className="max-w-[75%]">
         {showName && (
           <span className="text-sm font-bold text-silver ml-1">{design.displayName}</span>
         )}
-        <div
-          className={`relative ${roundedClass} text-ink-black px-4 py-4 mb-2`}
-          style={{
-            backgroundColor: design.bgColor,
-            color: design.textColor,
-            border: `1px solid ${design.borderColor}`,
-            boxShadow: design.shadow,
-          }}
-        >
-          {/* <MaskedDecor character={character} /> */}
-          {contentType === "sticker" ? (
-            <img src={`/stickers/${file}`} alt="sticker" className="w-24 h-24 object-contain" />
-          ) : contentType === "image" ? (
-            <button onClick={() => onImageTap?.(file!)}>
-              <img
-                src={`/images/${file}`}
-                alt="shared image"
-                className="max-w-[200px] rounded-lg"
-              />
-            </button>
-          ) : (
-            <p className="text-lg whitespace-pre-line">{text}</p>
-          )}
+        <div className="relative">
+          {isFirst && (
+              <div className="absolute top-[-10px] right-[-10px] w-[40px] h-[50px] z-0">
+                <Decor
+                  character={character}
+                  image={design.topRightUrl}
+                  className="w-[40px] h-[50px] -z-10"
+                />
+              </div>
+            )}
+          <div
+            className={`relative z-10 ${roundedClass} text-ink-black px-4 py-4 mb-2`}
+            style={{
+              backgroundColor: design.bgColor,
+              color: design.textColor,
+              border: `1px solid ${design.borderColor}`,
+              boxShadow: design.shadow,
+            }}
+          >
+            {/* <MaskedDecor character={character} /> */}
+            {isLast && (
+              <div className="absolute bottom-[-10px] left-[-15px] w-[40px] h-[20px]">
+                <MaskedDecor
+                  character={character}
+                  image={design.tailUrl}
+                  className="w-[40px] h-[20px]"
+                />
+              </div>
+            )}
+            {contentType === "sticker" ? (
+              <img src={`/stickers/${file}`} alt="sticker" className="w-24 h-24 object-contain" />
+            ) : contentType === "image" ? (
+              <button onClick={() => onImageTap?.(file!)}>
+                <img
+                  src={`/images/${file}`}
+                  alt="shared image"
+                  className="max-w-[200px] rounded-lg"
+                />
+              </button>
+            ) : (
+              <p className="text-lg whitespace-pre-line">{text}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

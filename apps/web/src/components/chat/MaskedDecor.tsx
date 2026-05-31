@@ -1,5 +1,8 @@
+import { getCharacterDesign } from "@hyakuto/game";
+
 type MaskedDecorProps = {
   character: string;
+  image?: string;
   className?: string;
 };
 
@@ -10,22 +13,21 @@ const colorMap: Record<string, string> = {
   haruki: "#C8DE98"
 }
 
-export function MaskedDecor({ character, className = 'w-24 h-9' }: MaskedDecorProps) {
+export function MaskedDecor({ character, image, className = 'w-[40px] h-[20px]' }: MaskedDecorProps) {
+  const design = getCharacterDesign(character);
+
   return (
     <div
       className={className}
       style={{
-        backgroundColor: colorMap[character.toLowerCase()],
-        maskImage: `url('/assets/images/${character.toLowerCase()}.png')`,
+        backgroundColor: design.borderColor,
+        maskImage: `url('/assets/images/${image}')`,
         maskSize: 'contain',
         maskRepeat: 'no-repeat',
-        position: 'absolute',
-        left: -5,
-        bottom: -5,
-        WebkitMaskImage: `url('/assets/images/${character.toLowerCase()}.png')`,
+        WebkitMaskImage: `url('/assets/images/${image}')`,
         WebkitMaskSize: 'contain',
         WebkitMaskRepeat: 'no-repeat',
-        opacity: 0.2
+        opacity: 0.9
       }}
     />
   );
