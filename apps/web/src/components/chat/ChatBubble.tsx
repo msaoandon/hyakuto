@@ -59,7 +59,10 @@ function ChatBubbleInner({
       ? "rounded-t-2xl rounded-bl-lg rounded-br-2xl"
       : isLast
         ? "rounded-br-2xl rounded-tr-2xl rounded-tl-lg"
-        : "rounded-r-2xl";
+        : "rounded-r-2xl rounded-l-lg";
+
+  let topDecorPosition = "top-[-15px] right-[-30px]";
+  let topDecorSize = "w-[100px] h-[40px]";
 
   return (
     <div className="flex gap-4 items-end">
@@ -70,14 +73,9 @@ function ChatBubbleInner({
         )}
         <div className="relative">
           {isFirst && (
-              <div className="absolute top-[-10px] right-[-10px] w-[40px] h-[50px] z-0">
-                <Decor
-                  character={character}
-                  image={design.topRightUrl}
-                  className="w-[40px] h-[50px] -z-10"
-                />
-              </div>
-            )}
+            <div className={`absolute ${topDecorPosition} ${topDecorSize} z-20`}>
+            </div>
+          )}
           <div
             className={`relative z-10 ${roundedClass} text-ink-black px-4 py-4 mb-2`}
             style={{
