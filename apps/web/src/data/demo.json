@@ -1,107 +1,114 @@
 [
   {
-    "block_id": "demo_4",
+    "block_id": "demo_5",
     "items": [
       {
         "type": "message",
-        "character": "Haruki",
+        "character": "Kou",
         "messages": [
-          "ok where do i actually start with japanese mythology?"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "any book recommendations?"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "seconding this"
-          },
-          {
-            "text": "Suddenly into mythology?))"
-          }
-        ]
-      },
-      {
-        "type": "image",
-        "character": "Tatsumi",
-        "file": "kojiki1.jpg"
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "oh ok"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "Looks kinda ancient T_T"
-          },
-          {
-            "text": "what's this omg"
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "\"The Kojiki: Records of Ancient Matters\""
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "By Ō no Yasumaro"
-        ]
-      },
-      {
-        "type": "image",
-        "character": "Ren",
-        "file": "kojiki2.jpg"
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "thanks 🥲"
+          "<b>attention!</b>"
         ]
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "it's the one where two gods stir the ocean with a jeweled spear and accidentally invent Japan"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "Guess you could put it like this."
+          "book of the week - advanced level"
         ]
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "that was one hell of a description xD"
+            "text": "ok, tell us more about it:)"
           },
           {
-            "text": "Thanks, Ren"
+            "text": "this better not be Kojiki part 2"
           },
           {
-            "text": "I should order one next week!"
+            "text": "not this again..."
           }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "go on)))"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "It describes the <b>WORST PARTY</b> in recorded history"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "👀"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Because of it we have day and night"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "<i>like literally</i>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "oh god..."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "if you want to read the <b>same gods</b> telling SIX-SEVEN different <b>versions of their own story</b>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "I'd recommend diving into <b>Nihon Shoki</b> next."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "<i>You should NOT promote books...</i>"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "haha"
+          },
+          {
+            "text": "still sounds intriguing))"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "xD"
         ]
       },
       {
@@ -109,6 +116,53 @@
         "character": "Kou",
         "messages": [
           "you're welcome ;)"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Older title is <b>\"Nihongi\"</b>."
+        ]
+      },
+      {
+        "type": "image",
+        "character": "Tatsumi",
+        "file": "nihongi.jpg"
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "By the way, you can find the infamous <b>Ryōmen Sukuna</b> there too."
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Sukuna?? as in JJK??"
+          },
+          {
+            "text": "the cursed king? xD"
+          },
+          {
+            "text": "I'm all ears!"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "Now we're talking lol"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "I mean, young women in my bookshop always ask about him..."
         ]
       }
     ]

@@ -3,6 +3,7 @@ import { Avatar } from "./Avatar";
 import { MaskedDecor } from "./MaskedDecor";
 import { Decor } from "./Decor";
 import { getCharacterDesign } from "@hyakuto/game";
+import { formatText } from "./formatText";
 
 type ChatBubbleProps = {
   character: string;
@@ -106,7 +107,7 @@ function ChatBubbleInner({
                 />
               </button>
             ) : (
-              <p className="text-lg whitespace-pre-line">{text}</p>
+              <p className="text-lg whitespace-pre-line">{formatText(text)}</p>
             )}
           </div>
         </div>
