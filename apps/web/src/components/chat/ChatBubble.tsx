@@ -1,7 +1,6 @@
 import { memo } from "react";
 import { Avatar } from "./Avatar";
 import { MaskedDecor } from "./MaskedDecor";
-import { Decor } from "./Decor";
 import { getCharacterDesign } from "@hyakuto/game";
 import { formatText } from "./formatText";
 
@@ -62,8 +61,8 @@ function ChatBubbleInner({
         ? "rounded-br-2xl rounded-tr-2xl rounded-tl-lg"
         : "rounded-r-2xl rounded-l-lg";
 
-  let topDecorPosition = "top-[-15px] right-[-30px]";
-  let topDecorSize = "w-[100px] h-[40px]";
+  const topDecorPosition = "top-[-15px] right-[-30px]";
+  const topDecorSize = "w-[100px] h-[40px]";
 
   return (
     <div className="flex gap-4 items-end">

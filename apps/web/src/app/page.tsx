@@ -12,9 +12,6 @@ const shipporiMincho = Shippori_Mincho({
 export default function Home() {
   const [progress, setProgress] = useState(1);
 
-  // Interpolate between amber (1.0) and near-black (0.0)
-  const bg = `hsl(${30 * progress}, ${60 * progress}%, ${Math.max(5, 50 * progress)}%)`;
-
   return (
     <main
       className="min-h-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500"

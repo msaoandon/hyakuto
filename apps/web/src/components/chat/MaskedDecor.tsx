@@ -6,13 +6,6 @@ type MaskedDecorProps = {
   className?: string;
 };
 
-const colorMap: Record<string, string> = {
-  tatsumi: '#81B6F8',
-  kou: "#F9AA5A",
-  ren: "#C9BDCD",
-  haruki: "#C8DE98"
-}
-
 export function MaskedDecor({ character, image, className = 'w-[40px] h-[20px]' }: MaskedDecorProps) {
   const design = getCharacterDesign(character);
 
