@@ -4,8 +4,15 @@
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
+  "scripts": {
+    "validate": "tsx src/cli-validate.ts"
+  },
   "dependencies": {
     "@hyakuto/engine": "workspace:*",
     "@hyakuto/game": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.21.0"
   }
 }
