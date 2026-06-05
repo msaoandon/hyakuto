@@ -1,8 +1,8 @@
-import type { GameState } from '../state/game-state';
-import type { CharacterConfig } from '../schemas/character';
-import { calculateTypingMs, calculateDelayMs, type PaceLevel } from './timing';
-import { evaluateCondition } from '../conditions/parser';
-import { selectFromPool } from '../pools/selector';
+import type { GameState } from "../state/game-state";
+import type { CharacterConfig } from "../schemas/character";
+import { calculateTypingMs, calculateDelayMs, type PaceLevel } from "./timing";
+import { evaluateCondition } from "../conditions/parser";
+import { selectFromPool } from "../pools/selector";
 
 export interface QueuedMessage {
   id: string;
@@ -12,6 +12,9 @@ export interface QueuedMessage {
   typing_ms: number;
   effects?: { axis: string; delta: number }[];
   set_flag?: string;
+  kind?: "cue";
+  channel?: string;
+  value?: string;
 }
 
 export interface RawMessage {
@@ -24,6 +27,9 @@ export interface RawMessage {
   condition?: string;
   effects?: { axis: string; delta: number }[];
   set_flag?: string;
+  kind?: "cue";
+  channel?: string;
+  value?: string;
 }
 
 export function resolveQueue(
@@ -43,6 +49,21 @@ export function resolveQueue(
       }
     }
 
+    if (msg.kind === "cue") {
+      if (msg.condition && !evaluateCondition(msg.condition, state)) continue;
+      queue.push({
+        id: msg.id,
+        character: "",
+        kind: "cue",
+        channel: msg.channel,
+        value: msg.value,
+        text: "",
+        delay_ms: 0,
+        typing_ms: 0,
+      });
+      continue;
+    }
+
     // Resolve text — pool or direct
     let text: string;
     if (msg.pool) {
@@ -55,17 +76,19 @@ export function resolveQueue(
     }
 
     // Look up character typing rate
-    const charConfig = characters.find(c => c.id === msg.character);
+    const charConfig = characters.find((c) => c.id === msg.character);
     const typingRate = charConfig?.typing_rate ?? 1.0;
 
     // Calculate timing
     const isFirstInGroup = msg.character !== prevCharacter;
-    const delay_ms = msg.delay_ms !== undefined
-      ? Math.round(msg.delay_ms * pace)
-      : calculateDelayMs(isFirstInGroup, pace);
-    const typing_ms = msg.typing_ms !== undefined
-      ? Math.round(msg.typing_ms * typingRate * pace)
-      : calculateTypingMs(text, typingRate, pace);
+    const delay_ms =
+      msg.delay_ms !== undefined
+        ? Math.round(msg.delay_ms * pace)
+        : calculateDelayMs(isFirstInGroup, pace);
+    const typing_ms =
+      msg.typing_ms !== undefined
+        ? Math.round(msg.typing_ms * typingRate * pace)
+        : calculateTypingMs(text, typingRate, pace);
 
     queue.push({
       id: msg.id,

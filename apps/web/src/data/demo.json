@@ -3,6 +3,11 @@
     "block_id": "demo_5",
     "items": [
       {
+        "type": "cue",
+        "channel": "music",
+        "value": "ambient_01"
+      },
+      {
         "type": "message",
         "character": "Kou",
         "messages": [

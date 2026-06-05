@@ -21,7 +21,8 @@ export type EngineEvent =
   | { type: "affinity_changed"; axis: string; value: number }
   | { type: "segment_complete"; segmentId: string }
   | { type: "typing_start"; character: string; duration: number }
-  | { type: "typing_end"; character: string };
+  | { type: "typing_end"; character: string }
+  | { type: "cue"; channel: string; value: string };
 
 export interface ChoiceOption {
   text: string;
@@ -143,26 +144,31 @@ export function createEngine(options: CreateEngineOptions): Engine {
         throw new Error("No segment loaded. Call loadSegment() first.");
       }
 
-      for (const msg of queue) {
+      for (const item of queue) {
+        if (item.kind === "cue") {
+          onEvent({ type: "cue", channel: item.channel!, value: item.value! });
+          continue;
+        }
+
         // Delay before typing
-        if (msg.delay_ms > 0) {
-          await sleep(msg.delay_ms);
+        if (item.delay_ms > 0) {
+          await sleep(item.delay_ms);
         }
 
         // Typing indicator
-        if (msg.typing_ms > 0) {
-          onEvent({ type: "typing_start", character: msg.character, duration: msg.typing_ms });
-          await sleep(msg.typing_ms);
-          onEvent({ type: "typing_end", character: msg.character });
+        if (item.typing_ms > 0) {
+          onEvent({ type: "typing_start", character: item.character, duration: item.typing_ms });
+          await sleep(item.typing_ms);
+          onEvent({ type: "typing_end", character: item.character });
         }
 
         // Show message
-        onEvent({ type: "message_shown", message: msg });
-        applyMessageEffects(msg);
+        onEvent({ type: "message_shown", message: item });
+        applyMessageEffects(item);
 
         // Check if a choice point follows this message
-        if (currentSegment.choices && currentSegment.choices[msg.id]) {
-          const choiceBlock = currentSegment.choices[msg.id];
+        if (currentSegment.choices && currentSegment.choices[item.id]) {
+          const choiceBlock = currentSegment.choices[item.id];
           const allOptions = choiceBlock.options;
 
           // Filter options by condition
@@ -176,7 +182,11 @@ export function createEngine(options: CreateEngineOptions): Engine {
             continue;
           }
 
-          onEvent({ type: 'choice_required', options: availableOptions, character: choiceBlock.character });
+          onEvent({
+            type: "choice_required",
+            options: availableOptions,
+            character: choiceBlock.character,
+          });
 
           const chosenIndex = await new Promise<number>((resolve) => {
             waitingForChoice = resolve;

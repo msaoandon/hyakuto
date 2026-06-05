@@ -50,6 +50,13 @@ const ChoiceItem = z.object({
   })).min(1),
 });
 
+const CueItem = z.object({
+  type: z.literal('cue'),
+  channel: z.string(),
+  value: z.string(),
+  condition: z.string().optional(),
+});
+
 const TypingItem = z.object({
   type: z.literal('typing'),
   character: z.string(),
@@ -63,6 +70,7 @@ export const BlockItem = z.discriminatedUnion('type', [
   TypingItem,
   StickerItem,
   ImageItem,
+  CueItem
 ]);
 
 export const Block = z.object({

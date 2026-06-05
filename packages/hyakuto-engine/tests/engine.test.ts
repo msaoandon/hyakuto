@@ -3,7 +3,7 @@ import { createEngine, type EngineEvent, type SegmentInput } from "../src/engine
 import type { GameConfig } from "../src/schemas/game-config";
 
 const config: GameConfig = {
-  axes: ["story", "trust"],
+  axes: ["story", "trust", "sanity"],
   characters: [
     { id: "ao", typing_rate: 1.0 },
     { id: "kou", typing_rate: 0.6 },
@@ -349,5 +349,92 @@ describe("pace", () => {
     const engine = createEngine({ config, onEvent: () => {} });
     engine.setPace(0.5);
     expect(engine.getPace()).toBe(0.5);
+  });
+});
+
+describe('cues', () => {
+  it('emits a cue event with channel and value', async () => {
+    const segment: SegmentInput = {
+      id: 'seg_cue',
+      messages: [
+        { id: 'cue_001', character: '', kind: 'cue', channel: 'music', value: 'ambient_01' },
+      ],
+    };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    const cue = events.find(e => e.type === 'cue');
+    expect(cue).toBeDefined();
+    if (cue?.type === 'cue') {
+      expect(cue.channel).toBe('music');
+      expect(cue.value).toBe('ambient_01');
+    }
+  });
+
+  it('fires cues in order with messages', async () => {
+    const segment: SegmentInput = {
+      id: 'seg_order',
+      messages: [
+        { id: 'msg_001', character: 'ao', text: 'before' },
+        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on' },
+        { id: 'msg_002', character: 'ao', text: 'after' },
+      ],
+    };
+
+    const order: string[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => {
+        if (e.type === 'message_shown') order.push(`msg:${e.message.text}`);
+        if (e.type === 'cue') order.push(`cue:${e.value}`);
+      },
+    });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    expect(order).toEqual(['msg:before', 'cue:on', 'msg:after']);
+  });
+
+  it('skips a cue whose condition fails', async () => {
+    const segment: SegmentInput = {
+      id: 'seg_cond',
+      messages: [
+        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on', condition: 'sanity > 5' },
+      ],
+    };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    expect(events.find(e => e.type === 'cue')).toBeUndefined();
+  });
+
+  it('fires a cue whose condition passes', async () => {
+    const segment: SegmentInput = {
+      id: 'seg_cond_pass',
+      messages: [
+        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on', condition: 'sanity < 5' },
+      ],
+    };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => events.push(e),
+      savedState: { axes: { sanity: 2 }, counters: {}, flags: [], poolSelections: {} },
+    });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+
+    expect(events.find(e => e.type === 'cue')).toBeDefined();
   });
 });

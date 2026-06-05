@@ -29,6 +29,18 @@ function convertBlockToSegment(block: Block): SegmentInput {
 
   for (const item of block.items) {
     switch (item.type) {
+      case "cue": {
+        messages.push({
+          id: `${block.block_id}_cue_${msgIndex++}`,
+          character: "",
+          kind: "cue",
+          channel: item.channel,
+          value: item.value,
+          condition: item.condition,
+        });
+        break;
+      }
+
       case "message": {
         if (item.messages) {
           for (const text of item.messages) {
@@ -202,6 +214,10 @@ export function ChatFeed({
         if (cancelled) return;
 
         switch (event.type) {
+          case "cue":
+            onEngineEvent?.(`cue: ${event.channel} = ${event.value}`);
+            break;
+            
           case "typing_start":
             if (event.character !== "MC") {
               setTypingCharacter(event.character);
@@ -373,7 +389,7 @@ export function ChatFeed({
                         showAvatar={isLast && !continuesWithTyping}
                         isFirst={isFirst}
                         isLast={isLast}
-                        contentType={msg.kind as 'message' | 'sticker' | 'image' | undefined}
+                        contentType={msg.kind as "message" | "sticker" | "image" | undefined}
                         file={msg.file!}
                         onImageTap={onImageTap}
                       />
