@@ -2,13 +2,13 @@
  
 **HYAKUTŌ**
  
-───────  ◉  ───────
+─────── ◉ ───────
  
 **DEVELOPMENT PLAN**
  
 *Zero to Production*
  
-v4  •  May 2026  •  Aligned with Engine Spec v2.0
+v5 • June 2026 • Aligned with Engine Spec v2.0 • Progress-annotated
  
 # **I. Overview**
  
@@ -22,20 +22,48 @@ The plan has seven engineering phases (0–6) plus a post-launch track. Testing 
 | **⚑ SPEC ALIGNMENT** | *This plan is written against Engine Spec v2.0. The engine supports: five-level story hierarchy (Season → Route → Day → Segment → Message); four segment types (group_chat, dm, vn, system); randomised NPC message pools; full boolean condition expression language; multiple named counters; per-character typing rates; and a content compilation + server-side gating security model.* |
 | --- | --- |
  
+## **Progress Snapshot — June 2026**
+ 
+Status legend used throughout: **✓ done**, **◐ in progress**, **○ not started**.
+ 
+- **Phase 0 — Foundation: ✓ complete.** Tagged v0.1.0.
+ 
+- **Phase 1 — Engine Core: ✓ complete.** Tagged v0.2.0. All engine systems, CLI playback, full Vitest coverage.
+ 
+- **Phase 2 — Playable Proto: ◐ in progress.** Chat UI is well ahead (bubbles, grouping, avatars, typing, choice modal, dev console, per-character designs); choice resolver done. Not yet started: Zustand store, segment transition/assembly, VN rendering, candle animation, IndexedDB guest saves, the if_/do_ column refactor, context predicates, Playwright, Storybook.
+ 
+- **Phases 3–6: ○ not started.**
+ 
+**Work done ahead of / outside the plan:**
+ 
+- Capacitor iOS + Android — running on real devices (a Post-Launch item, pulled early for layout testing).
+ 
+- Cue system (music / glitch channels, state-persisting, condition-gated) — engine event + dev-console wiring.
+ 
+- Sticker and image content types (image opens full-screen modal).
+ 
+- Inline // message formatting (parser + tests).
+ 
+- Whole-file (multi-tab) Apps Script exporter with stable filenames.
+ 
+- Repo-side merge + validate pipeline in hyakuto-content (cross-file segment_id uniqueness, condition/axis/character/cue checks) — early Phase 4 content-integrity work.
+ 
 ## **Phase Summary**
  
-| **Phase** | **Goal (Definition of Done)** | **Key Scope Introduced** |
-| --- | --- | --- |
-| 0 — Foundation | Monorepo alive. Hardcoded chat message on screen. | Next.js 15, TypeScript, Tailwind, Vitest, pnpm workspaces |
-| 1 — Engine Core | Engine reads JSON and plays it back as simulated chat. | Five-level hierarchy schemas, four segment types, pool selection, condition parser, counters, typing rates |
-| 2 — Playable Proto | A person plays through one full day with choices. | Zustand, Framer Motion, VN rendering, IndexedDB guest saves, Playwright, Storybook, if_/do_ column conventions, context predicates (time, gender) |
-| 3 — Persistence | Progress saves. Close and reopen — continue exactly where you left off. | Prisma, SQLite, NextAuth (Google + Discord + Apple), GDPR baseline, guest-to-account migration |
-| 4 — Content Pipeline | New JSON content added without touching app code. Pipeline catches all errors. | Content compilation, server-side gating API, ReactFlow admin, full CI checklist, Supabase swap |
-| 5 — Full Content | Complete game playable from candle 100 to all endings. | All routes, all endings, full Playwright coverage, player dashboard |
-| 6 — Ship | Playable by strangers. PWA installable. Push notifications working. | Serwist, Notification API, Vercel Cron, Web Push, production hardening |
-| Post-Launch | App Store and Google Play. Native push. Audio layer. | Capacitor, FCM, Howler.js |
+| **Phase** | **Status** | **Goal (Definition of Done)** | **Key Scope Introduced** |
+| --- | --- | --- | --- |
+| 0 — Foundation | ✓ done | Monorepo alive. Hardcoded chat message on screen. | Next.js 15, TypeScript, Tailwind, Vitest, pnpm workspaces |
+| 1 — Engine Core | ✓ done | Engine reads JSON and plays it back as simulated chat. | Five-level hierarchy schemas, four segment types, pool selection, condition parser, counters, typing rates |
+| 2 — Playable Proto | ◐ in progress | A person plays through one full day with choices. | Zustand, Framer Motion, VN rendering, IndexedDB guest saves, Playwright, Storybook, if_/do_ column conventions, context predicates (time, gender) |
+| 3 — Persistence | ○ not started | Progress saves. Close and reopen — continue exactly where you left off. | Prisma, SQLite, NextAuth (Google + Discord + Apple), GDPR baseline, guest-to-account migration |
+| 4 — Content Pipeline | ○ not started | New JSON content added without touching app code. Pipeline catches all errors. | Content compilation, server-side gating API, ReactFlow admin, full CI checklist, Supabase swap |
+| 5 — Full Content | ○ not started | Complete game playable from candle 100 to all endings. | All routes, all endings, full Playwright coverage, player dashboard |
+| 6 — Ship | ○ not started | Playable by strangers. PWA installable. Push notifications working. | Serwist, Notification API, Vercel Cron, Web Push, production hardening |
+| Post-Launch | ◐ partial (Capacitor done) | App Store and Google Play. Native push. Audio layer. | Capacitor, FCM, Howler.js |
  
 # **II. Phase 0 — Foundation**
+ 
+**Status: ✓ COMPLETE**
  
 *Goal: The monorepo is alive. You can render a hardcoded chat message on screen.*
  
@@ -47,7 +75,7 @@ The plan has seven engineering phases (0–6) plus a post-launch track. Testing 
  
 - One hardcoded chat message renders in the correct visual style — correct font, bubble shape, avatar placeholder
  
-- The --candle-progress CSS custom property wired to a manual slider, proving the amber → blue-gray → near-black colour shift works end-to-end
+- The –candle-progress CSS custom property wired to a manual slider, proving the amber → blue-gray → near-black colour shift works end-to-end
  
 - Dependency flow enforced: engine ← game ← content ← app. No backwards imports.
  
@@ -63,6 +91,8 @@ Vitest is configured from day one. No tests are written yet — the goal is to e
 | --- | --- |
  
 # **III. Phase 1 — Engine Core**
+ 
+**Status: ✓ COMPLETE**
  
 *Goal: The engine reads a JSON file and plays it back as a simulated chat with correct timing. All core engine concepts are implemented.*
  
@@ -88,7 +118,7 @@ The engine supports a five-level hierarchy. All five levels need Zod schemas and
  
 ## **Message Queue ****&**** Timing (hyakuto-engine)**
  
-- Message queue: loads a segment's messages, drips them with configurable delay_ms and typing_ms
+- Message queue: loads a segment’s messages, drips them with configurable delay_ms and typing_ms
  
 - Three timing modes: Live (delays honoured), Catch-Up (pre-rendered), Fast-Forward (all delays stripped)
  
@@ -130,7 +160,7 @@ Conditions are boolean expressions evaluated against the current game state. The
  
 - Affinity deltas applied via the delta field on messages or choices, evaluated by the engine after the message is consumed.
  
-- Flags: a per-route flag store. set_flag and clear_flag effects modify it. flag:<name> predicates read it.
+- Flags: a per-route flag store. set_flag and clear_flag effects modify it. flag: predicates read it.
  
 ## **Engine Public Interface (hyakuto-engine)**
  
@@ -169,91 +199,93 @@ Conditions are boolean expressions evaluated against the current game state. The
  
 # **IV. Phase 2 — Playable Proto**
  
+**Status: ◐ IN PROGRESS**
+ 
 *Goal: A person plays through one full day with choices. The game runs in a browser, persists progress locally, and exercises every engine system in a real UI. The spreadsheet authoring grammar is formalised before content volume grows.*
  
 ## **Deliverables**
  
 ### **hyakuto-engine**
  
-- Choice resolver: a choice modifies named variables; branching targets resolved against condition expressions
+- **✓** Choice resolver: a choice modifies named variables; branching targets resolved against condition expressions
  
-- Segment transition: when a segment completes, the engine loads the next segment in the Day's ordered list
+- **○** Segment transition: when a segment completes, the engine loads the next segment in the Day’s ordered list
  
-- Segment-level condition gating: a segment with a failing condition is skipped, the next segment loads automatically
+- **○** Segment-level condition gating: a segment with a failing condition is skipped, the next segment loads automatically
  
 ### **apps/web — Group Chat ****&**** DM**
  
-- Zustand wired to engine state: candle count, affinity values, pace, current segment, message queue, typing state
+- **○** Zustand wired to engine state: candle count, affinity values, pace, current segment, message queue, typing state
  
-- Full day-cycle UI: Main Hall (group_chat), DM shell (dm), Archive tab accessible
+- **◐** Full day-cycle UI: Main Hall (group_chat), DM shell (dm), Archive tab accessible
  
-- Typing indicator animation — natural rhythm, character-specific pacing visible
+- **✓** Typing indicator animation — natural rhythm, character-specific pacing visible
  
-- Player choice UI: choices render inline in chat, player taps, queue resumes
+- **✓** Player choice UI (implemented as a Reply button + choice modal): choices render in chat, player taps, queue resumes
  
-- Candle extinguishing animation (Framer Motion): flame dims, wisps, goes out. counter_changed event drives this.
+- **○** Candle extinguishing animation (Framer Motion): flame dims, wisps, goes out. counter_changed event drives this.
  
 ### **apps/web — VN Segment Rendering**
  
 The VN segment type is a distinct rendering mode, not a chat bubble variant. It requires explicit UI work in this phase.
  
-- Scene background: a declared scene ID maps to a background (colour, image, or gradient). Scene persists across consecutive narrator messages on the same scene ID.
+- **○** Scene background: a declared scene ID maps to a background (colour, image, or gradient). Scene persists across consecutive narrator messages on the same scene ID.
  
-- Narrator message styling: distinct from chat bubbles — no avatar, no character name, prose-style typography
+- **○** Narrator message styling: distinct from chat bubbles — no avatar, no character name, prose-style typography
  
-- Character speech within a VN segment (e.g. Tatsumi speaking in the bookshop) renders as a styled caption over the scene, not a chat bubble
+- **○** Character speech within a VN segment (e.g. Tatsumi speaking in the bookshop) renders as a styled caption over the scene, not a chat bubble
  
-- Scene transition: when scene ID changes, a brief crossfade. Framer Motion.
+- **○** Scene transition: when scene ID changes, a brief crossfade. Framer Motion.
  
 ### **apps/web — Guest Persistence**
  
 Guest mode saves progress locally before account creation. This is more than in-memory — the spec requires Zustand + IndexedDB.
  
-- IndexedDB adapter for Zustand: serialises game state to IndexedDB on key events (candle extinguished, segment complete, choice made)
+- **○** IndexedDB adapter for Zustand: serialises game state to IndexedDB on key events (candle extinguished, segment complete, choice made)
  
-- Guest saves persist across page refreshes and tab closes. The player resumes from correct state without an account.
+- **○** Guest saves persist across page refreshes and tab closes. The player resumes from correct state without an account.
  
-- Guest mode cannot sync to Supabase — the account creation prompt appears before progress would be lost (approaching the end of The Warming tier)
+- **○** Guest mode cannot sync to Supabase — the account creation prompt appears before progress would be lost (approaching the end of The Warming tier)
  
 ### **hyakuto-content**
  
-- One complete day: morning group_chat, a vn segment, a dm, and an evening group_chat with one story told and one candle extinguished
+- **○** One complete day: morning group_chat, a vn segment, a dm, and an evening group_chat with one story told and one candle extinguished
  
-- The day must include a pool message and a conditional message so both systems are exercised in-game
+- **○** The day must include a pool message and a conditional message so both systems are exercised in-game
  
 ### **Content Pipeline Refactor — Column Conventions**
  
-Phase 1 shipped the spreadsheet pipeline with an ad-hoc effect format (effect_1/2/3 columns parsing inline syntax like "story+1, haruki-1"). Phase 2 formalises the convention before content volume grows. This is the last cheap moment to refactor the authoring grammar.
+Phase 1 shipped the spreadsheet pipeline with an ad-hoc effect format (effect_1/2/3 columns parsing inline syntax like “story+1, haruki-1”). Phase 2 formalises the convention before content volume grows. This is the last cheap moment to refactor the authoring grammar.
  
-- Column prefix convention: if_<predicate> for conditions, do_<effect_type> for effects. One predicate or effect per column. Cross-column AND is the only compound logic the spreadsheet expresses. No inline AND/OR inside cells.
+- **○** Column prefix convention: if_ for conditions, do_ for effects. One predicate or effect per column. Cross-column AND is the only compound logic the spreadsheet expresses. No inline AND/OR inside cells.
  
-- Apps Script exporter refactor: route columns by prefix. Each if_* column compiles to a predicate clause; the exporter joins all non-empty clauses with AND into a single condition string. Each do_* column compiles to a typed effect object; results aggregate into an effects array.
+- **○** Apps Script exporter refactor: route columns by prefix. Each if_* column compiles to a predicate clause; the exporter joins all non-empty clauses with AND into a single condition string. Each do_* column compiles to a typed effect object; results aggregate into an effects array.
  
-- Effects parser refactor: replace the current effect_1/2/3 inline parser with typed compilation per column. do_flag, do_affinity, do_counter, do_ending each have their own validator and compiler. Adding the same effect type twice on one row uses numeric suffixes (do_affinity_1, do_affinity_2) only as needed — no schema-level cap on effect count.
+- **○** Effects parser refactor: replace the current effect_1/2/3 inline parser with typed compilation per column. do_flag, do_affinity, do_counter, do_ending each have their own validator and compiler. Adding the same effect type twice on one row uses numeric suffixes (do_affinity_1, do_affinity_2) only as needed — no schema-level cap on effect count.
  
-- Existing Phase 1 content migration: the one Phase 1 stress-test segment is updated to the new column format as part of this refactor. The Apps Script does not support both formats — clean cut, no grandfathering.
+- **○** Existing Phase 1 content migration: the one Phase 1 stress-test segment is updated to the new column format as part of this refactor. The Apps Script does not support both formats — clean cut, no grandfathering.
  
 ### **Context Predicates (hyakuto-engine)**
  
 A new category of condition predicate evaluates against runtime context rather than GameState. Both initial members ship in Phase 2.
  
-- Parser signature change: evaluate(condition, gameState, runtimeContext) — runtimeContext carries time-of-day and MC customisation. Existing GameState predicates unaffected.
+- **○** Parser signature change: evaluate(condition, gameState, runtimeContext) — runtimeContext carries time-of-day and MC customisation. Existing GameState predicates unaffected.
  
-- if_time predicate: time.band evaluated against new Date() at message resolution time, not segment load time. Named bands as engine primitives (morning, midday, afternoon, evening, night, late_night). Cell accepts a single band or comma-separated set; exporter compiles to time.band IN (...).
+- **○** if_time predicate: time.band evaluated against new Date() at message resolution time, not segment load time. Named bands as engine primitives (morning, midday, afternoon, evening, night, late_night). Cell accepts a single band or comma-separated set; exporter compiles to time.band IN (…).
  
-- if_gender predicate: mc.gender evaluated against MC state. Three valid values — male, female, unset. unset is the default and the inclusive baseline. Writers add gendered variants only where the line genuinely changes character; the unset/default variant is the canonical line.
+- **○** if_gender predicate: mc.gender evaluated against MC state. Three valid values — male, female, unset. unset is the default and the inclusive baseline. Writers add gendered variants only where the line genuinely changes character; the unset/default variant is the canonical line.
  
-- MC gender state field: added to game state in Phase 2 with default unset. The player-facing picker UI ("How should characters address you?") ships in Phase 3 alongside the rest of MC customisation. Until then, all gameplay runs with the default and gendered variants are dead code paths — useful for testing the predicate logic without blocking on UI.
+- **○** MC gender state field: added to game state in Phase 2 with default unset. The player-facing picker UI (“How should characters address you?”) ships in Phase 3 alongside the rest of MC customisation. Until then, all gameplay runs with the default and gendered variants are dead code paths — useful for testing the predicate logic without blocking on UI.
  
 ### **Authoring Documentation Updates**
  
 Documentation updates ship with the refactor, not after.
  
-- Column conventions reference: the canonical list of valid if_* and do_* columns, what each accepts, and what each compiles to. Lives in the content package or a separate authoring guide.
+- **◐** Column conventions reference (current effect_1/2/3 format documented in README; if_/do_ pending): the canonical list of valid if_* and do_* columns, what each accepts, and what each compiles to. Lives in the content package or a separate authoring guide.
  
-- "What to update when new columns are added": a checklist for the recurring engine change — add the column to the Apps Script handler, add a Zod validator, add a parser case (predicate or effect compiler), add a Vitest case, update the column conventions reference. Five places, in order. Future-you (or a collaborator) follows the checklist instead of reverse-engineering five files.
+- **○** “What to update when new columns are added”: a checklist for the recurring engine change — add the column to the Apps Script handler, add a Zod validator, add a parser case (predicate or effect compiler), add a Vitest case, update the column conventions reference. Five places, in order. Future-you (or a collaborator) follows the checklist instead of reverse-engineering five files.
  
-- MC customisation design note: the worldbuilding bible (or character profiles, whichever owns MC design) lists gender alongside name and pronouns as a player-facing customisation choice. Framed as "how characters address you," not as an identity claim — friendlier UX, smaller GDPR surface.
+- **○** MC customisation design note: the worldbuilding bible (or character profiles, whichever owns MC design) lists gender alongside name and pronouns as a player-facing customisation choice. Framed as “how characters address you,” not as an identity claim — friendlier UX, smaller GDPR surface.
  
 ## **Testing in This Phase**
  
@@ -280,6 +312,8 @@ Documentation updates ship with the refactor, not after.
  
 # **V. Phase 3 — Persistence ****&**** Auth**
  
+**Status: ○ NOT STARTED**
+ 
 *Goal: Progress saves to the server. Close the app and come back to exactly where you left off.*
  
 ## **Deliverables**
@@ -298,9 +332,9 @@ Documentation updates ship with the refactor, not after.
  
 - NextAuth.js with three OAuth providers: Google, Discord, and Apple Sign-In
  
-Apple Sign-In differs structurally from Google and Discord — it hides the user's email behind a relay address on first sign-in. The user record must not assume a real email is available. Test this separately.
+Apple Sign-In differs structurally from Google and Discord — it hides the user’s email behind a relay address on first sign-in. The user record must not assume a real email is available. Test this separately.
  
-- Guest-to-account upgrade: when a guest creates an account, the IndexedDB save from Phase 2 is migrated to Supabase. The player's progress is not lost. This migration is a first-class feature, not an edge case.
+- Guest-to-account upgrade: when a guest creates an account, the IndexedDB save from Phase 2 is migrated to Supabase. The player’s progress is not lost. This migration is a first-class feature, not an edge case.
  
 - Session management integrated with Zustand
  
@@ -336,6 +370,8 @@ No new story content required. Use this phase to review and revise Phase 2 JSON 
 | --- | --- |
  
 # **VI. Phase 4 — Content Pipeline ****&**** Writer Tooling**
+ 
+**Status: ○ NOT STARTED (merge+validate started early)**
  
 *Goal: New story content can be added without touching the application codebase. The pipeline catches all structural errors before they reach production.*
  
@@ -383,7 +419,7 @@ Every PR that touches content runs the full validation suite. A failure blocks m
  
 ## **Admin Tooling**
  
-- ReactFlow-based segment graph viewer: visualises a route's segment ordering and conditional branches
+- ReactFlow-based segment graph viewer: visualises a route’s segment ordering and conditional branches
  
 - Chat preview panel: dev-only UI to play any segment in isolation against a synthetic GameState
  
@@ -401,6 +437,8 @@ Candles 100–71 — The Warming tier — authored end-to-end. This is the volum
 | --- | --- |
  
 # **VII. Phase 5 — Full Content**
+ 
+**Status: ○ NOT STARTED**
  
 *Goal: The complete game is playable from candle 100 to all endings, on all romance routes.*
  
@@ -438,6 +476,8 @@ Candles 100–71 — The Warming tier — authored end-to-end. This is the volum
 | --- | --- |
  
 # **VIII. Phase 6 — Ship**
+ 
+**Status: ○ NOT STARTED**
  
 *Goal: Playable by strangers. PWA installable. Push notifications working.*
  
@@ -490,6 +530,8 @@ Candles 100–71 — The Warming tier — authored end-to-end. This is the volum
  
 # **IX. Post-Launch**
  
+**Status: ◐ PARTIAL — Capacitor iOS/Android running on device**
+ 
 *Native apps, push via FCM, and audio. These wait until the web version is stable.*
  
 ## **Capacitor Native Builds**
@@ -536,17 +578,17 @@ Testing is not a phase. It starts at Phase 0 and grows continuously with the pro
  
 ## **Coverage Priorities**
  
-- **Highest: **Engine logic. Message queue, pool selection, condition parser, ending evaluation, exporter compilation. Pure functions, no dependencies. Test thoroughly.
+- **Highest:**** **Engine logic. Message queue, pool selection, condition parser, ending evaluation, exporter compilation. Pure functions, no dependencies. Test thoroughly.
  
-- **High: **Save/load serialisation including pool seen history. Data corruption is unrecoverable.
+- **High:**** **Save/load serialisation including pool seen history. Data corruption is unrecoverable.
  
-- **High: **Ending conditions. Third Path gate, sabotage triggers, first-match ordering must match exactly.
+- **High:**** **Ending conditions. Third Path gate, sabotage triggers, first-match ordering must match exactly.
  
-- **High: **Content delivery gating. A player must not receive content they have not reached.
+- **High:**** **Content delivery gating. A player must not receive content they have not reached.
  
-- **Medium: **Auth flows and GDPR operations. Infrequent but legally significant.
+- **Medium:**** **Auth flows and GDPR operations. Infrequent but legally significant.
  
-- **Lower: **React component internals. Storybook covers visual states; Playwright covers journeys.
+- **Lower:**** **React component internals. Storybook covers visual states; Playwright covers journeys.
  
 ## **What Not to Test**
  
@@ -582,10 +624,10 @@ Content authoring starts seriously in Phase 4, not earlier. The compilation step
 | Apple Sign-In relay email causes user record issues | Phase 3 | Treat email as nullable from day one. Never assume a real email address is available. Test the Apple OAuth path explicitly. |
 | Guest-to-account migration corrupts progress | Phase 3 | Vitest round-trip test for the IndexedDB → Supabase migration. Playwright e2e test for the upgrade flow. |
 | Content compilation step is slow at full scale (100 candles) | Phase 4 | Incremental compilation: only recompile changed files. Measure build time with The Warming tier (30 candles) as a proxy. |
-| Server-side gating adds latency to tier transitions | Phase 4 | Pre-fetch the next tier's compiled segments when the player reaches the boundary candle. Player never waits mid-play. |
+| Server-side gating adds latency to tier transitions | Phase 4 | Pre-fetch the next tier’s compiled segments when the player reaches the boundary candle. Player never waits mid-play. |
 | Supabase migration breaks save data | Phase 4 | Swap before real users exist. Test migration on a staging branch before merging to main. |
 | Content volume underestimated in Phase 5 | Phase 5 | The Warming tier (Phase 4) is the volume calibration test. If it takes longer than expected, Phase 5 timeline adjusts before it is critical. |
 | App Store review rejects the Capacitor build | Post-Launch | Web version is in production and earning trust before native submission. A rejection delays native, not the game. |
 | Solo dev burnout on content volume | Phase 5 | Phase 5 is the longest phase intentionally. Break into tier milestones (70–41, 40–11, 10–1) with rest between. Engineering is finished. |
  
-百灯 / Hyakutō  •  Development Plan v4  •  Aligned with Engine Spec v2.0  •  May 2026  •  Confidential
+百灯 / Hyakutō • Development Plan v4 • Aligned with Engine Spec v2.0 • May 2026 • Confidential
