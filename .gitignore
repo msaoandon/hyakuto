@@ -43,3 +43,6 @@ pnpm-debug.log*
 # Vercel
 .vercel/
  .idea/
+
+# Claude
+./claude
