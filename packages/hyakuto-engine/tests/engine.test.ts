@@ -51,6 +51,16 @@ describe("createEngine", () => {
 });
 
 describe("play", () => {
+  it("emits segment_start before any message", async () => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadSegment(simpleSegment);
+    await engine.play();
+    expect(events[0]!.type).toBe("segment_start");
+    if (events[0]!.type === "segment_start") expect(events[0]!.segmentId).toBe("seg_test");
+  });
+
   it("emits message_shown events in order", async () => {
     const events: EngineEvent[] = [];
     const engine = createEngine({
@@ -356,12 +366,12 @@ describe("pace", () => {
   });
 });
 
-describe('cues', () => {
-  it('emits a cue event with channel and value', async () => {
+describe("cues", () => {
+  it("emits a cue event with channel and value", async () => {
     const segment: SegmentInput = {
-      id: 'seg_cue',
+      id: "seg_cue",
       messages: [
-        { id: 'cue_001', character: '', kind: 'cue', channel: 'music', value: 'ambient_01' },
+        { id: "cue_001", character: "", kind: "cue", channel: "music", value: "ambient_01" },
       ],
     };
 
@@ -371,21 +381,21 @@ describe('cues', () => {
     engine.loadSegment(segment);
     await engine.play();
 
-    const cue = events.find(e => e.type === 'cue');
+    const cue = events.find((e) => e.type === "cue");
     expect(cue).toBeDefined();
-    if (cue?.type === 'cue') {
-      expect(cue.channel).toBe('music');
-      expect(cue.value).toBe('ambient_01');
+    if (cue?.type === "cue") {
+      expect(cue.channel).toBe("music");
+      expect(cue.value).toBe("ambient_01");
     }
   });
 
-  it('fires cues in order with messages', async () => {
+  it("fires cues in order with messages", async () => {
     const segment: SegmentInput = {
-      id: 'seg_order',
+      id: "seg_order",
       messages: [
-        { id: 'msg_001', character: 'ao', text: 'before' },
-        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on' },
-        { id: 'msg_002', character: 'ao', text: 'after' },
+        { id: "msg_001", character: "ao", text: "before" },
+        { id: "cue_001", character: "", kind: "cue", channel: "glitch", value: "on" },
+        { id: "msg_002", character: "ao", text: "after" },
       ],
     };
 
@@ -393,22 +403,29 @@ describe('cues', () => {
     const engine = createEngine({
       config,
       onEvent: (e) => {
-        if (e.type === 'message_shown') order.push(`msg:${e.message.text}`);
-        if (e.type === 'cue') order.push(`cue:${e.value}`);
+        if (e.type === "message_shown") order.push(`msg:${e.message.text}`);
+        if (e.type === "cue") order.push(`cue:${e.value}`);
       },
     });
     engine.setPace(0);
     engine.loadSegment(segment);
     await engine.play();
 
-    expect(order).toEqual(['msg:before', 'cue:on', 'msg:after']);
+    expect(order).toEqual(["msg:before", "cue:on", "msg:after"]);
   });
 
-  it('skips a cue whose condition fails', async () => {
+  it("skips a cue whose condition fails", async () => {
     const segment: SegmentInput = {
-      id: 'seg_cond',
+      id: "seg_cond",
       messages: [
-        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on', condition: 'sanity > 5' },
+        {
+          id: "cue_001",
+          character: "",
+          kind: "cue",
+          channel: "glitch",
+          value: "on",
+          condition: "sanity > 5",
+        },
       ],
     };
 
@@ -418,14 +435,21 @@ describe('cues', () => {
     engine.loadSegment(segment);
     await engine.play();
 
-    expect(events.find(e => e.type === 'cue')).toBeUndefined();
+    expect(events.find((e) => e.type === "cue")).toBeUndefined();
   });
 
-  it('fires a cue whose condition passes', async () => {
+  it("fires a cue whose condition passes", async () => {
     const segment: SegmentInput = {
-      id: 'seg_cond_pass',
+      id: "seg_cond_pass",
       messages: [
-        { id: 'cue_001', character: '', kind: 'cue', channel: 'glitch', value: 'on', condition: 'sanity < 5' },
+        {
+          id: "cue_001",
+          character: "",
+          kind: "cue",
+          channel: "glitch",
+          value: "on",
+          condition: "sanity < 5",
+        },
       ],
     };
 
@@ -439,11 +463,30 @@ describe('cues', () => {
     engine.loadSegment(segment);
     await engine.play();
 
-    expect(events.find(e => e.type === 'cue')).toBeDefined();
+    expect(events.find((e) => e.type === "cue")).toBeDefined();
   });
 });
 
 describe("playDay", () => {
+  it("emits segment_start only for played segments, not skipped ones", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: {
+        id: "s1",
+        condition: "story > 10",
+        messages: [{ id: "m1", character: "ao", text: "x" }],
+      },
+      s2: { id: "s2", messages: [{ id: "m2", character: "ao", text: "y" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await engine.playDay();
+    const starts = events.flatMap((e) => (e.type === "segment_start" ? [e.segmentId] : []));
+    expect(starts).toEqual(["s2"]); // s1 was gated out
+  });
+
   it("plays segments in order and fires day_complete once, last", async () => {
     const segments: Record<string, SegmentInput> = {
       s1: { id: "s1", messages: [{ id: "m1", character: "ao", text: "first" }] },
@@ -467,7 +510,11 @@ describe("playDay", () => {
 
   it("skips a segment whose condition fails and emits segment_skipped", async () => {
     const segments: Record<string, SegmentInput> = {
-      s1: { id: "s1", condition: "story > 10", messages: [{ id: "m1", character: "ao", text: "gated out" }] },
+      s1: {
+        id: "s1",
+        condition: "story > 10",
+        messages: [{ id: "m1", character: "ao", text: "gated out" }],
+      },
       s2: { id: "s2", messages: [{ id: "m2", character: "ao", text: "plays" }] },
     };
     const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
@@ -487,13 +534,24 @@ describe("playDay", () => {
 
   it("evaluates gates lazily: segment 1's flag gates segment 2 in", async () => {
     const segments: Record<string, SegmentInput> = {
-      s1: { id: "s1", messages: [{ id: "m1", character: "ao", text: "open it", set_flag: "door_open" }] },
-      s2: { id: "s2", condition: "flag:door_open", messages: [{ id: "m2", character: "ao", text: "through" }] },
+      s1: {
+        id: "s1",
+        messages: [{ id: "m1", character: "ao", text: "open it", set_flag: "door_open" }],
+      },
+      s2: {
+        id: "s2",
+        condition: "flag:door_open",
+        messages: [{ id: "m2", character: "ao", text: "through" }],
+      },
     };
     const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
 
     const events: EngineEvent[] = [];
-    const engine = createEngine({ config, flagsManifest: ["door_open"], onEvent: (e) => events.push(e) });
+    const engine = createEngine({
+      config,
+      flagsManifest: ["door_open"],
+      onEvent: (e) => events.push(e),
+    });
     engine.setPace(0);
     engine.loadDay(day, segments);
     await engine.playDay();
@@ -504,8 +562,16 @@ describe("playDay", () => {
 
   it("fires day_complete even when every segment is skipped", async () => {
     const segments: Record<string, SegmentInput> = {
-      s1: { id: "s1", condition: "story > 10", messages: [{ id: "m1", character: "ao", text: "no" }] },
-      s2: { id: "s2", condition: "story > 20", messages: [{ id: "m2", character: "ao", text: "no" }] },
+      s1: {
+        id: "s1",
+        condition: "story > 10",
+        messages: [{ id: "m1", character: "ao", text: "no" }],
+      },
+      s2: {
+        id: "s2",
+        condition: "story > 20",
+        messages: [{ id: "m2", character: "ao", text: "no" }],
+      },
     };
     const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
 

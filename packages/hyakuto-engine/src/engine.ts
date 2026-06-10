@@ -25,7 +25,8 @@ export type EngineEvent =
   | { type: "typing_end"; character: string }
   | { type: "cue"; channel: string; value: string }
   | { type: "day_complete"; day: number }
-  | { type: "segment_skipped"; segmentId: string };
+  | { type: "segment_skipped"; segmentId: string }
+  | { type: "segment_start"; segmentId: string };
 
 export interface ChoiceOption {
   text: string;
@@ -156,6 +157,8 @@ export function createEngine(options: CreateEngineOptions): Engine {
       if (!currentSegment) {
         throw new Error("No segment loaded. Call loadSegment() first.");
       }
+      
+      onEvent({ type: "segment_start", segmentId: currentSegment.id });
 
       for (const item of queue) {
         if (item.kind === "cue") {
