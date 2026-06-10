@@ -245,7 +245,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
 
         // ── GATING ── evaluate against *current* state, in order
         if (segment.condition && !evaluateCondition(segment.condition, state)) {
-          onEvent({ type: "segment_skipped", segmentId: segId }); // optional
+          onEvent({ type: "segment_skipped", segmentId: segId });
           continue; // skip; loop advances automatically
         }
 

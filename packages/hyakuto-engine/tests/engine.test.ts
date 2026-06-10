@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createEngine, type EngineEvent, type SegmentInput } from "../src/engine";
+import type { DayConfig } from "../src/schemas/day";
 import type { GameConfig } from "../src/schemas/game-config";
 
 const config: GameConfig = {
@@ -10,6 +11,9 @@ const config: GameConfig = {
   ],
   counters: [{ id: "candles", start: 100, end: 0, direction: "down" }],
 };
+
+const shownTexts = (events: EngineEvent[]) =>
+  events.flatMap((e) => (e.type === "message_shown" ? [e.message.text] : []));
 
 const simpleSegment: SegmentInput = {
   id: "seg_test",
@@ -436,5 +440,100 @@ describe('cues', () => {
     await engine.play();
 
     expect(events.find(e => e.type === 'cue')).toBeDefined();
+  });
+});
+
+describe("playDay", () => {
+  it("plays segments in order and fires day_complete once, last", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: { id: "s1", messages: [{ id: "m1", character: "ao", text: "first" }] },
+      s2: { id: "s2", messages: [{ id: "m2", character: "ao", text: "second" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await engine.playDay();
+
+    expect(shownTexts(events)).toEqual(["first", "second"]);
+
+    const dayDone = events.filter((e) => e.type === "day_complete");
+    expect(dayDone).toHaveLength(1);
+    expect(events[events.length - 1]!.type).toBe("day_complete"); // it's the final event
+    if (dayDone[0]!.type === "day_complete") expect(dayDone[0]!.day).toBe(1);
+  });
+
+  it("skips a segment whose condition fails and emits segment_skipped", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: { id: "s1", condition: "story > 10", messages: [{ id: "m1", character: "ao", text: "gated out" }] },
+      s2: { id: "s2", messages: [{ id: "m2", character: "ao", text: "plays" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await engine.playDay();
+
+    const skipped = events.find((e) => e.type === "segment_skipped");
+    expect(skipped).toBeDefined();
+    if (skipped?.type === "segment_skipped") expect(skipped.segmentId).toBe("s1");
+
+    expect(shownTexts(events)).toEqual(["plays"]); // the gated-out message never shows
+  });
+
+  it("evaluates gates lazily: segment 1's flag gates segment 2 in", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: { id: "s1", messages: [{ id: "m1", character: "ao", text: "open it", set_flag: "door_open" }] },
+      s2: { id: "s2", condition: "flag:door_open", messages: [{ id: "m2", character: "ao", text: "through" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, flagsManifest: ["door_open"], onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await engine.playDay();
+
+    expect(shownTexts(events)).toEqual(["open it", "through"]); // s2 ran because s1 set the flag
+    expect(events.find((e) => e.type === "segment_skipped")).toBeUndefined();
+  });
+
+  it("fires day_complete even when every segment is skipped", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: { id: "s1", condition: "story > 10", messages: [{ id: "m1", character: "ao", text: "no" }] },
+      s2: { id: "s2", condition: "story > 20", messages: [{ id: "m2", character: "ao", text: "no" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "s2"] };
+
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await engine.playDay();
+
+    expect(shownTexts(events)).toHaveLength(0);
+    expect(events.filter((e) => e.type === "segment_skipped")).toHaveLength(2);
+    expect(events.find((e) => e.type === "day_complete")).toBeDefined();
+  });
+
+  it("throws when the day references an unknown segment", async () => {
+    const segments: Record<string, SegmentInput> = {
+      s1: { id: "s1", messages: [{ id: "m1", character: "ao", text: "hi" }] },
+    };
+    const day: DayConfig = { day: 1, route: "r", segments: ["s1", "missing"] };
+
+    const engine = createEngine({ config, onEvent: () => {} });
+    engine.setPace(0);
+    engine.loadDay(day, segments);
+    await expect(engine.playDay()).rejects.toThrow("unknown segment");
+  });
+
+  it("throws if no day loaded", async () => {
+    const engine = createEngine({ config, onEvent: () => {} });
+    await expect(engine.playDay()).rejects.toThrow("No day loaded");
   });
 });
