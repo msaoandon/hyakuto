@@ -208,9 +208,50 @@ Effects in the sheet use the shorthand format `axis+delta` or `axis-delta`. The 
 
 Axis names must match the `axes` array in the game config. The engine throws an error on unknown axes — this catches typos early.
  
+### Manifest Tab (`_manifest`)
+
+The `_manifest` tab declares how segments assemble into days and how each segment is gated. It is read separately from the message tabs — any tab whose name starts with `_` is skipped by the message parser. One row per segment.
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `day` | yes | Day number this segment belongs to |
+| `order` | yes | Position within the day — segments are sorted by `order`, not row position |
+| `route` | yes | Route this day belongs to (e.g. `tatsumi`) |
+| `segment_id` | yes | Stable segment slug. Joins to a message block via its `block_id`. A blank cell silently drops the row |
+| `seg_type` | yes | Segment type: `group_chat`, `dm`, `vn`, or `system` |
+| `thread_id` | chat types | Chat-list grouping key (e.g. `main_hall`, `dm_ren`). Segments sharing a `thread_id` render as one chat thread. Blank for `vn`/`system` |
+| `characters_present` | no | Comma-separated character IDs (e.g. `Ao,Kou,Ren`) |
+| `scene` | for vn | Scene background ID for VN segments |
+| `condition` | no | Gate expression (same syntax as message conditions). If it evaluates false against game state, the segment is skipped and the next one loads automatically |
+
+Example:
+
+| day | order | route | segment_id | seg_type | thread_id | characters_present | scene | condition |
+|-----|-------|-------|------------|----------|-----------|--------------------|-------|-----------|
+| 1 | 1 | tatsumi | day1_morning | group_chat | main_hall | Ao,Kou,Ren | | |
+| 1 | 2 | tatsumi | day1_bookshop | vn | | Tatsumi | bookshop_interior | flag:met_tatsumi |
+| 1 | 3 | tatsumi | day1_ren_dm | dm | dm_ren | Ren | | candles<=90 |
+
+The exporter turns this tab into:
+
+- **`days`** — one entry per `(route, day)`, listing its `segment_id`s in `order`:
+  ```json
+  { "day": 1, "route": "tatsumi", "segments": ["day1_morning", "day1_bookshop", "day1_ren_dm"] }
+  ```
+- **`segments`** — the per-segment envelope (`type`, `condition`, `thread_id`, `scene`, `characters_present`), keyed by `segment_id`.
+
+The engine consumes these to play a day in order, skipping any segment whose `condition` fails — `engine.loadDay(day, segments)` then `engine.playDay()`.
+
 ### Apps Script Export
- 
-The Apps Script exporter reads the sheet and produces a JSON file matching the engine's `StoryFile` schema (array of blocks, each with typed items). Empty effect columns are skipped. The exported JSON is validated by Zod schemas on import.
+
+The exporter produces **two files** per spreadsheet:
+
+- `hyakuto_<name>.json` — message content: an array of blocks (the `StoryFile` schema), each with typed items. Format unchanged.
+- `hyakuto_<name>_manifest.json` — `{ days, segments }` from the `_manifest` tab.
+
+The two are joined at load time by `segment_id` === `block_id`: the manifest supplies each segment's envelope (type, gate condition, thread), the content file supplies its messages. The exporter logs a warning for any manifest segment with no matching block, or any block missing from the manifest. Empty effect columns are skipped. Exported JSON is validated by Zod schemas on import.
+
+Menu items: **Export spreadsheet as JSON** (writes both files), **Show JSON in dialog** (content), **Show manifest JSON in dialog** (manifest).
  
 ## Environment Notes
  
