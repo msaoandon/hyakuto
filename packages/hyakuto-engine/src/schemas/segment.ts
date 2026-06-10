@@ -17,6 +17,7 @@ export const SegmentDef = z.object({
   type: SegmentType,
   route: z.string().optional(),
   day: z.number().int().positive().optional(),
+  thread_id: z.string().optional(),
   characters_present: z.array(z.string()).optional(),
   condition: z.string().optional(),
   scene: z.string().optional(),

@@ -1,5 +1,108 @@
 [
   {
+    "block_id": "demo_1",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "ambient_01"
+      },
+      {
+        "type": "status",
+        "text": "Kou joined the room."
+      },
+      {
+        "type": "status",
+        "text": "Haruki joined the room."
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Hi!!"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "Anyone alive?"
+        ]
+      },
+      {
+        "type": "status",
+        "text": "{MC} joined the room."
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "wazzup"
+          },
+          {
+            "text": "Hi!!"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_2",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "glitch",
+        "value": "glitch_01"
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "What was that?"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "\"That\" - what?"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "common, everyone saw"
+          },
+          {
+            "text": "yeah, what?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "That was scary"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "writer",
+        "messages": [
+          "just a  test"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Ok."
+        ]
+      }
+    ]
+  },
+  {
     "block_id": "demo_5",
     "items": [
       {

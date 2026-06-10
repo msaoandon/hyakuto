@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
@@ -24,6 +24,17 @@ export default function ChatPage() {
     flags: [] as string[],
   });
   const [lastEvent, setLastEvent] = useState<string>();
+  const [segmentEnded, setSegmentEnded] = useState(false);
+  const [hasNextSegment, setHasNextSegment] = useState(false);
+  const advanceRef = useRef<(() => void) | null>(null);
+
+  const handleNext = () => {
+    advanceRef.current?.();
+    setSegmentEnded(false);
+    setHasNextSegment(false);
+  };
+
+  const showNext = segmentEnded && hasNextSegment && !pendingChoice;
 
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
 
@@ -78,28 +89,45 @@ export default function ChatPage() {
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
         onImageTap={setOpenImage}
+        onEngineReady={(api) => {
+          advanceRef.current = api.advance;
+        }}
+        onSegmentEnded={(hasNext) => {
+          setSegmentEnded(true);
+          setHasNextSegment(hasNext);
+        }}
       />
       <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-        <button
-          onClick={handleReplyTap}
-          disabled={!replyEnabled}
-          className={`w-full py-2 rounded-xl font-medium transition-colors border-2 border-solid border-[#2f406d]
+        {showNext ? (
+          <button
+            onClick={handleNext}
+            className="w-full py-2 rounded-xl font-medium border-2 border-solid border-[#2f406d] bg-gradient-to-t from-[#162347] to-[#2f406d] text-[#daccd0]"
+            style={{ textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)" }}
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            onClick={handleReplyTap}
+            disabled={!replyEnabled}
+            className={`w-full py-2 rounded-xl font-medium transition-colors border-2 border-solid border-[#2f406d]
             ${
               replyEnabled
                 ? "bg-gradient-to-t from-[#162347] to-[#2f406d] text-[#daccd0]"
                 : "bg-gradient-to-t from-[#162347]/50 to-[#2f406d]/50 text-[#daccd0]/30 cursor-not-allowed"
             }
           `}
-          style={
-            replyEnabled
-              ? {
-                  textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)",
-                }
-              : {}
-          }
-        >
-          Reply
-        </button>
+            style={
+              replyEnabled
+                ? {
+                    textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)",
+                  }
+                : {}
+            }
+          >
+            Reply
+          </button>
+        )}
       </footer>
       {openImage && <ImageModal file={openImage} onClose={() => setOpenImage(null)} />}
       {modalOpen && pendingChoice && (

@@ -1,0 +1,54 @@
+{
+  "days": [
+    {
+      "day": 1,
+      "route": "common",
+      "segments": [
+        "demo_1",
+        "demo_2"
+      ]
+    },
+    {
+      "day": 2,
+      "route": "common",
+      "segments": [
+        "demo_5"
+      ]
+    }
+  ],
+  "segments": {
+    "demo_1": {
+      "id": "demo_1",
+      "type": "group_chat",
+      "route": "common",
+      "day": 1,
+      "characters_present": [
+        "Kou",
+        "Haruki",
+        "Tatsumi"
+      ]
+    },
+    "demo_2": {
+      "id": "demo_2",
+      "type": "group_chat",
+      "route": "common",
+      "day": 1,
+      "characters_present": [
+        "Kou",
+        "Haruki",
+        "Tatsumi"
+      ]
+    },
+    "demo_5": {
+      "id": "demo_5",
+      "type": "group_chat",
+      "route": "common",
+      "day": 2,
+      "characters_present": [
+        "Kou",
+        "Haruki",
+        "Tatsumi"
+      ]
+    }
+  }
+}

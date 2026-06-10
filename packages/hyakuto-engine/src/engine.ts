@@ -1,4 +1,5 @@
 import type { GameConfig } from "./schemas/game-config";
+import type { DayConfig } from "./schemas/day"
 import type { CharacterConfig } from "./schemas/character";
 import {
   createGameState,
@@ -22,7 +23,9 @@ export type EngineEvent =
   | { type: "segment_complete"; segmentId: string }
   | { type: "typing_start"; character: string; duration: number }
   | { type: "typing_end"; character: string }
-  | { type: "cue"; channel: string; value: string };
+  | { type: "cue"; channel: string; value: string }
+  | { type: "day_complete"; day: number }
+  | { type: "segment_skipped"; segmentId: string };
 
 export interface ChoiceOption {
   text: string;
@@ -32,6 +35,7 @@ export interface ChoiceOption {
 
 export interface SegmentInput {
   id: string;
+  condition?: string;
   messages: RawMessage[];
   choices?: Record<string, { character?: string; options: ChoiceOption[] }>;
 }
@@ -43,6 +47,8 @@ type EventHandler = (event: EngineEvent) => void;
 export interface Engine {
   loadSegment(segment: SegmentInput): void;
   play(): Promise<void>;
+  loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void;  // ← add
+  playDay(): Promise<void>;                                               // ← add
   chooseOption(index: number): void;
   setPace(pace: PaceLevel): void;
   getState(): GameState;
@@ -83,6 +89,8 @@ export function createEngine(options: CreateEngineOptions): Engine {
 
   let pace: PaceLevel = 1.0;
   let currentSegment: SegmentInput | null = null;
+  let currentDay: DayConfig | null = null;
+  let segmentsById: Record<string, SegmentInput> = {};
   let queue: QueuedMessage[] = [];
   let waitingForChoice: ((index: number) => void) | null = null;
 
@@ -131,6 +139,11 @@ export function createEngine(options: CreateEngineOptions): Engine {
     loadSegment(segment: SegmentInput): void {
       currentSegment = segment;
       queue = resolveQueue(segment.messages, state, config.characters, pace);
+    },
+
+    loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void {
+      currentDay = day;
+      segmentsById = segments;
     },
 
     getCounterStart(counterId: string): number {
@@ -222,6 +235,25 @@ export function createEngine(options: CreateEngineOptions): Engine {
       }
 
       onEvent({ type: "segment_complete", segmentId: currentSegment.id });
+    },
+
+    async playDay(): Promise<void> {
+      if (!currentDay) throw new Error("No day loaded. Call loadDay() first.");
+      for (const segId of currentDay.segments) {
+        const segment = segmentsById[segId];
+        if (!segment) throw new Error(`Day references unknown segment: "${segId}"`);
+
+        // ── GATING ── evaluate against *current* state, in order
+        if (segment.condition && !evaluateCondition(segment.condition, state)) {
+          onEvent({ type: "segment_skipped", segmentId: segId }); // optional
+          continue; // skip; loop advances automatically
+        }
+
+        // ── TRANSITION ── load + play; play() emits segment_complete
+        engine.loadSegment(segment);
+        await engine.play();
+      }
+      onEvent({ type: "day_complete", day: currentDay.day });
     },
 
     chooseOption(index: number): void {

@@ -14,6 +14,11 @@ import type { VisibleItem } from "./types";
 
 const MC_NAME = "You";
 
+function snapshot(engine: ReturnType<typeof createEngine>) {
+  const s = engine.getState();
+  return { axes: { ...s.axes }, counters: { ...s.counters }, flags: Array.from(s.flags) };
+}
+
 // ─── CONVERT DEMO JSON TO SEGMENT INPUT ──────────────────
 // Bridge between your current JSON format and the engine's SegmentInput.
 // This adapter disappears when the Apps Script exporter outputs the engine format directly.
@@ -123,6 +128,8 @@ function convertBlockToSegment(block: Block): SegmentInput {
 type PendingChoice = {
   options: { text: string }[];
   character?: string;
+  onEngineReady?: (api: { getCounterStart: (id: string) => number; advance: () => void }) => void;
+  onSegmentEnded?: (hasNext: boolean) => void;
 };
 
 type ChatFeedProps = {
@@ -150,12 +157,14 @@ export function ChatFeed({
   onStateChange,
   onEngineEvent,
   onEngineReady,
+  onSegmentEnded,
   onImageTap,
 }: ChatFeedProps) {
   const [visible, setVisible] = useState<VisibleItem[]>([]);
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
+  const indexRef = useRef(0);
   const choiceResolveRef = useRef<((index: number) => void) | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
   const pendingCharacterRef = useRef<string | undefined>(undefined);
@@ -189,45 +198,24 @@ export function ChatFeed({
     }
   }, [chosenText, onChoiceConsumed, onChosenRendered]);
 
-  // Start engine playback
+  // Start engine playback — steps through blocks on advance()
   useEffect(() => {
     let cancelled = false;
-
-    // Add any status items before engine starts
-    for (const item of block.items) {
-      if (item.type === "status") {
-        setVisible((prev) => [
-          ...prev,
-          {
-            kind: "status" as const,
-            text: item.text.replace(/\{@?MC\}/g, MC_NAME),
-          },
-        ]);
-      }
-    }
-
-    const segment = convertBlockToSegment(block);
 
     const engine = createEngine({
       config: gameConfig,
       onEvent: (event: EngineEvent) => {
         if (cancelled) return;
-
         switch (event.type) {
           case "cue":
             onEngineEvent?.(`cue: ${event.channel} = ${event.value}`);
             break;
-            
           case "typing_start":
-            if (event.character !== "MC") {
-              setTypingCharacter(event.character);
-            }
+            if (event.character !== "MC") setTypingCharacter(event.character);
             break;
-
           case "typing_end":
             setTypingCharacter(null);
             break;
-
           case "message_shown": {
             const isMC = event.message.character === "MC";
             const isDev = event.message.character === "dev";
@@ -264,7 +252,6 @@ export function ChatFeed({
             }
             break;
           }
-
           case "choice_required": {
             const substituted = event.options.map((o) => ({
               ...o,
@@ -275,73 +262,55 @@ export function ChatFeed({
             onChoiceAvailable({ options: substituted, character: event.character });
             break;
           }
-
           case "affinity_changed":
-            onStateChange?.({
-              axes: { ...engine.getState().axes },
-              counters: { ...engine.getState().counters },
-              flags: Array.from(engine.getState().flags),
-            });
+            onStateChange?.(snapshot(engine));
             onEngineEvent?.(`${event.axis} → ${event.value}`);
             break;
-
           case "counter_changed":
-            onStateChange?.({
-              axes: { ...engine.getState().axes },
-              counters: { ...engine.getState().counters },
-              flags: Array.from(engine.getState().flags),
-            });
+            onStateChange?.(snapshot(engine));
             onEngineEvent?.(`${event.counterId} → ${event.value}`);
             break;
-
           case "flag_set":
-            onStateChange?.({
-              axes: { ...engine.getState().axes },
-              counters: { ...engine.getState().counters },
-              flags: Array.from(engine.getState().flags),
-            });
+            onStateChange?.(snapshot(engine));
             onEngineEvent?.(`flag: ${event.flag}`);
             break;
-
-          case "segment_complete":
+          case "segment_complete": {
             onEngineEvent?.(`segment complete: ${event.segmentId}`);
+            onSegmentEnded?.(indexRef.current + 1 < blocks.length);
             break;
+          }
         }
       },
     });
 
-    onEngineReady?.({ getCounterStart: engine.getCounterStart });
-
     engineRef.current = engine;
-
-    // Override chooseOption to capture the resolve
-    const originalChoose = engine.chooseOption.bind(engine);
-
-    engine.loadSegment(segment);
     engine.setPace(1.0);
 
-    // Emit initial state
-    onStateChange?.({
-      axes: { ...engine.getState().axes },
-      counters: { ...engine.getState().counters },
-      flags: Array.from(engine.getState().flags),
-    });
-
-    // Wrap play to intercept choice_required
-    const runEngine = async () => {
-      // We need to intercept the choice promise.
-      // The engine's play() calls waitingForChoice internally,
-      // but we need the UI to call engine.chooseOption().
-      // This already works because:
-      // 1. Engine emits choice_required
-      // 2. onEvent sets up onChoiceAvailable
-      // 3. User picks -> chosenText updates
-      // 4. Our useEffect calls engine.chooseOption(index)
-      // 5. Engine resumes
+    const runBlock = async (b: Block) => {
+      for (const item of b.items) {
+        if (item.type === "status") {
+          setVisible((prev) => [
+            ...prev,
+            { kind: "status" as const, text: item.text.replace(/\{@?MC\}/g, MC_NAME) },
+          ]);
+        }
+      }
+      engine.loadSegment(convertBlockToSegment(b));
+      onStateChange?.(snapshot(engine));
       await engine.play();
     };
 
-    runEngine();
+    const advance = () => {
+      const next = indexRef.current + 1;
+      if (next >= blocks.length) return;
+      indexRef.current = next;
+      runBlock(blocks[next]!);
+    };
+
+    onEngineReady?.({ getCounterStart: engine.getCounterStart, advance });
+
+    onStateChange?.(snapshot(engine));
+    runBlock(blocks[0]!);
 
     return () => {
       cancelled = true;
