@@ -12,6 +12,8 @@
       "day": 2,
       "route": "common",
       "segments": [
+        "demo_3",
+        "demo_4",
         "demo_5"
       ]
     }
@@ -22,33 +24,53 @@
       "type": "group_chat",
       "route": "common",
       "day": 1,
-      "characters_present": [
-        "Kou",
-        "Haruki",
-        "Tatsumi"
-      ]
+      "thread_id": "day1_01"
     },
     "demo_2": {
       "id": "demo_2",
       "type": "group_chat",
       "route": "common",
       "day": 1,
-      "characters_present": [
-        "Kou",
-        "Haruki",
-        "Tatsumi"
-      ]
+      "thread_id": "day1_02"
+    },
+    "demo_3": {
+      "id": "demo_3",
+      "type": "group_chat",
+      "route": "common",
+      "day": 2,
+      "thread_id": "day2_01"
+    },
+    "demo_4": {
+      "id": "demo_4",
+      "type": "group_chat",
+      "route": "common",
+      "day": 2,
+      "thread_id": "day2_02",
+      "condition": "candles < 60"
     },
     "demo_5": {
       "id": "demo_5",
       "type": "group_chat",
       "route": "common",
       "day": 2,
-      "characters_present": [
-        "Kou",
-        "Haruki",
-        "Tatsumi"
-      ]
+      "thread_id": "day2_03"
+    }
+  },
+  "threads": {
+    "day1_01": {
+      "display_name": "Arriving"
+    },
+    "day1_02": {
+      "display_name": "Getting to know"
+    },
+    "day2_01": {
+      "display_name": "Photo from bar"
+    },
+    "day2_02": {
+      "display_name": "Whatever"
+    },
+    "day2_03": {
+      "display_name": "BNook recommendation"
     }
   }
 }

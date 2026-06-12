@@ -103,6 +103,30 @@
     ]
   },
   {
+    "block_id": "demo_3",
+    "items": [
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Demo 3!"
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_4",
+    "items": [
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "Demo 4."
+        ]
+      }
+    ]
+  },
+  {
     "block_id": "demo_5",
     "items": [
       {
