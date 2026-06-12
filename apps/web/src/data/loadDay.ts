@@ -1,4 +1,6 @@
 import type { Block, StoryFile, SegmentInput, DayConfig } from "@hyakuto/engine";
+import manifestData from "./manifest.json";
+import demoData from "./demo.json";
 
 // Segment envelope as produced by the Apps Script exporter's manifest
 export type SegmentMeta = {
@@ -9,10 +11,13 @@ export type SegmentMeta = {
   thread_id?: string;
   scene?: string;
   condition?: string;
-  characters_present?: string[];
 };
 
-export type Manifest = { days: DayConfig[]; segments: Record<string, SegmentMeta> };
+export type Manifest = {
+  days: DayConfig[];
+  segments: Record<string, SegmentMeta>;
+  threads: Record<string, { display_name: string }>;
+};
 
 export type LoadedDay = {
   day: DayConfig;
@@ -134,7 +139,18 @@ export function convertBlockToSegment(block: Block): SegmentInput {
         }
         break;
       }
-      // status and typing items bypass the engine for now
+      case "status": {
+        messages.push({
+          id: `${block.block_id}_status_${msgIndex++}`,
+          character: "",
+          text: `__status__:${item.text}`,
+          delay_ms: 0,
+          typing_ms: 0, // ← no typing indicator (engine skips when <= 0)
+          condition: item.condition,
+        });
+        break;
+      }
+      // typing items bypass the engine for now
     }
   }
 
@@ -142,5 +158,29 @@ export function convertBlockToSegment(block: Block): SegmentInput {
     id: block.block_id,
     messages,
     choices: Object.keys(choices).length > 0 ? choices : undefined,
+  };
+}
+
+const manifest = manifestData as Manifest;
+const content = demoData as StoryFile;
+
+export function assembleThread(day: number, threadId: string): SegmentInput {
+  const dayCfg = manifest.days.find((d) => d.day === day);
+  const segmentIds = (dayCfg?.segments ?? []).filter(
+    (id) => manifest.segments[id]?.thread_id === threadId,
+  );
+
+  const blockById: Record<string, Block> = {};
+  for (const b of content) blockById[b.block_id] = b;
+
+  const segs = segmentIds
+    .map((id) => blockById[id])
+    .filter((b): b is Block => Boolean(b))
+    .map(convertBlockToSegment);
+
+  return {
+    id: `${day}:${threadId}`,
+    messages: segs.flatMap((s) => s.messages),
+    choices: Object.assign({}, ...segs.map((s) => s.choices ?? {})),
   };
 }

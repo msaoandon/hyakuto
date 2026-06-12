@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
@@ -8,6 +8,7 @@ import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
 import { ImageModal } from "@/components/chat/ImageModal";
 import { usePlay } from "../layout";
+import { assembleThread } from "@/data/loadDay";
 
 type PendingChoice = {
   options: { text: string }[];
@@ -16,7 +17,8 @@ type PendingChoice = {
 
 export default function ChatPage() {
   const router = useRouter();
-  const { selectedChat } = usePlay();
+  const { selectedDay, selectedChat } = usePlay();
+
   const [openImage, setOpenImage] = useState<string | null>(null);
   const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
@@ -28,26 +30,43 @@ export default function ChatPage() {
     flags: [] as string[],
   });
   const [lastEvent, setLastEvent] = useState<string>();
-  const [segmentEnded, setSegmentEnded] = useState(false);
-  const [hasNextSegment, setHasNextSegment] = useState(false);
-  const advanceRef = useRef<(() => void) | null>(null);
+  const [threadEnded, setThreadEnded] = useState(false);
 
-  const handleExit = () => {
-    router.push('/play/day');
-  };
-
-  const showExit = segmentEnded && !hasNextSegment && !pendingChoice;
-
-  const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
+  // Assemble the selected thread into a single playable segment.
+  const segment = useMemo(
+    () => assembleThread(selectedDay ?? 0, selectedChat ?? ""),
+    [selectedDay, selectedChat],
+  );
 
   useEffect(() => {
-    if (!selectedChat) router.replace("/play");
-  }, [selectedChat, router]);
-  if (!selectedChat) return null;
+    if (selectedDay === null || !selectedChat) router.replace("/play");
+  }, [selectedDay, selectedChat, router]);
 
   useEffect(() => {
     document.body.style.setProperty("--candle-progress", String(candleProgress));
   }, [candleProgress]);
+
+  const handleChoiceAvailable = useCallback((choice: PendingChoice) => {
+    setPendingChoice(choice);
+  }, []);
+
+  const handleChoiceConsumed = useCallback(() => {
+    setPendingChoice(null);
+  }, []);
+
+  const handleChosenRendered = useCallback(() => {
+    setChosenText(null);
+  }, []);
+
+  if (selectedDay === null || !selectedChat) return null;
+
+  const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
+  const showExit = threadEnded && !pendingChoice;
+  const replyEnabled = pendingChoice !== null && chosenText === null;
+
+  const handleExit = () => {
+    router.push("/play/day");
+  };
 
   const handleStateChange = (state: {
     axes: Record<string, number>;
@@ -59,10 +78,6 @@ export default function ChatPage() {
       setCandleProgress(state.counters.candles / candleStart);
     }
   };
-
-  const handleChoiceAvailable = useCallback((choice: PendingChoice) => {
-    setPendingChoice(choice);
-  }, []);
 
   const handleReplyTap = () => {
     if (pendingChoice) {
@@ -76,20 +91,10 @@ export default function ChatPage() {
     setModalOpen(false);
   };
 
-  const handleChoiceConsumed = useCallback(() => {
-    setPendingChoice(null);
-  }, []);
-
-  const handleChosenRendered = useCallback(() => {
-    setChosenText(null);
-  }, []);
-
-  const replyEnabled = pendingChoice !== null && chosenText === null;
-
   return (
     <>
       <ChatFeed
-        segmentId={selectedChat}
+        segment={segment}
         onStateChange={handleStateChange}
         onChoiceAvailable={handleChoiceAvailable}
         onChoiceConsumed={handleChoiceConsumed}
@@ -97,13 +102,7 @@ export default function ChatPage() {
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
         onImageTap={setOpenImage}
-        onEngineReady={(api) => {
-          advanceRef.current = api.advance;
-        }}
-        onSegmentEnded={(hasNext) => {
-          setSegmentEnded(true);
-          setHasNextSegment(hasNext);
-        }}
+        onThreadEnded={() => setThreadEnded(true)}
       />
       <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
         {showExit ? (

@@ -3,7 +3,7 @@ import { createContext, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import manifestData from "@/data/manifest.json";
-import type { Manifest } from '@/data/loadDay';
+import type { Manifest } from "@/data/loadDay";
 
 type PlayState = {
   selectedDay: number | null;
@@ -35,8 +35,7 @@ export default function PlayLayout({ children }: { children: React.ReactNode }) 
         : pathname === "/play/chat"
           ? {
               back: "/play/day",
-              title:
-                manifest.segments[selectedChat ?? ""]?.characters_present?.join(", ") ?? "Chat",
+              title: manifest.threads[selectedChat ?? ""]?.display_name ?? "Chat",
             }
           : null;
 

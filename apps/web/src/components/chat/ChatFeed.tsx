@@ -5,10 +5,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { ChatBubble } from "./ChatBubble";
 import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
-import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
-import type { Block, GameConfig } from "@hyakuto/engine";
-import demoData from "@/data/demo.json";
-import { convertBlockToSegment } from "@/data/loadDay";
+import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 import { groupItems } from "./groupMessages";
 import type { VisibleItem } from "./types";
@@ -25,12 +22,10 @@ function snapshot(engine: ReturnType<typeof createEngine>) {
 type PendingChoice = {
   options: { text: string }[];
   character?: string;
-  onEngineReady?: (api: { getCounterStart: (id: string) => number; advance: () => void }) => void;
-  onSegmentEnded?: (hasNext: boolean) => void;
 };
 
 type ChatFeedProps = {
-  segmentId: string;
+  segment: SegmentInput;
   onChoiceAvailable: (choice: PendingChoice) => void;
   onChoiceConsumed: () => void;
   chosenText: string | null;
@@ -41,23 +36,21 @@ type ChatFeedProps = {
     flags: string[];
   }) => void;
   onEngineEvent?: (event: string) => void;
-  onEngineReady?: (api: { getCounterStart: (id: string) => number; advance: () => void }) => void;
-  onSegmentEnded?: (hasNext: boolean) => void;
+  onThreadEnded?: () => void;
   onImageTap?: (file: string) => void;
 };
 
 // ─── COMPONENT ───────────────────────────────────────────
 
 export function ChatFeed({
-  segmentId,
+  segment,
   onChoiceAvailable,
   onChoiceConsumed,
   chosenText,
   onChosenRendered,
   onStateChange,
   onEngineEvent,
-  onEngineReady,
-  onSegmentEnded,
+  onThreadEnded,
   onImageTap,
 }: ChatFeedProps) {
   const [visible, setVisible] = useState<VisibleItem[]>([]);
@@ -67,8 +60,6 @@ export function ChatFeed({
   const choiceResolveRef = useRef<((index: number) => void) | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
   const pendingCharacterRef = useRef<string | undefined>(undefined);
-  const blocks = demoData as StoryFile;
-  const block = blocks.find((b) => b.block_id === segmentId);
 
   // Handle choice selection
   useEffect(() => {
@@ -97,10 +88,8 @@ export function ChatFeed({
     }
   }, [chosenText, onChoiceConsumed, onChosenRendered]);
 
-  // Start engine playback — steps through blocks on advance()
+  // Start engine playback — plays the assembled thread as one segment
   useEffect(() => {
-    if (!block) return;
-
     let cancelled = false;
 
     const engine = createEngine({
@@ -121,7 +110,15 @@ export function ChatFeed({
             const isMC = event.message.character === "MC";
             const isDev = event.message.character === "dev";
             const text = event.message.text;
-            if (text.startsWith("__sticker__:")) {
+            if (text.startsWith("__status__:")) {
+              setVisible((prev) => [
+                ...prev,
+                {
+                  kind: "status" as const,
+                  text: text.replace("__status__:", "").replace(/\{@?MC\}/g, MC_NAME),
+                },
+              ]);
+            } else if (text.startsWith("__sticker__:")) {
               setVisible((prev) => [
                 ...prev,
                 {
@@ -177,7 +174,7 @@ export function ChatFeed({
             break;
           case "segment_complete": {
             onEngineEvent?.(`segment complete: ${event.segmentId}`);
-            onSegmentEnded?.(false);
+            onThreadEnded?.();
             break;
           }
         }
@@ -186,32 +183,14 @@ export function ChatFeed({
 
     engineRef.current = engine;
     engine.setPace(1.0);
-
-    const runBlock = async (b: Block) => {
-      for (const item of b.items) {
-        if (item.type === "status") {
-          setVisible((prev) => [
-            ...prev,
-            { kind: "status" as const, text: item.text.replace(/\{@?MC\}/g, MC_NAME) },
-          ]);
-        }
-      }
-      engine.loadSegment(convertBlockToSegment(b));
-      onStateChange?.(snapshot(engine));
-      await engine.play();
-    };
-
-    const advance = () => {};
-
-    onEngineReady?.({ getCounterStart: engine.getCounterStart, advance });
-
+    engine.loadSegment(segment);
     onStateChange?.(snapshot(engine));
-    runBlock(block);
+    engine.play();
 
     return () => {
       cancelled = true;
     };
-  }, [segmentId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [segment.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
