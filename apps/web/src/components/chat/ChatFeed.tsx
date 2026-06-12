@@ -30,6 +30,7 @@ type PendingChoice = {
 };
 
 type ChatFeedProps = {
+  segmentId: string;
   onChoiceAvailable: (choice: PendingChoice) => void;
   onChoiceConsumed: () => void;
   chosenText: string | null;
@@ -48,6 +49,7 @@ type ChatFeedProps = {
 // ─── COMPONENT ───────────────────────────────────────────
 
 export function ChatFeed({
+  segmentId,
   onChoiceAvailable,
   onChoiceConsumed,
   chosenText,
@@ -62,12 +64,11 @@ export function ChatFeed({
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
-  const indexRef = useRef(0);
   const choiceResolveRef = useRef<((index: number) => void) | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
   const pendingCharacterRef = useRef<string | undefined>(undefined);
   const blocks = demoData as StoryFile;
-  const block = blocks[0]!;
+  const block = blocks.find((b) => b.block_id === segmentId);
 
   // Handle choice selection
   useEffect(() => {
@@ -98,6 +99,8 @@ export function ChatFeed({
 
   // Start engine playback — steps through blocks on advance()
   useEffect(() => {
+    if (!block) return;
+
     let cancelled = false;
 
     const engine = createEngine({
@@ -174,7 +177,7 @@ export function ChatFeed({
             break;
           case "segment_complete": {
             onEngineEvent?.(`segment complete: ${event.segmentId}`);
-            onSegmentEnded?.(indexRef.current + 1 < blocks.length);
+            onSegmentEnded?.(false);
             break;
           }
         }
@@ -198,22 +201,17 @@ export function ChatFeed({
       await engine.play();
     };
 
-    const advance = () => {
-      const next = indexRef.current + 1;
-      if (next >= blocks.length) return;
-      indexRef.current = next;
-      runBlock(blocks[next]!);
-    };
+    const advance = () => {};
 
     onEngineReady?.({ getCounterStart: engine.getCounterStart, advance });
 
     onStateChange?.(snapshot(engine));
-    runBlock(blocks[0]!);
+    runBlock(block);
 
     return () => {
       cancelled = true;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [segmentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const grouped = useMemo(() => groupItems(visible), [visible]);
 

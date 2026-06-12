@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
 import { ImageModal } from "@/components/chat/ImageModal";
-import { usePlay } from '../layout';
+import { usePlay } from "../layout";
 
 type PendingChoice = {
   options: { text: string }[];
@@ -43,7 +43,7 @@ export default function ChatPage() {
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
 
   useEffect(() => {
-    if (!selectedChat) router.replace('/play');
+    if (!selectedChat) router.replace("/play");
   }, [selectedChat, router]);
   if (!selectedChat) return null;
 
@@ -91,6 +91,7 @@ export default function ChatPage() {
   return (
     <>
       <ChatFeed
+        segmentId={selectedChat}
         onStateChange={handleStateChange}
         onChoiceAvailable={handleChoiceAvailable}
         onChoiceConsumed={handleChoiceConsumed}
