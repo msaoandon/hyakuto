@@ -164,14 +164,19 @@ export function convertBlockToSegment(block: Block): SegmentInput {
 const manifest = manifestData as Manifest;
 const content = demoData as StoryFile;
 
-export function assembleThread(day: number, threadId: string): SegmentInput {
-  const dayCfg = manifest.days.find((d) => d.day === day);
+export function assembleThread(
+  day: number,
+  threadId: string,
+  m: Manifest = manifest,
+  c: StoryFile = content,
+): SegmentInput {
+  const dayCfg = m.days.find((d) => d.day === day);
   const segmentIds = (dayCfg?.segments ?? []).filter(
-    (id) => manifest.segments[id]?.thread_id === threadId,
+    (id) => m.segments[id]?.thread_id === threadId,
   );
 
   const blockById: Record<string, Block> = {};
-  for (const b of content) blockById[b.block_id] = b;
+  for (const b of c) blockById[b.block_id] = b;
 
   const segs = segmentIds
     .map((id) => blockById[id])
