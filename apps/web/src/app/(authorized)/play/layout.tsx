@@ -1,5 +1,8 @@
-'use client';
-import { createContext, useContext, useState } from 'react';
+"use client";
+import { createContext, useContext, useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import manifest from "@/data/manifest.json";
 
 type PlayState = {
   selectedDay: number | null;
@@ -12,15 +15,37 @@ const PlayContext = createContext<PlayState | null>(null);
 
 export function usePlay() {
   const ctx = useContext(PlayContext);
-  if (!ctx) throw new Error('usePlay must be used inside /play');
+  if (!ctx) throw new Error("usePlay must be used inside /play");
   return ctx;
 }
 
 export default function PlayLayout({ children }: { children: React.ReactNode }) {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+  const pathname = usePathname();
+
+  // back target + title per step (hierarchical, not always "/")
+  const header =
+    pathname === "/play"
+      ? { back: "/", title: "Choose a day" }
+      : pathname === "/play/day"
+        ? { back: "/play", title: `Day ${selectedDay ?? ""}` }
+        : pathname === "/play/chat"
+          ? {
+              back: "/play/day",
+              title:
+                manifest.segments[selectedChat ?? ""]?.characters_present?.join(", ") ?? "Chat",
+            }
+          : null;
+
   return (
     <PlayContext.Provider value={{ selectedDay, selectedChat, setSelectedDay, setSelectedChat }}>
+      {header && (
+        <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)] bg-harcoal-blue flex items-center gap-3">
+          <Link href={header.back}>←</Link>
+          <span>{header.title}</span>
+        </header>
+      )}
       {children}
     </PlayContext.Provider>
   );

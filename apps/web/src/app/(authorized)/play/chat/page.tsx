@@ -32,13 +32,11 @@ export default function ChatPage() {
   const [hasNextSegment, setHasNextSegment] = useState(false);
   const advanceRef = useRef<(() => void) | null>(null);
 
-  const handleNext = () => {
-    advanceRef.current?.();
-    setSegmentEnded(false);
-    setHasNextSegment(false);
+  const handleExit = () => {
+    router.push('/play/day');
   };
 
-  const showNext = segmentEnded && hasNextSegment && !pendingChoice;
+  const showExit = segmentEnded && !hasNextSegment && !pendingChoice;
 
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
 
@@ -108,13 +106,13 @@ export default function ChatPage() {
         }}
       />
       <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
-        {showNext ? (
+        {showExit ? (
           <button
-            onClick={handleNext}
+            onClick={handleExit}
             className="w-full py-2 rounded-xl font-medium border-2 border-solid border-[#2f406d] bg-gradient-to-t from-[#162347] to-[#2f406d] text-[#daccd0]"
             style={{ textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)" }}
           >
-            Next
+            Exit
           </button>
         ) : (
           <button

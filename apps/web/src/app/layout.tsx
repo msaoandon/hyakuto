@@ -32,7 +32,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AppShell>
-          <AppHeader />
           <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
         </AppShell>
       </body>
