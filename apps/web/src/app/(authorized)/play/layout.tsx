@@ -2,7 +2,8 @@
 import { createContext, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import manifest from "@/data/manifest.json";
+import manifestData from "@/data/manifest.json";
+import type { Manifest } from '@/data/loadDay';
 
 type PlayState = {
   selectedDay: number | null;
@@ -23,6 +24,7 @@ export default function PlayLayout({ children }: { children: React.ReactNode }) 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const pathname = usePathname();
+  const manifest = manifestData as Manifest;
 
   // back target + title per step (hierarchical, not always "/")
   const header =
