@@ -40,7 +40,8 @@ type ChatFeedProps = {
     flags: string[];
   }) => void;
   onEngineEvent?: (event: string) => void;
-  onEngineReady?: (engine: { getCounterStart: (id: string) => number }) => void;
+  onEngineReady?: (api: { getCounterStart: (id: string) => number; advance: () => void }) => void;
+  onSegmentEnded?: (hasNext: boolean) => void;
   onImageTap?: (file: string) => void;
 };
 
