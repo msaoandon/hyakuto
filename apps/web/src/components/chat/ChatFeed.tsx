@@ -8,6 +8,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { createEngine, type EngineEvent, type SegmentInput, type StoryFile } from "@hyakuto/engine";
 import type { Block, GameConfig } from "@hyakuto/engine";
 import demoData from "@/data/demo.json";
+import { convertBlockToSegment } from "@/data/loadDay";
 import { gameConfig } from "@hyakuto/game";
 import { groupItems } from "./groupMessages";
 import type { VisibleItem } from "./types";
@@ -17,110 +18,6 @@ const MC_NAME = "You";
 function snapshot(engine: ReturnType<typeof createEngine>) {
   const s = engine.getState();
   return { axes: { ...s.axes }, counters: { ...s.counters }, flags: Array.from(s.flags) };
-}
-
-// ─── CONVERT DEMO JSON TO SEGMENT INPUT ──────────────────
-// Bridge between your current JSON format and the engine's SegmentInput.
-// This adapter disappears when the Apps Script exporter outputs the engine format directly.
-
-function convertBlockToSegment(block: Block): SegmentInput {
-  const messages: SegmentInput["messages"] = [];
-  const choices: Record<
-    string,
-    { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }
-  > = {};
-
-  let msgIndex = 0;
-
-  for (const item of block.items) {
-    switch (item.type) {
-      case "cue": {
-        messages.push({
-          id: `${block.block_id}_cue_${msgIndex++}`,
-          character: "",
-          kind: "cue",
-          channel: item.channel,
-          value: item.value,
-          condition: item.condition,
-        });
-        break;
-      }
-
-      case "message": {
-        if (item.messages) {
-          for (const text of item.messages) {
-            const id = `${block.block_id}_msg_${msgIndex++}`;
-            messages.push({
-              id,
-              character: item.character,
-              text,
-              condition: item.condition,
-              effects: item.effects,
-            });
-          }
-        }
-        break;
-      }
-      case "sticker": {
-        const id = `${block.block_id}_sticker_${msgIndex++}`;
-        messages.push({
-          id,
-          character: item.character,
-          text: `__sticker__:${item.file}`,
-          condition: item.condition,
-        });
-        break;
-      }
-      case "image": {
-        const id = `${block.block_id}_image_${msgIndex++}`;
-        messages.push({
-          id,
-          character: item.character,
-          text: `__image__:${item.file}`,
-          condition: item.condition,
-        });
-        break;
-      }
-      case "choice": {
-        // Attach choice to the last message
-        if (messages.length > 0 && item.options) {
-          const lastMsgId = messages[messages.length - 1]!.id;
-          choices[lastMsgId] = {
-            character: "character" in item ? item.character : undefined,
-            options: item.options.map((opt) => ({
-              text: opt.text,
-              effects: opt.effects,
-            })),
-          };
-        }
-        break;
-      }
-      case "pool": {
-        if ("variants" in item) {
-          const id = `${block.block_id}_pool_${msgIndex++}`;
-          messages.push({
-            id,
-            character: item.character,
-            pool: item.variants.map((v, i) => ({
-              idx: i,
-              text: v.text,
-              weight: v.weight ?? 1,
-            })),
-            condition: item.condition,
-            effects: item.effects,
-          });
-        }
-        break;
-      }
-      // status and typing items bypass the engine for now
-    }
-  }
-
-  return {
-    id: block.block_id,
-    messages,
-    choices: Object.keys(choices).length > 0 ? choices : undefined,
-  };
 }
 
 // ─── TYPES ───────────────────────────────────────────────
