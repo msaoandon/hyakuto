@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from 'next/navigation';
 import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
 import { ImageModal } from "@/components/chat/ImageModal";
+import { usePlay } from '../layout';
 
 type PendingChoice = {
   options: { text: string }[];
@@ -13,6 +15,8 @@ type PendingChoice = {
 };
 
 export default function ChatPage() {
+  const router = useRouter();
+  const { selectedChat } = usePlay();
   const [openImage, setOpenImage] = useState<string | null>(null);
   const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
@@ -37,6 +41,11 @@ export default function ChatPage() {
   const showNext = segmentEnded && hasNextSegment && !pendingChoice;
 
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
+
+  useEffect(() => {
+    if (!selectedChat) router.replace('/play');
+  }, [selectedChat, router]);
+  if (!selectedChat) return null;
 
   useEffect(() => {
     document.body.style.setProperty("--candle-progress", String(candleProgress));
