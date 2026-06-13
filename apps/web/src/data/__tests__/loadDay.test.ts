@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Block, StoryFile } from "@hyakuto/engine";
-import { convertBlockToSegment, assembleThread, type Manifest } from "./loadDay";
+import { convertBlockToSegment, assembleThread, type Manifest } from "../loadDay";
 
 describe("convertBlockToSegment", () => {
   it("encodes a status item as a zero-timing engine message", () => {

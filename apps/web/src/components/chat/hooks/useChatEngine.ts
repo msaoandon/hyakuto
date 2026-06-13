@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
-import { messageToItem } from "./eventToItem";
-import { substituteMC } from "./mc";
-import type { VisibleItem, PendingChoice, EngineSnapshot } from "./types";
+import { messageToItem } from "../helpers/eventToItem";
+import { substituteMC } from "../helpers/mc";
+import type { VisibleItem, PendingChoice, EngineSnapshot } from "../types";
 
 type Engine = ReturnType<typeof createEngine>;
 

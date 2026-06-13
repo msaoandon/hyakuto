@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { messageToItem } from "./eventToItem";
+import { messageToItem } from "../eventToItem";
 import type { QueuedMessage } from "@hyakuto/engine";
 
 const msg = (over: Partial<QueuedMessage>): QueuedMessage => ({

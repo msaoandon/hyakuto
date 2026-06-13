@@ -6,9 +6,9 @@ import { ChatBubble } from "./ChatBubble";
 import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
 import type { SegmentInput } from "@hyakuto/engine";
-import { groupItems } from "./groupMessages";
-import { useChatEngine, type ChatEngineHandlers } from "./useChatEngine";
-import { MC_NAME } from "./mc";
+import { groupItems } from "./helpers/groupMessages";
+import { useChatEngine, type ChatEngineHandlers } from "./hooks/useChatEngine";
+import { MC_NAME } from "./helpers/mc";
 
 type ChatFeedProps = ChatEngineHandlers & {
   segment: SegmentInput;

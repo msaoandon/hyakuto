@@ -1,4 +1,4 @@
-import type { VisibleItem } from "./types";
+import type { VisibleItem } from "../types";
 
 export type MessageGroup = {
   character: string;

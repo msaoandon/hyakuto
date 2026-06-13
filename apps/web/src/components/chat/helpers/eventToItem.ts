@@ -1,5 +1,5 @@
 import type { QueuedMessage } from "@hyakuto/engine";
-import type { VisibleItem } from "./types";
+import type { VisibleItem } from "../types";
 import { substituteMC } from "./mc";
 
 // Authoring encodes non-text content as text prefixes on a normal message.

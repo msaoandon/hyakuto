@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Avatar } from "./Avatar";
 import { MaskedDecor } from "./MaskedDecor";
 import { getCharacterDesign } from "@hyakuto/game";
-import { formatText } from "./formatText";
+import { formatText } from "./helpers/formatText";
 
 type ChatBubbleProps = {
   character: string;
