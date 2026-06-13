@@ -17,7 +17,7 @@ export type SegmentMeta = {
 export type Manifest = {
   days: DayConfig[];
   segments: Record<string, SegmentMeta>;
-  threads: Record<string, { display_name: string }>;
+  threads: Record<string, { display_name: string; condition?: string  }>;
 };
 
 export type LoadedDay = {

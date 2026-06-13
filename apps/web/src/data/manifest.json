@@ -64,13 +64,14 @@
       "display_name": "Getting to know"
     },
     "day2_01": {
-      "display_name": "Photo from bar"
+      "display_name": "Photo from bar",
+      "condition": "candles<100"
     },
     "day2_02": {
       "display_name": "Whatever"
     },
     "day2_03": {
-      "display_name": "BNook recommendation"
+      "display_name": "Book recommendation"
     }
   }
 }
