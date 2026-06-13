@@ -110,6 +110,12 @@
         "character": "Kou",
         "messages": [
           "Demo 3!"
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -50
+          }
         ]
       }
     ]

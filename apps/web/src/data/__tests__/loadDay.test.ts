@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Block, StoryFile } from "@hyakuto/engine";
+import type { Block, StoryFile, GameState } from "@hyakuto/engine";
 import { convertBlockToSegment, assembleThread, type Manifest } from "../loadDay";
 
 describe("convertBlockToSegment", () => {
@@ -69,6 +69,8 @@ describe("convertBlockToSegment", () => {
 describe("assembleThread", () => {
   // Two threads on day 1 (alpha spans a1+a2, beta is b1) and a same-named
   // thread on day 2 (a3) — so we can prove both day- and thread-scoping.
+  const state: GameState = { axes: {}, counters: {}, flags: new Set(), poolSelections: {} };
+
   const manifest = {
     days: [
       { day: 1, route: "common", segments: ["a1", "a2", "b1"] },
@@ -91,22 +93,22 @@ describe("assembleThread", () => {
   ] satisfies StoryFile;
 
   it("concatenates a thread's segments in day order", () => {
-    const seg = assembleThread(1, "alpha", manifest, content);
+    const seg = assembleThread(1, "alpha", state, manifest, content);
     expect(seg.messages.map((m) => m.text)).toEqual(["one", "two"]);
   });
 
   it("uses a `day:thread` id", () => {
-    expect(assembleThread(1, "alpha", manifest, content).id).toBe("1:alpha");
+    expect(assembleThread(1, "alpha", state, manifest, content).id).toBe("1:alpha");
   });
 
   it("includes only segments matching the thread (not sibling threads)", () => {
-    const seg = assembleThread(1, "beta", manifest, content);
+    const seg = assembleThread(1, "beta", state, manifest, content);
     expect(seg.messages.map((m) => m.text)).toEqual(["beta"]);
   });
 
   it("scopes to the day — a same-named thread on another day is excluded", () => {
     // day 2's "alpha" must not pull in day 1's a1/a2
-    const seg = assembleThread(2, "alpha", manifest, content);
+    const seg = assembleThread(2, "alpha", state, manifest, content);
     expect(seg.messages.map((m) => m.text)).toEqual(["day2"]);
   });
 
@@ -128,13 +130,36 @@ describe("assembleThread", () => {
       },
     ] satisfies StoryFile;
 
-    const seg = assembleThread(1, "alpha", manifest, withChoices);
-
+    const seg = assembleThread(1, "alpha", state, manifest, withChoices);
     expect(Object.keys(seg.choices ?? {}).sort()).toEqual(["a1_msg_0", "a2_msg_0"]);
   });
 
   it("returns an empty thread when nothing matches", () => {
-    const seg = assembleThread(1, "missing", manifest, content);
+    const seg = assembleThread(1, "missing", state, manifest, content);
     expect(seg.messages).toEqual([]);
+  });
+
+  it("skips a segment whose condition fails, includes it when it passes", () => {
+    const m = {
+      days: [{ day: 1, route: "common", segments: ["g1", "g2"] }],
+      segments: {
+        g1: { id: "g1", type: "group_chat", day: 1, thread_id: "t" },
+        g2: { id: "g2", type: "group_chat", day: 1, thread_id: "t", condition: "candles < 60" },
+      },
+      threads: { t: { display_name: "T" } },
+    } satisfies Manifest;
+    const c = [
+      { block_id: "g1", items: [{ type: "message", character: "Kou", messages: ["always"] }] },
+      { block_id: "g2", items: [{ type: "message", character: "Ren", messages: ["secret"] }] },
+    ] satisfies StoryFile;
+
+    const locked = { ...state, counters: { candles: 100 } }; // 100 < 60 → false
+    const unlocked = { ...state, counters: { candles: 50 } }; //  50 < 60 → true
+
+    expect(assembleThread(1, "t", locked, m, c).messages.map((x) => x.text)).toEqual(["always"]);
+    expect(assembleThread(1, "t", unlocked, m, c).messages.map((x) => x.text)).toEqual([
+      "always",
+      "secret",
+    ]);
   });
 });

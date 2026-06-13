@@ -1,4 +1,5 @@
-import type { Block, StoryFile, SegmentInput, DayConfig } from "@hyakuto/engine";
+import type { Block, StoryFile, SegmentInput, DayConfig, GameState } from "@hyakuto/engine";
+import { evaluateCondition } from "@hyakuto/engine";
 import manifestData from "./manifest.json";
 import demoData from "./demo.json";
 
@@ -164,15 +165,22 @@ export function convertBlockToSegment(block: Block): SegmentInput {
 const manifest = manifestData as Manifest;
 const content = demoData as StoryFile;
 
+/** A segment plays when it has no gate, or its gate passes against the current state. */
+export function isSegmentAvailable(meta: SegmentMeta | undefined, state: GameState): boolean {
+  if (!meta?.condition) return true;
+  return evaluateCondition(meta.condition, state);
+}
+
 export function assembleThread(
   day: number,
   threadId: string,
+  state: GameState,
   m: Manifest = manifest,
   c: StoryFile = content,
 ): SegmentInput {
   const dayCfg = m.days.find((d) => d.day === day);
   const segmentIds = (dayCfg?.segments ?? []).filter(
-    (id) => m.segments[id]?.thread_id === threadId,
+    (id) => m.segments[id]?.thread_id === threadId && isSegmentAvailable(m.segments[id], state),
   );
 
   const blockById: Record<string, Block> = {};
