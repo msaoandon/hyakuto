@@ -9,11 +9,7 @@ import { gameConfig } from "@hyakuto/game";
 import { ImageModal } from "@/components/chat/ImageModal";
 import { usePlay } from "../layout";
 import { assembleThread } from "@/data/loadDay";
-
-type PendingChoice = {
-  options: { text: string }[];
-  character?: string;
-};
+import type { PendingChoice } from "@/components/chat/types";
 
 export default function ChatPage() {
   const router = useRouter();

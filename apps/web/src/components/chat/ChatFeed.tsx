@@ -1,197 +1,23 @@
 // components/chat/ChatFeed.tsx
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useMemo } from "react";
 import { ChatBubble } from "./ChatBubble";
 import { StatusMessage } from "./StatusMessage";
 import { TypingIndicator } from "./TypingIndicator";
-import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
-import { gameConfig } from "@hyakuto/game";
+import type { SegmentInput } from "@hyakuto/engine";
 import { groupItems } from "./groupMessages";
-import type { VisibleItem } from "./types";
+import { useChatEngine, type ChatEngineHandlers } from "./useChatEngine";
+import { MC_NAME } from "./mc";
 
-const MC_NAME = "You";
-
-function snapshot(engine: ReturnType<typeof createEngine>) {
-  const s = engine.getState();
-  return { axes: { ...s.axes }, counters: { ...s.counters }, flags: Array.from(s.flags) };
-}
-
-// ─── TYPES ───────────────────────────────────────────────
-
-type PendingChoice = {
-  options: { text: string }[];
-  character?: string;
-};
-
-type ChatFeedProps = {
+type ChatFeedProps = ChatEngineHandlers & {
   segment: SegmentInput;
-  onChoiceAvailable: (choice: PendingChoice) => void;
-  onChoiceConsumed: () => void;
   chosenText: string | null;
-  onChosenRendered: () => void;
-  onStateChange?: (state: {
-    axes: Record<string, number>;
-    counters: Record<string, number>;
-    flags: string[];
-  }) => void;
-  onEngineEvent?: (event: string) => void;
-  onThreadEnded?: () => void;
   onImageTap?: (file: string) => void;
 };
 
-// ─── COMPONENT ───────────────────────────────────────────
-
-export function ChatFeed({
-  segment,
-  onChoiceAvailable,
-  onChoiceConsumed,
-  chosenText,
-  onChosenRendered,
-  onStateChange,
-  onEngineEvent,
-  onThreadEnded,
-  onImageTap,
-}: ChatFeedProps) {
-  const [visible, setVisible] = useState<VisibleItem[]>([]);
-  const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<ReturnType<typeof createEngine> | null>(null);
-  const choiceResolveRef = useRef<((index: number) => void) | null>(null);
-  const pendingOptionsRef = useRef<{ text: string }[]>([]);
-  const pendingCharacterRef = useRef<string | undefined>(undefined);
-
-  // Handle choice selection
-  useEffect(() => {
-    if (chosenText && pendingOptionsRef.current.length > 0) {
-      const index = pendingOptionsRef.current.findIndex((o) => o.text === chosenText);
-      if (index >= 0) {
-        const isDev = pendingCharacterRef.current === "dev";
-        setVisible((prev) => [
-          ...prev,
-          {
-            kind: "mc-reply" as const,
-            text: chosenText,
-            isDev,
-          },
-        ]);
-
-        try {
-          engineRef.current?.chooseOption(index);
-        } catch {}
-
-        pendingOptionsRef.current = [];
-        pendingCharacterRef.current = undefined;
-        onChoiceConsumed();
-        onChosenRendered();
-      }
-    }
-  }, [chosenText, onChoiceConsumed, onChosenRendered]);
-
-  // Start engine playback — plays the assembled thread as one segment
-  useEffect(() => {
-    let cancelled = false;
-
-    const engine = createEngine({
-      config: gameConfig,
-      onEvent: (event: EngineEvent) => {
-        if (cancelled) return;
-        switch (event.type) {
-          case "cue":
-            onEngineEvent?.(`cue: ${event.channel} = ${event.value}`);
-            break;
-          case "typing_start":
-            if (event.character !== "MC") setTypingCharacter(event.character);
-            break;
-          case "typing_end":
-            setTypingCharacter(null);
-            break;
-          case "message_shown": {
-            const isMC = event.message.character === "MC";
-            const isDev = event.message.character === "dev";
-            const text = event.message.text;
-            if (text.startsWith("__status__:")) {
-              setVisible((prev) => [
-                ...prev,
-                {
-                  kind: "status" as const,
-                  text: text.replace("__status__:", "").replace(/\{@?MC\}/g, MC_NAME),
-                },
-              ]);
-            } else if (text.startsWith("__sticker__:")) {
-              setVisible((prev) => [
-                ...prev,
-                {
-                  kind: "sticker" as const,
-                  character: event.message.character,
-                  file: text.replace("__sticker__:", ""),
-                },
-              ]);
-            } else if (text.startsWith("__image__:")) {
-              setVisible((prev) => [
-                ...prev,
-                {
-                  kind: "image" as const,
-                  character: event.message.character,
-                  file: text.replace("__image__:", ""),
-                },
-              ]);
-            } else {
-              setVisible((prev) => [
-                ...prev,
-                {
-                  kind: "message" as const,
-                  character: event.message.character,
-                  text: text.replace(/\{@?MC\}/g, MC_NAME),
-                  isMC,
-                  isDev,
-                },
-              ]);
-            }
-            break;
-          }
-          case "choice_required": {
-            const substituted = event.options.map((o) => ({
-              ...o,
-              text: o.text.replace(/\{@?MC\}/g, MC_NAME),
-            }));
-            pendingOptionsRef.current = substituted;
-            pendingCharacterRef.current = event.character;
-            onChoiceAvailable({ options: substituted, character: event.character });
-            break;
-          }
-          case "affinity_changed":
-            onStateChange?.(snapshot(engine));
-            onEngineEvent?.(`${event.axis} → ${event.value}`);
-            break;
-          case "counter_changed":
-            onStateChange?.(snapshot(engine));
-            onEngineEvent?.(`${event.counterId} → ${event.value}`);
-            break;
-          case "flag_set":
-            onStateChange?.(snapshot(engine));
-            onEngineEvent?.(`flag: ${event.flag}`);
-            break;
-          case "segment_complete": {
-            onEngineEvent?.(`segment complete: ${event.segmentId}`);
-            onThreadEnded?.();
-            break;
-          }
-        }
-      },
-    });
-
-    engineRef.current = engine;
-    engine.setPace(1.0);
-    engine.loadSegment(segment);
-    onStateChange?.(snapshot(engine));
-    engine.play();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [segment.id]); // eslint-disable-line react-hooks/exhaustive-deps
-
+export function ChatFeed({ segment, chosenText, onImageTap, ...handlers }: ChatFeedProps) {
+  const { visible, typingCharacter } = useChatEngine(segment, chosenText, handlers);
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
   return (
