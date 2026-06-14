@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import manifestData from "@/data/manifest.json";
 import type { Manifest } from "@/data/loadDay";
+import { useT } from "@/i18n";
 
 type PlayState = {
   selectedDay: number | null;
@@ -25,17 +26,18 @@ export default function PlayLayout({ children }: { children: React.ReactNode }) 
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   const pathname = usePathname();
   const manifest = manifestData as Manifest;
+  const t = useT();
 
   // back target + title per step (hierarchical, not always "/")
   const header =
     pathname === "/play"
-      ? { back: "/", title: "Choose a day" }
+      ? { back: "/", title: t("play.chooseDay") }
       : pathname === "/play/day"
-        ? { back: "/play", title: `Day ${selectedDay ?? ""}` }
+        ? { back: "/play", title: t("play.day", { n: selectedDay ?? "" }) }
         : pathname === "/play/chat"
           ? {
               back: "/play/day",
-              title: manifest.threads[selectedChat ?? ""]?.display_name ?? "Chat",
+              title: manifest.threads[selectedChat ?? ""]?.display_name ?? t("play.chat"),
             }
           : null;
 

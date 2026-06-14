@@ -10,10 +10,12 @@ import { createGameState } from "@hyakuto/engine";
 import { ImageModal } from "@/components/chat/ImageModal";
 import { usePlay } from "../layout";
 import { assembleThread } from "@/data/loadDay";
+import { useT } from "@/i18n";
 import type { PendingChoice } from "@/components/chat/types";
 
 export default function ChatPage() {
   const router = useRouter();
+  const t = useT();
   const { selectedDay, selectedChat } = usePlay();
 
   const [openImage, setOpenImage] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function ChatPage() {
             className="w-full py-2 rounded-xl font-medium border-2 border-solid border-[#2f406d] bg-gradient-to-t from-[#162347] to-[#2f406d] text-[#daccd0]"
             style={{ textShadow: "0 0 4px rgba(255,242,226,0.6), 0 0 12px rgba(255,242,226,0.4)" }}
           >
-            Exit
+            {t("play.exit")}
           </button>
         ) : (
           <button
@@ -129,7 +131,7 @@ export default function ChatPage() {
                 : {}
             }
           >
-            Reply
+            {t("play.reply")}
           </button>
         )}
       </footer>
