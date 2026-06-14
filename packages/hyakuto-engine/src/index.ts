@@ -35,3 +35,16 @@ export {
   type SaveState,
   type CreateEngineOptions,
 } from "./engine";
+
+// Manifest navigation + assembly (headless game logic shared by web UI and CLI)
+export {
+  convertBlockToSegment,
+  isSegmentAvailable,
+  assembleThread,
+  buildDay,
+  listDays,
+  listThreads,
+  type SegmentMeta,
+  type Manifest,
+  type LoadedDay,
+} from "./manifest/manifest";

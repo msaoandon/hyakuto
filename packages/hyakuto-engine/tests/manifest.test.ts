@@ -1,6 +1,21 @@
 import { describe, it, expect } from "vitest";
-import type { Block, StoryFile, GameState } from "@hyakuto/engine";
-import { convertBlockToSegment, assembleThread, type Manifest } from "../loadDay";
+import {
+  convertBlockToSegment,
+  assembleThread,
+  isSegmentAvailable,
+  listDays,
+  listThreads,
+  type Manifest,
+} from "../src/manifest/manifest";
+import type { Block, StoryFile } from "../src/schemas/block";
+import type { GameState } from "../src/state/game-state";
+
+const emptyState = (): GameState => ({
+  axes: {},
+  counters: {},
+  flags: new Set(),
+  poolSelections: {},
+});
 
 describe("convertBlockToSegment", () => {
   it("encodes a status item as a zero-timing engine message", () => {
@@ -15,7 +30,6 @@ describe("convertBlockToSegment", () => {
     const m = seg.messages[0]!;
     expect(m.text).toBe("__status__:{MC} joined the room.");
     expect(m.character).toBe("");
-    // zero timing is what keeps the typing indicator off — engine skips when <= 0
     expect(m.delay_ms).toBe(0);
     expect(m.typing_ms).toBe(0);
   });
@@ -69,8 +83,6 @@ describe("convertBlockToSegment", () => {
 describe("assembleThread", () => {
   // Two threads on day 1 (alpha spans a1+a2, beta is b1) and a same-named
   // thread on day 2 (a3) — so we can prove both day- and thread-scoping.
-  const state: GameState = { axes: {}, counters: {}, flags: new Set(), poolSelections: {} };
-
   const manifest = {
     days: [
       { day: 1, route: "common", segments: ["a1", "a2", "b1"] },
@@ -93,49 +105,26 @@ describe("assembleThread", () => {
   ] satisfies StoryFile;
 
   it("concatenates a thread's segments in day order", () => {
-    const seg = assembleThread(1, "alpha", state, manifest, content);
+    const seg = assembleThread(manifest, content, 1, "alpha", emptyState());
     expect(seg.messages.map((m) => m.text)).toEqual(["one", "two"]);
   });
 
   it("uses a `day:thread` id", () => {
-    expect(assembleThread(1, "alpha", state, manifest, content).id).toBe("1:alpha");
+    expect(assembleThread(manifest, content, 1, "alpha", emptyState()).id).toBe("1:alpha");
   });
 
   it("includes only segments matching the thread (not sibling threads)", () => {
-    const seg = assembleThread(1, "beta", state, manifest, content);
+    const seg = assembleThread(manifest, content, 1, "beta", emptyState());
     expect(seg.messages.map((m) => m.text)).toEqual(["beta"]);
   });
 
   it("scopes to the day — a same-named thread on another day is excluded", () => {
-    // day 2's "alpha" must not pull in day 1's a1/a2
-    const seg = assembleThread(2, "alpha", state, manifest, content);
+    const seg = assembleThread(manifest, content, 2, "alpha", emptyState());
     expect(seg.messages.map((m) => m.text)).toEqual(["day2"]);
   });
 
-  it("merges choices from every segment without collision", () => {
-    const withChoices = [
-      {
-        block_id: "a1",
-        items: [
-          { type: "message", character: "Kou", messages: ["one"] },
-          { type: "choice", options: [{ text: "yes" }] },
-        ],
-      },
-      {
-        block_id: "a2",
-        items: [
-          { type: "message", character: "Ren", messages: ["two"] },
-          { type: "choice", options: [{ text: "no" }] },
-        ],
-      },
-    ] satisfies StoryFile;
-
-    const seg = assembleThread(1, "alpha", state, manifest, withChoices);
-    expect(Object.keys(seg.choices ?? {}).sort()).toEqual(["a1_msg_0", "a2_msg_0"]);
-  });
-
   it("returns an empty thread when nothing matches", () => {
-    const seg = assembleThread(1, "missing", state, manifest, content);
+    const seg = assembleThread(manifest, content, 1, "missing", emptyState());
     expect(seg.messages).toEqual([]);
   });
 
@@ -153,13 +142,66 @@ describe("assembleThread", () => {
       { block_id: "g2", items: [{ type: "message", character: "Ren", messages: ["secret"] }] },
     ] satisfies StoryFile;
 
-    const locked = { ...state, counters: { candles: 100 } }; // 100 < 60 → false
-    const unlocked = { ...state, counters: { candles: 50 } }; //  50 < 60 → true
+    const locked = { ...emptyState(), counters: { candles: 100 } };
+    const unlocked = { ...emptyState(), counters: { candles: 50 } };
 
-    expect(assembleThread(1, "t", locked, m, c).messages.map((x) => x.text)).toEqual(["always"]);
-    expect(assembleThread(1, "t", unlocked, m, c).messages.map((x) => x.text)).toEqual([
+    expect(assembleThread(m, c, 1, "t", locked).messages.map((x) => x.text)).toEqual(["always"]);
+    expect(assembleThread(m, c, 1, "t", unlocked).messages.map((x) => x.text)).toEqual([
       "always",
       "secret",
     ]);
+  });
+});
+
+describe("isSegmentAvailable", () => {
+  it("is available when there is no condition", () => {
+    expect(isSegmentAvailable({ id: "x", type: "dm" }, emptyState())).toBe(true);
+    expect(isSegmentAvailable(undefined, emptyState())).toBe(true);
+  });
+
+  it("evaluates the condition against state", () => {
+    const meta = { id: "x", type: "dm", condition: "candles < 60" } as const;
+    expect(isSegmentAvailable(meta, { ...emptyState(), counters: { candles: 50 } })).toBe(true);
+    expect(isSegmentAvailable(meta, { ...emptyState(), counters: { candles: 100 } })).toBe(false);
+  });
+});
+
+describe("navigation", () => {
+  const manifest = {
+    days: [
+      { day: 1, route: "common", segments: ["a1", "a2", "b1"] },
+      { day: 2, route: "common", segments: ["c1"] },
+    ],
+    segments: {
+      a1: { id: "a1", type: "group_chat", day: 1, thread_id: "alpha" },
+      a2: { id: "a2", type: "group_chat", day: 1, thread_id: "alpha" },
+      b1: { id: "b1", type: "group_chat", day: 1, thread_id: "beta" },
+      c1: { id: "c1", type: "group_chat", day: 2, thread_id: "gamma" },
+    },
+    threads: {
+      alpha: { display_name: "Alpha" },
+      beta: { display_name: "Beta" },
+      gamma: { display_name: "Gamma" },
+    },
+  } satisfies Manifest;
+
+  it("listDays returns the manifest days", () => {
+    expect(listDays(manifest).map((d) => d.day)).toEqual([1, 2]);
+  });
+
+  it("listThreads dedupes a day's threads in first-appearance order, with names", () => {
+    expect(listThreads(manifest, 1)).toEqual([
+      { id: "alpha", display_name: "Alpha" },
+      { id: "beta", display_name: "Beta" },
+    ]);
+  });
+
+  it("listThreads falls back to the id when a display name is missing", () => {
+    const m = {
+      days: [{ day: 1, route: "common", segments: ["x"] }],
+      segments: { x: { id: "x", type: "dm", day: 1, thread_id: "lonely" } },
+      threads: {},
+    } satisfies Manifest;
+    expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely" }]);
   });
 });

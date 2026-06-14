@@ -2,11 +2,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
 import { StoryFile } from "./schemas/block";
-import { createEngine, type EngineEvent, type SegmentInput } from "./engine";
+import { createEngine, type EngineEvent } from "./engine";
 import type { GameConfig } from "./schemas/game-config";
-import { DayConfig } from "./schemas/day";
+import { assembleThread, listDays, listThreads, type Manifest } from "./manifest/manifest";
 
 // ─── CONFIG ──────────────────────────────────────────────
+// NOTE: duplicated from @hyakuto/game on purpose — the CLI lives inside
+// @hyakuto/engine, and @hyakuto/game depends on @hyakuto/engine, so importing
+// it here would be a dependency cycle. A later step can load config from data.
 
 const MC_NAME = "You";
 
@@ -45,50 +48,12 @@ function substitute(text: string): string {
   return text.replace(/\{@?MC\}/g, MC_NAME);
 }
 
-// ─── CONVERT BLOCK TO SEGMENT ────────────────────────────
+// ─── INPUT ───────────────────────────────────────────────
 
-function convertBlockToSegment(block: { block_id: string; items: any[] }): SegmentInput {
-  const messages: SegmentInput["messages"] = [];
-  const choices: Record<
-    string,
-    { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }
-  > = {};
-  let msgIndex = 0;
-
-  for (const item of block.items) {
-    if (item.type === "message" && item.messages) {
-      for (const text of item.messages) {
-        const id = `${block.block_id}_msg_${msgIndex++}`;
-        messages.push({
-          id,
-          character: item.character,
-          text,
-          condition: item.condition,
-          effects: item.effects,
-        });
-      }
-    } else if (item.type === "choice" && item.options) {
-      if (messages.length > 0) {
-        const lastMsgId = messages[messages.length - 1]!.id;
-        choices[lastMsgId] = {
-          character: item.character,
-          options: item.options.map((opt: any) => ({
-            text: opt.text,
-            effects: opt.effects,
-          })),
-        };
-      }
-    }
-  }
-
-  return {
-    id: block.block_id,
-    messages,
-    choices: Object.keys(choices).length > 0 ? choices : undefined,
-  };
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+function question(q: string): Promise<string> {
+  return new Promise((resolve) => rl.question(q, resolve));
 }
-
-// ─── PROMPT FOR CHOICE ───────────────────────────────────
 
 async function promptChoice(options: { text: string }[]): Promise<number> {
   console.log("\n" + color.yellow("  ❯ Your turn:"));
@@ -96,14 +61,7 @@ async function promptChoice(options: { text: string }[]): Promise<number> {
     console.log(`    ${color.dim(`[${i + 1}]`)} ${substitute(opt.text)}`);
   });
 
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const answer: string = await new Promise((resolve) => {
-    rl.question("\n  > ", (a) => {
-      rl.close();
-      resolve(a);
-    });
-  });
-
+  const answer = await question("\n  > ");
   let idx = parseInt(answer.trim(), 10) - 1;
   if (isNaN(idx) || idx < 0 || idx >= options.length) {
     console.log(color.dim("  (invalid — defaulting to option 1)"));
@@ -113,32 +71,33 @@ async function promptChoice(options: { text: string }[]): Promise<number> {
   const chosen = options[idx]!;
   const paint = characterColor(MC_NAME);
   console.log(`\n  ${paint(color.bold(MC_NAME))}: ${substitute(chosen.text)}`);
-
   return idx;
 }
 
 // ─── MAIN ────────────────────────────────────────────────
 
 async function main() {
-  const filePath = process.argv[2];
-  if (!filePath) {
-    console.error("Usage: pnpm cli <story-file.json>");
+  const contentPath = process.argv[2];
+  const manifestPath = process.argv[3];
+  if (!contentPath || !manifestPath) {
+    console.error("Usage: pnpm cli <content.json> <manifest.json>");
     process.exit(1);
   }
 
-  const raw = fs.readFileSync(path.resolve(filePath), "utf-8");
-  const parsed = JSON.parse(raw);
-  const result = StoryFile.safeParse(parsed);
-
-  if (!result.success) {
-    console.error("Validation failed:");
-    console.error(result.error.format());
+  const parsed = StoryFile.safeParse(
+    JSON.parse(fs.readFileSync(path.resolve(contentPath), "utf-8")),
+  );
+  if (!parsed.success) {
+    console.error("Content validation failed:");
+    console.error(parsed.error.format());
     process.exit(1);
   }
+  const content = parsed.data;
+  const manifest = JSON.parse(
+    fs.readFileSync(path.resolve(manifestPath), "utf-8"),
+  ) as Manifest;
 
-  const blocks = result.data;
-  let pendingChoiceResolve: ((index: number) => void) | null = null;
-
+  // ONE engine for the whole playthrough — state persists across chats.
   const engine = createEngine({
     config: gameConfig,
     onEvent: (event: EngineEvent) => {
@@ -146,66 +105,93 @@ async function main() {
         case "typing_start":
           process.stdout.write(color.dim(`  [${event.character} is typing...]\r`));
           break;
-
         case "typing_end":
           process.stdout.write("                                      \r");
           break;
-
         case "message_shown": {
-          const paint = characterColor(event.message.character);
-          const sender = paint(color.bold(event.message.character));
-          console.log(`${sender}: ${substitute(event.message.text)}`);
+          const text = event.message.text;
+          if (text.startsWith("__status__:")) {
+            console.log("\n" + color.dim(`── ${substitute(text.slice(11))} ──`) + "\n");
+          } else if (text.startsWith("__sticker__:")) {
+            console.log(color.dim(`  [sticker: ${text.slice(12)}]`));
+          } else if (text.startsWith("__image__:")) {
+            console.log(color.dim(`  [image: ${text.slice(10)}]`));
+          } else {
+            const paint = characterColor(event.message.character);
+            console.log(`${paint(color.bold(event.message.character))}: ${substitute(text)}`);
+          }
           break;
         }
-
         case "choice_required":
-          promptChoice(event.options).then((index) => {
-            engine.chooseOption(index);
-          });
+          promptChoice(event.options).then((index) => engine.chooseOption(index));
           break;
-
         case "affinity_changed":
           console.log(color.dim(`  [${event.axis}: ${event.value}]`));
           break;
-
+        case "counter_changed":
+          console.log(color.dim(`  [${event.counterId}: ${event.value}]`));
+          break;
         case "flag_set":
           console.log(color.dim(`  [flag set: ${event.flag}]`));
           break;
-
         case "segment_complete":
-          console.log(color.dim(`\n══ segment complete: ${event.segmentId} ══`));
-          break;
-        case "segment_start": {
-          const b = blockById[event.segmentId];
-          if (b)
-            for (const item of b.items) {
-              if (item.type === "status")
-                console.log("\n" + color.dim(`── ${substitute(item.text)} ──`) + "\n");
-            }
-          break;
-        }
-        case "day_complete":
-          console.log(color.dim(`\n══ day complete ══`));
-          console.log(color.dim(`  state: ${JSON.stringify(engine.getState().axes)}`));
+          console.log(color.dim(`\n══ chat complete ══`));
           break;
       }
     },
   });
-
   engine.setPace(1.0);
 
-  // build a day from the blocks
-  const day: DayConfig = { day: 1, route: "cli", segments: blocks.map((b) => b.block_id) };
-  const segmentsById: Record<string, SegmentInput> = {};
-  const blockById: Record<string, (typeof blocks)[number]> = {};
-  for (const b of blocks) {
-    segmentsById[b.block_id] = convertBlockToSegment(b);
-    blockById[b.block_id] = b;
+  // ─── navigation: days → chats → play ───
+  let running = true;
+  while (running) {
+    const days = listDays(manifest);
+    console.log("\n" + color.bold("Days:"));
+    days.forEach((d, i) => console.log(`  ${color.dim(`[${i + 1}]`)} Day ${d.day}`));
+    const dayAnswer = (await question("\nPick a day (number), or q to quit: ")).trim();
+    if (dayAnswer === "q") break;
+    const day = days[parseInt(dayAnswer, 10) - 1];
+    if (!day) {
+      console.log(color.dim("  (invalid day)"));
+      continue;
+    }
+
+    let inDay = true;
+    while (inDay) {
+      const threads = listThreads(manifest, day.day);
+      if (threads.length === 0) {
+        console.log(color.dim("  (no chats on this day)"));
+        break;
+      }
+      console.log("\n" + color.bold(`Day ${day.day} — chats:`));
+      threads.forEach((t, i) =>
+        console.log(`  ${color.dim(`[${i + 1}]`)} ${t.display_name}`),
+      );
+      const chatAnswer = (await question("\nPick a chat (number), b for days, q to quit: ")).trim();
+      if (chatAnswer === "q") {
+        running = false;
+        break;
+      }
+      if (chatAnswer === "b") {
+        inDay = false;
+        break;
+      }
+      const thread = threads[parseInt(chatAnswer, 10) - 1];
+      if (!thread) {
+        console.log(color.dim("  (invalid chat)"));
+        continue;
+      }
+
+      // gate + assemble against the live, accumulated state, then play.
+      const segment = assembleThread(manifest, content, day.day, thread.id, engine.getState());
+      console.log("\n" + color.dim(`── ${thread.display_name} ──`));
+      engine.loadSegment(segment);
+      await engine.play();
+      console.log(color.dim(`  candles: ${engine.getState().counters.candles}`));
+    }
   }
 
-  engine.setPace(1.0);
-  engine.loadDay(day, segmentsById);
-  await engine.playDay();
+  rl.close();
 }
 
 main().catch((err) => {
