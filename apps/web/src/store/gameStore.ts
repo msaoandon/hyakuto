@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { createGameState, type SaveState, type GameState } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 
@@ -18,11 +19,20 @@ type GameStore = {
   reset: () => void;
 };
 
-export const useGameStore = create<GameStore>()((set) => ({
-  save: freshSave(),
-  commit: (save) => set({ save }),
-  reset: () => set({ save: freshSave() }),
-}));
+export const useGameStore = create<GameStore>()(
+  persist(
+    (set) => ({
+      save: freshSave(),
+      commit: (save) => set({ save }),
+      reset: () => set({ save: freshSave() }),
+    }),
+    {
+      name: "hyakuto-save",
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({ save: s.save }),
+    },
+  ),
+);
 
 export function saveToState(save: SaveState): GameState {
   return {
@@ -32,4 +42,3 @@ export function saveToState(save: SaveState): GameState {
     poolSelections: { ...save.poolSelections },
   };
 }
-

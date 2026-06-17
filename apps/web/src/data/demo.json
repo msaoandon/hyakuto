@@ -16,6 +16,12 @@
         "character": "Kou",
         "messages": [
           "demo_1"
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -10
+          }
         ]
       },
       {
@@ -25,7 +31,13 @@
       {
         "type": "image",
         "character": "Tatsumi",
-        "file": ""
+        "file": "kojiki1.jpg",
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -5
+          }
+        ]
       },
       {
         "type": "choice",
@@ -172,7 +184,13 @@
       {
         "type": "image",
         "character": "Haruki",
-        "file": ""
+        "file": "",
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -5
+          }
+        ]
       },
       {
         "type": "choice",
