@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Shippori_Mincho } from 'next/font/google';
+import { LanguageChooser } from '@/components/LanguageChooser';
+import { useT } from '@/i18n';
 
 const shipporiMincho = Shippori_Mincho({
   weight: '800',
@@ -11,13 +13,17 @@ const shipporiMincho = Shippori_Mincho({
 
 export default function Home() {
   const [progress, setProgress] = useState(1);
+  const t = useT();
 
   return (
     <main
       className="min-h-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500"
     >
+      <div className="fixed top-4 right-4">
+        <LanguageChooser />
+      </div>
       <span className={`${shipporiMincho.className} text-[72px]`}>百灯</span>
-      <Link href="/play" className="w-64 text-center py-2 bg-[#cec0c4] text-ink-black rounded-lg">Start</Link>
+      <Link href="/play" className="w-64 text-center py-2 bg-[#cec0c4] text-ink-black rounded-lg">{t('home.start')}</Link>
       {/* <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
       <input
         type="range"

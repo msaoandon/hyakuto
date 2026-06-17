@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { en } from "../en";
 import { uk } from "../uk";
-import { useT } from "../index";
+import { interpolate } from "../index";
 
 describe("i18n dictionaries", () => {
   it("uk has exactly the same keys as en (parity)", () => {
@@ -17,15 +17,9 @@ describe("i18n dictionaries", () => {
   });
 });
 
-describe("useT", () => {
-  it("returns the string for a key", () => {
-    const t = useT();
-    expect(t("play.chooseDay")).toBe("Choose a day");
-  });
-
-  it("interpolates named vars and leaves unknown placeholders intact", () => {
-    const t = useT();
-    expect(t("play.day", { n: 3 })).toBe("Day 3");
-    expect(t("play.day")).toBe("Day {n}");
+describe("interpolate", () => {
+  it("substitutes named vars, leaves unknown placeholders intact", () => {
+    expect(interpolate("Day {n}", { n: 3 })).toBe("Day 3");
+    expect(interpolate("Day {n}")).toBe("Day {n}");
   });
 });
