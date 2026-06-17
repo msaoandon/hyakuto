@@ -110,6 +110,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
           character: item.character,
           text: `__sticker__:${item.file}`,
           condition: item.condition,
+          effects: item.effects,
         });
         break;
       }
@@ -120,6 +121,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
           character: item.character,
           text: `__image__:${item.file}`,
           condition: item.condition,
+          effects: item.effects,
         });
         break;
       }

@@ -6,7 +6,7 @@ import { ChatFeed } from "@/components/chat/ChatFeed";
 import { ChoiceModal } from "@/components/chat/ChoiceModal";
 import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
-import { createGameState } from "@hyakuto/engine";
+import { useGameStore, saveToState } from "@/store/gameStore";
 import { ImageModal } from "@/components/chat/ImageModal";
 import { usePlay } from "../layout";
 import { assembleThread } from "@/data/loadDay";
@@ -32,9 +32,10 @@ export default function ChatPage() {
   const [threadEnded, setThreadEnded] = useState(false);
 
   // Assemble the selected thread into a single playable segment.
+  const save = useGameStore((s) => s.save); // reactive: re-assembles when a commit changes it
   const segment = useMemo(
-    () => assembleThread(selectedDay ?? 0, selectedChat ?? "", createGameState(gameConfig)),
-    [selectedDay, selectedChat],
+    () => assembleThread(selectedDay ?? 0, selectedChat ?? "", saveToState(save)),
+    [selectedDay, selectedChat, save],
   );
 
   useEffect(() => {

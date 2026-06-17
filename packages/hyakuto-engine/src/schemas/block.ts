@@ -20,6 +20,7 @@ const StickerItem = z.object({
   character: z.string(),
   file: z.string().min(1),
   condition: z.string().optional(),
+  effects: z.array(EffectDef).optional(),
 });
 
 const ImageItem = z.object({
@@ -27,6 +28,7 @@ const ImageItem = z.object({
   character: z.string(),
   file: z.string().min(1),
   condition: z.string().optional(),
+  effects: z.array(EffectDef).optional(),
 });
 
 const PoolItem = z.object({
