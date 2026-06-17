@@ -137,10 +137,26 @@ Story content is authored in a Google Sheet and exported to JSON via Apps Script
 | `value` | for cues | Target state for the channel (e.g. `ambient_01`, `on`) |
 | `text` | for messages/status | Message content. Supports `{MC}` and `{@MC}` placeholders, and inline `<b>`, `<i>`, `<u>` formatting tags. For `sticker`/`image` rows, the filename |
 | `weight` | for pools | Relative selection weight of a pool variant (default 1) |
-| `condition` | no | Boolean expression evaluated against game state (e.g. `story>4`, `candles<=40 AND flag:path_unlocked`) |
-| `effect_1` | no | Affinity axis change in format `axis+delta` or `axis-delta` (e.g. `story+1`, `trust-2`) |
-| `effect_2` | no | Additional effect |
-| `effect_3` | no | Additional effect |
+| `if_*` | no | A condition column. One predicate per cell (e.g. `candles<60`, `flag:path_unlocked`). All non-empty `if_` cells on a row are AND-ed together — see *Authoring grammar* below |
+| `do_affinity_1`, `do_affinity_2` | no | An affinity change, `axis±n` (e.g. `tatsumi+1`, `ren-1`). **Max 2 per row** — so one row can raise one character and lower another |
+| `do_counter` | no | A counter change, `counter±n` (e.g. `candles-1`) |
+
+> Deferred (not yet active): `do_flag` (needs a flags manifest), `if_time` / `if_gender` (context predicates), `do_ending` (Phase 5).
+
+### Authoring grammar: `if_` and `do_`
+
+Two column families drive conditions and effects, by **column-name prefix**:
+
+- **`if_*` decides whether the row plays.** Put one predicate per `if_` cell. The exporter wraps each in parentheses and joins all non-empty ones with `AND`. Add as many `if_` columns as you need (`if_1`, `if_2`, …) — they all AND together. For the rare `OR`, write it inside a single cell: `(story>3 OR trust>5)`.
+- **`do_*` fires when the row plays.** All `do_` cells on the row apply together, after it shows. A `do_` with no `if_` is simply unconditional.
+
+Because the `if_` gate is **row-scoped**, every `do_` on a row shares it. To make one effect conditional and another not, put them on **separate rows** — for choices that's automatic (each option is its own row).
+
+| block_id | character | type | text | if_1 | do_affinity_1 | do_affinity_2 | do_counter |
+|----------|-----------|------|------|------|---------------|---------------|------------|
+| d_7 | Ren | message | I'll help you | flag:route_x | tatsumi+1 | ren-1 | candles-1 |
+
+This row only plays if `flag:route_x` is set; when it does, it raises `tatsumi`, lowers `ren`, and burns a candle.
 
 ### Row Types
 
@@ -181,9 +197,9 @@ Example — music shifts and glitch turns on as a ghost story begins, then both 
 | demo_5 | | cue | glitch | off | |
 | demo_5 | | cue | music | ambient_calm | |
 
-### Condition Syntax
+### Condition Syntax (inside `if_` cells)
 
-Conditions are boolean expressions evaluated against the current game state.
+Each `if_` cell holds one boolean predicate, evaluated against the current game state. Multiple `if_` cells on a row AND together (see *Authoring grammar*).
 
 | Expression | Meaning |
 |-----------|---------|
@@ -191,22 +207,22 @@ Conditions are boolean expressions evaluated against the current game state.
 | `candles <= 40` | Counter comparison |
 | `flag:path_unlocked` | Flag is set |
 | `NOT flag:ko_confronted` | Flag is not set |
-| `story >= 5 AND candles <= 40` | Compound condition |
-| `story > 3 OR trust > 5` | Either condition true |
-| `(story > 3 OR trust > 5) AND candles <= 40` | Grouped with parentheses |
+| `story > 3 OR trust > 5` | Either side true — keep `OR`/grouping **inside one cell** |
+| `(story > 3 OR trust > 5)` | Parenthesised group within a cell |
 
-Spaces around operators are optional (`story>4` works the same as `story > 4`).
+Spaces around operators are optional (`story>4` works the same as `story > 4`). Don't write `AND` across a cell — use separate `if_` columns for that; `AND` is the cross-column behaviour.
 
-### Effect Format
+### Effect Format (inside `do_` cells)
 
-Effects in the sheet use the shorthand format `axis+delta` or `axis-delta`. The Apps Script exporter converts these to structured objects:
+`do_affinity_*` and `do_counter` cells use the shorthand `target+delta` / `target-delta`. The exporter compiles each to a structured effect:
 
-| Sheet value | Exported JSON |
-|-------------|---------------|
-| `story+1` | `{ "axis": "story", "delta": 1 }` |
-| `trust-2` | `{ "axis": "trust", "delta": -2 }` |
+| Column | Sheet value | Exported JSON |
+|--------|-------------|---------------|
+| `do_affinity_1` | `tatsumi+1` | `{ "axis": "tatsumi", "delta": 1 }` |
+| `do_affinity_2` | `ren-2` | `{ "axis": "ren", "delta": -2 }` |
+| `do_counter` | `candles-1` | `{ "axis": "candles", "delta": -1 }` |
 
-Axis names must match the `axes` array in the game config. The engine throws an error on unknown axes — this catches typos early.
+Targets must match the game config (`axes` for affinity, `counters` for counters). The engine throws on an unknown target — this catches typos early. A third `do_affinity_*` on one row is ignored with a warning.
  
 ### Manifest Tab (`_manifest`)
 
