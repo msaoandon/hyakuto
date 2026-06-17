@@ -78,6 +78,23 @@ describe("convertBlockToSegment", () => {
     expect(seg.messages[0]!.channel).toBe("music");
     expect(seg.messages[0]!.value).toBe("ambient_01");
   });
+
+  it("carries effects on image and sticker items (they play as messages)", () => {
+    const block: Block = {
+      block_id: "fx",
+      items: [
+        { type: "image", character: "Tatsumi", file: "kojiki1.jpg", effects: [{ axis: "candles", delta: -1 }] },
+        { type: "sticker", character: "Kou", file: "wink.png", effects: [{ axis: "trust", delta: 1 }] },
+      ],
+    };
+
+    const seg = convertBlockToSegment(block);
+
+    expect(seg.messages[0]!.text).toBe("__image__:kojiki1.jpg");
+    expect(seg.messages[0]!.effects).toEqual([{ axis: "candles", delta: -1 }]);
+    expect(seg.messages[1]!.text).toBe("__sticker__:wink.png");
+    expect(seg.messages[1]!.effects).toEqual([{ axis: "trust", delta: 1 }]);
+  });
 });
 
 describe("assembleThread", () => {

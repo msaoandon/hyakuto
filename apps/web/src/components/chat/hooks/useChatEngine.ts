@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
+import { useGameStore } from "@/store/gameStore";
 import { messageToItem } from "../helpers/eventToItem";
 import { substituteMC } from "../helpers/mc";
 import type { VisibleItem, PendingChoice, EngineSnapshot } from "../types";
@@ -72,6 +73,7 @@ export function useChatEngine(
 
     const engine = createEngine({
       config: gameConfig,
+      savedState: useGameStore.getState().save,
       onEvent: (event: EngineEvent) => {
         if (cancelled) return;
         switch (event.type) {
@@ -107,6 +109,7 @@ export function useChatEngine(
             onEngineEvent?.(`flag: ${event.flag}`);
             break;
           case "segment_complete":
+            useGameStore.getState().commit(engine.serialize());
             onEngineEvent?.(`segment complete: ${event.segmentId}`);
             onThreadEnded?.();
             break;

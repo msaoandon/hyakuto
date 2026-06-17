@@ -9,35 +9,41 @@
       },
       {
         "type": "status",
-        "text": "Kou joined the room."
-      },
-      {
-        "type": "status",
-        "text": "Haruki joined the room."
+        "text": "{MC} joined the room."
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "Hi!!"
+          "demo_1"
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -10
+          }
         ]
       },
       {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "Anyone alive?"
-        ]
+        "type": "typing",
+        "character": "Haruki"
       },
       {
-        "type": "status",
-        "text": "{MC} joined the room."
+        "type": "image",
+        "character": "Tatsumi",
+        "file": "kojiki1.jpg",
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -5
+          }
+        ]
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "wazzup"
+            "text": "helo."
           },
           {
             "text": "Hi!!"
@@ -51,53 +57,50 @@
     "items": [
       {
         "type": "cue",
-        "channel": "glitch",
-        "value": "glitch_01"
+        "channel": "music",
+        "value": "ambient_01"
+      },
+      {
+        "type": "status",
+        "text": "{MC} joined the room."
       },
       {
         "type": "message",
-        "character": "Tatsumi",
+        "character": "Suzune",
         "messages": [
-          "What was that?"
+          "demo_2"
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -10
+          }
         ]
       },
       {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "\"That\" - what?"
-        ]
+        "type": "typing",
+        "character": "Kou"
+      },
+      {
+        "type": "image",
+        "character": "Ren",
+        "file": ""
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "common, everyone saw"
+            "text": "helo.",
+            "effects": [
+              {
+                "axis": "candles",
+                "delta": -5
+              }
+            ]
           },
           {
-            "text": "yeah, what?"
+            "text": "Hi!!"
           }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "That was scary"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "writer",
-        "messages": [
-          "just a  test"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "Ok."
         ]
       }
     ]
@@ -106,15 +109,50 @@
     "block_id": "demo_3",
     "items": [
       {
+        "type": "cue",
+        "channel": "music",
+        "value": "ambient_01"
+      },
+      {
+        "type": "status",
+        "text": "{MC} joined the room."
+      },
+      {
         "type": "message",
-        "character": "Kou",
+        "character": "Ren",
         "messages": [
-          "Demo 3!"
+          "demo_3"
         ],
         "effects": [
           {
             "axis": "candles",
-            "delta": -50
+            "delta": -10
+          }
+        ]
+      },
+      {
+        "type": "typing",
+        "character": "Tatsumi"
+      },
+      {
+        "type": "image",
+        "character": "Kou",
+        "file": ""
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "helo.",
+            "effects": [
+              {
+                "axis": "candles",
+                "delta": -5
+              }
+            ]
+          },
+          {
+            "text": "Hi!!"
           }
         ]
       }
@@ -124,10 +162,45 @@
     "block_id": "demo_4",
     "items": [
       {
+        "type": "cue",
+        "channel": "music",
+        "value": "ambient_01"
+      },
+      {
+        "type": "status",
+        "text": "{MC} joined the room."
+      },
+      {
         "type": "message",
         "character": "Tatsumi",
         "messages": [
-          "Demo 4."
+          "demo_4"
+        ]
+      },
+      {
+        "type": "typing",
+        "character": "Ren"
+      },
+      {
+        "type": "image",
+        "character": "Haruki",
+        "file": "",
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -5
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "helo."
+          },
+          {
+            "text": "Hi!!"
+          }
         ]
       }
     ]
@@ -141,166 +214,34 @@
         "value": "ambient_01"
       },
       {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "<b>attention!</b>"
-        ]
+        "type": "status",
+        "text": "{MC} joined the room."
       },
       {
         "type": "message",
-        "character": "Kou",
+        "character": "dev",
         "messages": [
-          "book of the week - advanced level"
+          "demo_5"
         ]
       },
       {
-        "type": "choice",
-        "options": [
-          {
-            "text": "ok, tell us more about it:)"
-          },
-          {
-            "text": "this better not be Kojiki part 2"
-          },
-          {
-            "text": "not this again..."
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "go on)))"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "It describes the <b>WORST PARTY</b> in recorded history"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "👀"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "Because of it we have day and night"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "<i>like literally</i>"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "oh god..."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "if you want to read the <b>same gods</b> telling SIX-SEVEN different <b>versions of their own story</b>"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "I'd recommend diving into <b>Nihon Shoki</b> next."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "<i>You should NOT promote books...</i>"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "haha"
-          },
-          {
-            "text": "still sounds intriguing))"
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "xD"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "you're welcome ;)"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "Older title is <b>\"Nihongi\"</b>."
-        ]
+        "type": "typing",
+        "character": "Ren"
       },
       {
         "type": "image",
-        "character": "Tatsumi",
-        "file": "nihongi.jpg"
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "By the way, you can find the infamous <b>Ryōmen Sukuna</b> there too."
-        ]
+        "character": "Suzune",
+        "file": ""
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "Sukuna?? as in JJK??"
+            "text": "helo."
           },
           {
-            "text": "the cursed king? xD"
-          },
-          {
-            "text": "I'm all ears!"
+            "text": "Hi!!"
           }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "Now we're talking lol"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "I mean, young women in my bookshop always ask about him..."
         ]
       }
     ]
