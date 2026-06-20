@@ -44,7 +44,10 @@ export {
   buildDay,
   listDays,
   listThreads,
+  stripEffects,
   type SegmentMeta,
   type Manifest,
   type LoadedDay,
 } from "./manifest/manifest";
+
+

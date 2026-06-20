@@ -17,7 +17,8 @@ function freshSave(): SaveState {
 type GameStore = {
   save: SaveState;
   locale: Locale;
-  commit: (save: SaveState) => void;
+  completed: string[];
+  completeThread: (key: string, save: SaveState) => void;
   reset: () => void;
   setLocale: (locale: Locale) => void;
 };
@@ -27,7 +28,9 @@ export const useGameStore = create<GameStore>()(
     (set) => ({
       save: freshSave(),
       locale: DEFAULT_LOCALE,
-      commit: (save) => set({ save }),
+      completed: [],
+      completeThread: (key, save) =>
+        set((s) => (s.completed.includes(key) ? {} : { save, completed: [...s.completed, key] })),
       reset: () => set({ save: freshSave() }),
       setLocale: (locale) => set({ locale }),
     }),

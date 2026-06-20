@@ -242,3 +242,19 @@ export function assembleThread(
     choices: Object.assign({}, ...segs.map((s) => s.choices ?? {})),
   };
 }
+
+/** Return a copy of a segment with all effects/flags removed — for read-only replay. */
+export function stripEffects(segment: SegmentInput): SegmentInput {
+  return {
+    ...segment,
+    messages: segment.messages.map(({ effects, set_flag, ...rest }) => rest),
+    choices: segment.choices
+      ? Object.fromEntries(
+          Object.entries(segment.choices).map(([id, c]) => [
+            id,
+            { ...c, options: c.options.map(({ effects, ...o }) => o) },
+          ]),
+        )
+      : undefined,
+  };
+}

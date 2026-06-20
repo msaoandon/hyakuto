@@ -9,7 +9,7 @@ import { gameConfig } from "@hyakuto/game";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { ImageModal } from "@/components/chat/ImageModal";
 import { usePlay } from "../layout";
-import { assembleThread } from "@/data/loadDay";
+import { assembleThread, stripEffects } from "@/data/loadDay";
 import { useT } from "@/i18n";
 import type { PendingChoice } from "@/components/chat/types";
 
@@ -32,11 +32,14 @@ export default function ChatPage() {
   const [threadEnded, setThreadEnded] = useState(false);
 
   // Assemble the selected thread into a single playable segment.
-  const save = useGameStore((s) => s.save); // reactive: re-assembles when a commit changes it
-  const segment = useMemo(
-    () => assembleThread(selectedDay ?? 0, selectedChat ?? "", saveToState(save)),
-    [selectedDay, selectedChat, save],
-  );
+  const save = useGameStore((s) => s.save);
+  const completed = useGameStore((s) => s.completed);
+
+  const segment = useMemo(() => {
+    const seg = assembleThread(selectedDay ?? 0, selectedChat ?? "", saveToState(save));
+    const isReplay = completed.includes(`${selectedDay}:${selectedChat}`);
+    return isReplay ? stripEffects(seg) : seg;
+  }, [selectedDay, selectedChat, save, completed]);
 
   useEffect(() => {
     if (selectedDay === null || !selectedChat) router.replace("/play");

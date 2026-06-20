@@ -109,7 +109,7 @@ export function useChatEngine(
             onEngineEvent?.(`flag: ${event.flag}`);
             break;
           case "segment_complete":
-            useGameStore.getState().commit(engine.serialize());
+            useGameStore.getState().completeThread(event.segmentId, engine.serialize());
             onEngineEvent?.(`segment complete: ${event.segmentId}`);
             onThreadEnded?.();
             break;
