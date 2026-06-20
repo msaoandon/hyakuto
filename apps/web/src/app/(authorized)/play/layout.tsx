@@ -1,55 +1,29 @@
-"use client";
-import { createContext, useContext, useState } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import manifestData from "@/data/manifest.json";
-import type { Manifest } from "@/data/loadDay";
-import { useT } from "@/i18n";
+'use client';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import manifestData from '@/data/manifest.json';
+import type { Manifest } from '@/data/loadDay';
+import { useT } from '@/i18n';
 
-type PlayState = {
-  selectedDay: number | null;
-  selectedChat: string | null;
-  setSelectedDay: (d: number | null) => void;
-  setSelectedChat: (id: string | null) => void;
-};
-
-const PlayContext = createContext<PlayState | null>(null);
-
-export function usePlay() {
-  const ctx = useContext(PlayContext);
-  if (!ctx) throw new Error("usePlay must be used inside /play");
-  return ctx;
-}
+const manifest = manifestData as Manifest;
 
 export default function PlayLayout({ children }: { children: React.ReactNode }) {
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
-  const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const pathname = usePathname();
-  const manifest = manifestData as Manifest;
   const t = useT();
+  const { day, thread } = useParams<{ day?: string; thread?: string }>();
 
-  // back target + title per step (hierarchical, not always "/")
-  const header =
-    pathname === "/play"
-      ? { back: "/", title: t("play.chooseDay") }
-      : pathname === "/play/day"
-        ? { back: "/play", title: t("play.day", { n: selectedDay ?? "" }) }
-        : pathname === "/play/chat"
-          ? {
-              back: "/play/day",
-              title: manifest.threads[selectedChat ?? ""]?.display_name ?? t("play.chat"),
-            }
-          : null;
+  const header = thread
+    ? { back: `/play/day/${day}`, title: manifest.threads[thread]?.display_name ?? t('play.chat') }
+    : day
+      ? { back: '/play', title: t('play.day', { n: Number(day) }) }
+      : { back: '/', title: t('play.chooseDay') };
 
   return (
-    <PlayContext.Provider value={{ selectedDay, selectedChat, setSelectedDay, setSelectedChat }}>
-      {header && (
-        <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)] bg-harcoal-blue flex items-center gap-3">
-          <Link href={header.back}>←</Link>
-          <span>{header.title}</span>
-        </header>
-      )}
+    <>
+      <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)] bg-harcoal-blue flex items-center gap-3">
+        <Link href={header.back}>←</Link>
+        <span>{header.title}</span>
+      </header>
       {children}
-    </PlayContext.Provider>
+    </>
   );
 }

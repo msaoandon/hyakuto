@@ -8,15 +8,14 @@ import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { ImageModal } from "@/components/chat/ImageModal";
-import { usePlay } from "../layout";
 import { assembleThread, stripEffects } from "@/data/loadDay";
 import { useT } from "@/i18n";
 import type { PendingChoice } from "@/components/chat/types";
 
-export default function ChatPage() {
+export function ChatView({ day, thread }: { day: string; thread: string }) {
   const router = useRouter();
   const t = useT();
-  const { selectedDay, selectedChat } = usePlay();
+  const dayNum = Number(day);
 
   const [openImage, setOpenImage] = useState<string | null>(null);
   const [candleProgress, setCandleProgress] = useState(1);
@@ -36,14 +35,10 @@ export default function ChatPage() {
   const completed = useGameStore((s) => s.completed);
 
   const segment = useMemo(() => {
-    const seg = assembleThread(selectedDay ?? 0, selectedChat ?? "", saveToState(save));
-    const isReplay = completed.includes(`${selectedDay}:${selectedChat}`);
+    const seg = assembleThread(dayNum, thread, saveToState(save));
+    const isReplay = completed.includes(`${dayNum}:${thread}`);
     return isReplay ? stripEffects(seg) : seg;
-  }, [selectedDay, selectedChat, save, completed]);
-
-  useEffect(() => {
-    if (selectedDay === null || !selectedChat) router.replace("/play");
-  }, [selectedDay, selectedChat, router]);
+  }, [dayNum, thread, save, completed]);
 
   useEffect(() => {
     document.body.style.setProperty("--candle-progress", String(candleProgress));
@@ -61,14 +56,12 @@ export default function ChatPage() {
     setChosenText(null);
   }, []);
 
-  if (selectedDay === null || !selectedChat) return null;
-
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
   const showExit = threadEnded && !pendingChoice;
   const replyEnabled = pendingChoice !== null && chosenText === null;
 
   const handleExit = () => {
-    router.push("/play/day");
+    router.push(`/play/day/${dayNum}`);
   };
 
   const handleStateChange = (state: {
