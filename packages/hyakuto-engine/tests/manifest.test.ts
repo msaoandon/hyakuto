@@ -5,10 +5,12 @@ import {
   isSegmentAvailable,
   listDays,
   listThreads,
+  stripEffects,
   type Manifest,
 } from "../src/manifest/manifest";
 import type { Block, StoryFile } from "../src/schemas/block";
 import type { GameState } from "../src/state/game-state";
+import type { SegmentInput } from "../src/engine";
 
 const emptyState = (): GameState => ({
   axes: {},
@@ -220,5 +222,46 @@ describe("navigation", () => {
       threads: {},
     } satisfies Manifest;
     expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely" }]);
+  });
+});
+
+describe("stripEffects", () => {
+  it("removes effects/set_flag from messages and effects from choice options", () => {
+    const seg: SegmentInput = {
+      id: "1:t",
+      messages: [
+        {
+          id: "m0",
+          character: "Ren",
+          text: "hi",
+          effects: [{ axis: "candles", delta: -1 }],
+          set_flag: "met_ren",
+        },
+        { id: "m1", character: "Kou", text: "yo" },
+      ],
+      choices: {
+        m0: {
+          options: [{ text: "a", effects: [{ axis: "trust", delta: 1 }] }, { text: "b" }],
+        },
+      },
+    };
+
+    const stripped = stripEffects(seg);
+
+    expect(stripped.messages[0]!.effects).toBeUndefined();
+    expect(stripped.messages[0]!.set_flag).toBeUndefined();
+    expect(stripped.messages[0]!.text).toBe("hi"); // content preserved
+    expect(stripped.choices!.m0!.options[0]!.effects).toBeUndefined();
+    expect(stripped.choices!.m0!.options[0]!.text).toBe("a");
+    expect(stripped.id).toBe("1:t"); // identity preserved
+  });
+
+  it("leaves an effect-free segment unchanged", () => {
+    const seg: SegmentInput = {
+      id: "1:t",
+      messages: [{ id: "m", character: "Kou", text: "hello" }],
+    };
+
+    expect(stripEffects(seg).messages).toEqual([{ id: "m", character: "Kou", text: "hello" }]);
   });
 });

@@ -32,7 +32,7 @@ export const useGameStore = create<GameStore>()(
       completed: [],
       completeThread: (key, save) =>
         set((s) => (s.completed.includes(key) ? {} : { save, completed: [...s.completed, key] })),
-      reset: () => set({ save: freshSave() }),
+      reset: () => set({ save: freshSave(), completed: [] }),
       setLocale: (locale) => set({ locale }),
     }),
     {
