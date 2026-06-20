@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { createGameState, type SaveState, type GameState } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE } from "@/i18n/locales";
+import { idbStorage } from "./idbStorage";
 
 function freshSave(): SaveState {
   const s = createGameState(gameConfig);
@@ -36,8 +37,9 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ save: s.save, locale: s.locale }),
+      storage: createJSONStorage(() => idbStorage),
+      partialize: (s) => ({ save: s.save, locale: s.locale, completed: s.completed }),
+      skipHydration: true,
     },
   ),
 );
