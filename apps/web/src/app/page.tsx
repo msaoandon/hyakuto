@@ -21,7 +21,7 @@ export default function Home() {
       className="min-h-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500"
     >
       <LanternBackground />
-      <div className="fixed top-4 right-4">
+      <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)]">
         <LanguageChooser />
       </div>
       <span className={`${shipporiMincho.className} text-[72px]`}>百灯</span>
