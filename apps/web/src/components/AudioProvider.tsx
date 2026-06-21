@@ -70,13 +70,20 @@ export function AudioProvider() {
 
   // crossfade from the current playlist to a new one
   function switchTo(urls: string[], key: string) {
+    // unknown/empty theme (e.g. a mis-authored cue) → keep current music, don't go silent
+    if (urls.length === 0) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[audio] theme resolved to no tracks — keeping current music");
+      }
+      return;
+    }
     const old = playlist.current.howl;
     if (old) {
       old.fade(old.volume(), 0, CROSSFADE_MS);
       setTimeout(() => old.unload(), CROSSFADE_MS);
     }
     playlist.current = { urls, idx: 0, howl: null, key };
-    if (urls.length) playTrack(0, true);
+    playTrack(0, true);
   }
 
   function playTrack(idx: number, fadeIn: boolean) {

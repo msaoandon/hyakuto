@@ -3,11 +3,6 @@
     "block_id": "demo_1",
     "items": [
       {
-        "type": "cue",
-        "channel": "music",
-        "value": "ambient_01"
-      },
-      {
         "type": "status",
         "text": "{MC} joined the room."
       },
@@ -55,11 +50,6 @@
   {
     "block_id": "demo_2",
     "items": [
-      {
-        "type": "cue",
-        "channel": "music",
-        "value": "ambient_01"
-      },
       {
         "type": "status",
         "text": "{MC} joined the room."
@@ -109,11 +99,6 @@
     "block_id": "demo_3",
     "items": [
       {
-        "type": "cue",
-        "channel": "music",
-        "value": "ambient_01"
-      },
-      {
         "type": "status",
         "text": "{MC} joined the room."
       },
@@ -162,11 +147,6 @@
     "block_id": "demo_4",
     "items": [
       {
-        "type": "cue",
-        "channel": "music",
-        "value": "ambient_01"
-      },
-      {
         "type": "status",
         "text": "{MC} joined the room."
       },
@@ -211,7 +191,7 @@
       {
         "type": "cue",
         "channel": "music",
-        "value": "ambient_01"
+        "value": "suspense"
       },
       {
         "type": "status",
