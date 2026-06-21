@@ -40,7 +40,10 @@ export function AudioProvider() {
   // usePathname() always gives the full URL. Chat route: /play/day/<day>/<thread>
   const pathname = usePathname();
   const thread = pathname.match(/^\/play\/day\/[^/]+\/([^/]+)\/?$/)?.[1] ?? null;
-  const musicCue = useGameStore((s) => s.musicCue);
+  // select only the music channel — a glitch cue changing cues.glitch won't re-render here.
+  // "base" is the revert token: it means "back to the chat's base playlist", i.e. no override.
+  const rawCue = useGameStore((s) => s.cues.music);
+  const musicCue = rawCue && rawCue !== "base" ? rawCue : null;
 
   const playlist = useRef<{ urls: string[]; idx: number; howl: Howl | null; key: string }>({
     urls: [],

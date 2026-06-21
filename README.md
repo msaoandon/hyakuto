@@ -178,24 +178,24 @@ This row only plays if `flag:route_x` is set; when it does, it raises `tatsumi`,
 
 ### Cue Channels
 
-Cues set the state of a named channel, and that state holds until another cue changes it — there are no start/end pairs. To stop an effect, set the channel to its "off" value. Channels persist across chats, so set music explicitly wherever it should change.
+Cues set the state of a named **channel**, and that state holds until another cue changes it — there are no start/end pairs. Channels are **independent**: `music` and `glitch` can both be active at once, and turning one off leaves the other untouched. To stop an effect, set its channel to that channel's off value (each has its own).
 
-| channel | example values | effect |
-|---------|---------------|--------|
-| `music` | `ambient_01`, `story_tense` | switches the background track |
-| `glitch` | `on`, `off` | toggles the glitch effect |
+| channel | turn on | turn off |
+|---------|---------|----------|
+| `music` | a theme name (e.g. `suspense`, `chat_night`) | `base` — revert to the chat's OST/default playlist (not silence) |
+| `glitch` | `on` | `off` |
 
-A cue can carry a `condition` like any other row — e.g. a glitch cue gated on `sanity<5` only fires when the player is rattled.
+A `music` value is a **theme** (a folder under `public/music/`); see the *Threads Tab* OST notes. A cue can carry a `condition` like any other row — e.g. a glitch cue gated on `sanity<5` only fires when the player is rattled.
 
-Example — music shifts and glitch turns on as a ghost story begins, then both settle when discussion resumes:
+Example — suspense music + glitch turn on as a ghost story begins, then **both turn off** when discussion resumes (note each channel has its own off row, and they don't cancel each other):
 
 | block_id | character | type | channel | value | text |
 |----------|-----------|------|---------|-------|------|
-| demo_5 | | cue | music | story_tense | |
+| demo_5 | | cue | music | suspense | |
 | demo_5 | | cue | glitch | on | |
 | demo_5 | Kou | message | | | the well was never empty |
 | demo_5 | | cue | glitch | off | |
-| demo_5 | | cue | music | ambient_calm | |
+| demo_5 | | cue | music | base | |
 
 ### Condition Syntax (inside `if_` cells)
 

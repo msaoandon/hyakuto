@@ -19,12 +19,13 @@ type GameStore = {
   save: SaveState;
   locale: Locale;
   completed: string[];
-  /** Active music-cue value during chat playback (transient — not persisted). */
-  musicCue: string | null;
+  /** Active cue value per channel during chat playback (transient — not persisted). */
+  cues: Record<string, string>;
   completeThread: (key: string, save: SaveState) => void;
   reset: () => void;
   setLocale: (locale: Locale) => void;
-  setMusicCue: (cue: string | null) => void;
+  setCue: (channel: string, value: string) => void;
+  clearCues: () => void;
 };
 
 export const useGameStore = create<GameStore>()(
@@ -33,12 +34,13 @@ export const useGameStore = create<GameStore>()(
       save: freshSave(),
       locale: DEFAULT_LOCALE,
       completed: [],
-      musicCue: null,
+      cues: {},
       completeThread: (key, save) =>
         set((s) => (s.completed.includes(key) ? {} : { save, completed: [...s.completed, key] })),
       reset: () => set({ save: freshSave(), completed: [] }),
       setLocale: (locale) => set({ locale }),
-      setMusicCue: (musicCue) => set({ musicCue }),
+      setCue: (channel, value) => set((s) => ({ cues: { ...s.cues, [channel]: value } })),
+      clearCues: () => set({ cues: {} }),
     }),
     {
       name: "hyakuto-save",

@@ -70,7 +70,7 @@ export function useChatEngine(
   // Start playback — plays the assembled thread as one segment.
   useEffect(() => {
     let cancelled = false;
-    useGameStore.getState().setMusicCue(null); // fresh thread → no cue until one fires
+    useGameStore.getState().clearCues(); // fresh thread → no active cues on any channel
 
     const engine = createEngine({
       config: gameConfig,
@@ -79,7 +79,7 @@ export function useChatEngine(
         if (cancelled) return;
         switch (event.type) {
           case "cue":
-            if (event.channel === "music") useGameStore.getState().setMusicCue(event.value);
+            useGameStore.getState().setCue(event.channel, event.value);
             onEngineEvent?.(`cue: ${event.channel} = ${event.value}`);
             break;
           case "typing_start":
