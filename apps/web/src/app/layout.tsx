@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import { HydrationGate } from "@/components/HydrationGate";
+import { AudioProvider } from "@/components/AudioProvider";
 
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <AudioProvider />
         <HydrationGate>
           <AppShell>
             <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
