@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Shippori_Mincho } from 'next/font/google';
 import { LanguageChooser } from '@/components/LanguageChooser';
+import { LanternBackground } from '@/components/LanternBackground';
 import { useT } from '@/i18n';
 
 const shipporiMincho = Shippori_Mincho({
@@ -19,6 +20,7 @@ export default function Home() {
     <main
       className="min-h-screen flex flex-col items-center justify-center gap-8 transition-colors duration-500"
     >
+      <LanternBackground />
       <div className="fixed top-4 right-4">
         <LanguageChooser />
       </div>

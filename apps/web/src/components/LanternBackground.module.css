@@ -1,0 +1,147 @@
+/* Decorative main-screen backdrop: hanging lanterns swaying in the upper half,
+   mist drifting across the lower half. Pure CSS — placeholder art until real
+   assets land. Animates only transform/opacity/filter (GPU-composited, cheap on
+   mobile) and goes still under prefers-reduced-motion. */
+
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ---- Lanterns (upper half) ---- */
+
+.lantern {
+  position: absolute;
+  transform-origin: top center; /* swing from where the string attaches */
+  animation: sway var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+/* the hanging string, rising from the lantern toward the top of the screen */
+.lantern::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: var(--string);
+  background: linear-gradient(to top, rgba(140, 190, 255, 0.5), transparent);
+}
+
+.body {
+  width: var(--w);
+  height: var(--h);
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(190, 222, 255, 0.95),
+    rgba(70, 120, 175, 0.55) 65%,
+    rgba(44, 65, 86, 0.35) 100%
+  );
+  box-shadow:
+    0 0 28px 6px rgba(95, 165, 255, 0.45),
+    inset 0 0 12px rgba(220, 238, 255, 0.6);
+  animation: glow var(--glow-dur) ease-in-out var(--delay) infinite alternate;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.rect {
+  /* tall paper-lantern silhouette with softened corners */
+  border-radius: 45% / 32%;
+}
+
+/* ---- Mist (lower half) ---- */
+
+.mist {
+  position: absolute;
+  left: -25%;
+  width: 150%;
+  height: 45%;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse 40% 60% at 30% 60%,
+    rgba(95, 150, 225, 0.2),
+    transparent 70%
+  ),
+    radial-gradient(ellipse 50% 55% at 70% 50%, rgba(70, 130, 215, 0.16), transparent 70%);
+  filter: blur(22px);
+  animation: drift var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+/* a second, lower mist band that crawls the opposite way and rises slightly,
+   so the two layers shear past each other instead of moving in unison */
+.mistAlt {
+  position: absolute;
+  left: -25%;
+  width: 150%;
+  height: 32%;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse 55% 50% at 45% 70%,
+    rgba(220, 170, 215, 0.18),
+    transparent 70%
+  ),
+    radial-gradient(ellipse 35% 45% at 80% 60%, rgba(200, 165, 225, 0.14), transparent 70%);
+  filter: blur(28px);
+  animation: driftAlt var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes sway {
+  from {
+    transform: rotate(calc(var(--sway) * -1deg));
+  }
+  to {
+    transform: rotate(calc(var(--sway) * 1deg));
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow:
+      0 0 22px 4px rgba(95, 165, 255, 0.35),
+      inset 0 0 10px rgba(220, 238, 255, 0.5);
+    filter: brightness(0.92);
+  }
+  to {
+    box-shadow:
+      0 0 40px 12px rgba(110, 180, 255, 0.6),
+      inset 0 0 16px rgba(230, 244, 255, 0.75);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-6%);
+    opacity: 0.55;
+  }
+  to {
+    transform: translateX(6%);
+    opacity: 0.9;
+  }
+}
+
+/* opposite horizontal direction + a gentle upward creep */
+@keyframes driftAlt {
+  from {
+    transform: translate(7%, 4%);
+    opacity: 0.4;
+  }
+  to {
+    transform: translate(-7%, -3%);
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lantern,
+  .body,
+  .mist,
+  .mistAlt {
+    animation: none;
+  }
+}
