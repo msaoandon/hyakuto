@@ -58,20 +58,24 @@
   },
   "threads": {
     "day1_01": {
-      "display_name": "Arriving"
+      "display_name": "Arriving",
+      "ost": "chat_day"
     },
     "day1_02": {
-      "display_name": "Getting to know"
+      "display_name": "Getting to know",
+      "ost": "chat_night"
     },
     "day2_01": {
       "display_name": "Photo from bar",
-      "condition": "candles<100"
+      "ost": "chat_day"
     },
     "day2_02": {
-      "display_name": "Whatever"
+      "display_name": "Whatever",
+      "ost": "chat_day"
     },
     "day2_03": {
-      "display_name": "Book recommendation"
+      "display_name": "Book recommendation",
+      "ost": "chat_night"
     }
   }
 }

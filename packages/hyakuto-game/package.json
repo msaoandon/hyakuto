@@ -4,7 +4,13 @@
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@hyakuto/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "4.1.5"
   }
 }

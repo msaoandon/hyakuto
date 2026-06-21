@@ -258,6 +258,19 @@ The exporter turns this tab into:
 
 The engine consumes these to play a day in order, skipping any segment whose `condition` fails — `engine.loadDay(day, segments)` then `engine.playDay()`.
 
+### Threads Tab (`_threads`)
+
+Per-thread display and presentation metadata — one row per `thread_id`. A thread groups segments (across days for DMs), so its name and music live here once rather than on every segment row.
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `thread_id` | yes | Joins to the `thread_id` used in `_manifest` |
+| `display_name` | yes | Chat name shown in the day's chat list |
+| `condition` | no | Gate for the whole thread (same syntax as message conditions) |
+| `ost` | no | Music **theme** for this chat — a theme name (e.g. `chat_night`). Blank → the default chat theme. Use a **dropdown** (Data → Data validation → list of theme names) for consistency |
+
+Exported into `threads: { [thread_id]: { display_name, condition?, ost? } }`. A theme is a set of folders under `public/music/`; the app's AudioProvider pools their tracks into one playlist (one file loops, many rotate). A blank `ost` falls back to the default chat theme.
+
 ### Apps Script Export
 
 The exporter produces **two files** per spreadsheet:

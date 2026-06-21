@@ -1,0 +1,20 @@
+{
+  "app_default": [
+    "app_theme_default.mp3"
+  ],
+  "app_night": [
+    "app_theme_night.mp3"
+  ],
+  "chat_day": [
+    "chat_theme_comedic.mp3"
+  ],
+  "chat_default": [
+    "chat_theme_default.mp3"
+  ],
+  "chat_night": [
+    "chat_theme_night.mp3"
+  ],
+  "cues": [
+    "chat_theme_suspense.mp3"
+  ]
+}
