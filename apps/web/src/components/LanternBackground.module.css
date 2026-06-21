@@ -47,6 +47,10 @@
 
 .circle {
   border-radius: 50%;
+  background-image: url("/assets/lantern_round.webp");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .rect {
