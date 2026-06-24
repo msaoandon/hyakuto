@@ -27,9 +27,11 @@ function tracksForFolders(folders: string[]): string[] {
   );
 }
 
-// One playing playlist: an <audio> element (loads under Capacitor's capacitor://
-// scheme, where Web Audio's XHR fetch fails) routed through a GainNode so we can
-// fade it — iOS ignores volume changes on the element itself, but not on the node.
+// One playing playlist: an <audio> element routed through a GainNode. iOS ignores
+// volume changes on the element itself but honours them on the node, so we fade
+// via the gain. (The element also streams and loops without buffering the whole
+// track in memory — Web Audio buffer loading works fine here too, this is just
+// simpler.) The crossfade only works because the GainNode does, not the element.
 type Deck = { audio: HTMLAudioElement; gain: GainNode; urls: string[]; idx: number; key: string };
 
 /**
@@ -38,6 +40,11 @@ type Deck = { audio: HTMLAudioElement; gain: GainNode; urls: string[]; idx: numb
  *   elsewhere → pickAppMusic(now)
  * Each resolves to a theme → folders → a playlist (one track loops, many rotate).
  * Mounted once at the root so music continues across navigation.
+ *
+ * We manage the AudioContext by hand rather than via Howler: in Capacitor's
+ * WKWebView, Howler's autoUnlock does NOT resume the context, so it stayed
+ * suspended and silent. iOS requires the context to be created AND resumed
+ * inside a user gesture — see the unlock effect below.
  */
 export function AudioProvider() {
   // useParams() is unreliable for nested dynamic params from the root layout;

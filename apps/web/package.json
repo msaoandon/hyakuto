@@ -19,8 +19,6 @@
     "@hyakuto/content": "workspace:*",
     "@hyakuto/engine": "workspace:*",
     "@hyakuto/game": "workspace:*",
-    "@types/howler": "^2.2.13",
-    "howler": "^2.2.4",
     "idb-keyval": "^6.2.5",
     "next": "15.5.15",
     "react": "19.1.0",
