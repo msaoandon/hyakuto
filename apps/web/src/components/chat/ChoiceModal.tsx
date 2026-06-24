@@ -23,7 +23,7 @@ export function ChoiceModal({ options, onChoose, onClose }: ChoiceModalProps) {
             <button
               key={i}
               onClick={() => onChoose(i)}
-              className="text-left text-base px-4 py-3 bg-[#cec0c4] text-ink-black rounded-xl border border-beige/20 text-beige hover:border-gold/50 hover:bg-gold/5 transition-colors"
+              className="text-left text-base px-4 py-3 bg-[#a5cbfd] text-ink-black rounded-xl border border-beige/20 text-beige hover:border-gold/50 hover:bg-gold/5 transition-colors"
             >
               {opt.text}
             </button>

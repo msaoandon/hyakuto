@@ -21,7 +21,7 @@ export function ChatFeed({ segment, chosenText, onImageTap, ...handlers }: ChatF
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col-reverse p-4 chat-bg">
+    <div className="flex-1 overflow-y-auto flex flex-col-reverse p-4">
       <div className="flex flex-col gap-1 pb-4">
         {grouped.map((item, i) => {
           switch (item.kind) {

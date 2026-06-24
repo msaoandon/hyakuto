@@ -19,7 +19,9 @@ export default function PlayLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <header className="shrink-0 px-4 py-3 pt-[env(safe-area-inset-top)] bg-harcoal-blue flex items-center gap-3">
+      <header
+        className={`shrink-0 text-lantern-blue px-4 py-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] flex items-center gap-3 bg-black/30`}
+      >
         <Link href={header.back}>←</Link>
         <span>{header.title}</span>
       </header>

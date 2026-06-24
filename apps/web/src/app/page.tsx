@@ -24,8 +24,8 @@ export default function Home() {
       <div className="fixed top-[calc(env(safe-area-inset-top)+1rem)] right-[calc(env(safe-area-inset-right)+1rem)]">
         <LanguageChooser />
       </div>
-      <span className={`${shipporiMincho.className} text-[72px]`}>百灯</span>
-      <Link href="/play" className="w-64 text-center py-2 bg-[#cec0c4] text-ink-black rounded-lg">{t('home.start')}</Link>
+      <span className={`${shipporiMincho.className} text-[90px] text-black glow-title`}>百灯</span>
+      <Link href="/play" className="w-64 text-center py-2 bg-[#a5cbfd] text-ink-black rounded-lg">{t('home.start')}</Link>
       {/* <p className="text-white text-lg">Candle progress: {Math.round(progress * 100)}%</p>
       <input
         type="range"

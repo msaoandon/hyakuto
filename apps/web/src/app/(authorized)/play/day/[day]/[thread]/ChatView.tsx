@@ -89,6 +89,7 @@ export function ChatView({ day, thread }: { day: string; thread: string }) {
 
   return (
     <>
+      <div className="fixed inset-0 -z-10 chat-bg" aria-hidden="true" />
       <ChatFeed
         segment={segment}
         onStateChange={handleStateChange}
@@ -100,7 +101,7 @@ export function ChatView({ day, thread }: { day: string; thread: string }) {
         onImageTap={setOpenImage}
         onThreadEnded={() => setThreadEnded(true)}
       />
-      <footer className="shrink-0 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+      <footer className="shrink-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-black/10">
         {showExit ? (
           <button
             onClick={handleExit}
