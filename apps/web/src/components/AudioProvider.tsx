@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Howl } from "howler";
 import { musicConfig, pickAppMusic } from "@hyakuto/game";
 import { useGameStore } from "@/store/gameStore";
 import musicIndexData from "@/data/musicIndex.json";
@@ -28,6 +27,11 @@ function tracksForFolders(folders: string[]): string[] {
   );
 }
 
+// One playing playlist: an <audio> element (loads under Capacitor's capacitor://
+// scheme, where Web Audio's XHR fetch fails) routed through a GainNode so we can
+// fade it — iOS ignores volume changes on the element itself, but not on the node.
+type Deck = { audio: HTMLAudioElement; gain: GainNode; urls: string[]; idx: number; key: string };
+
 /**
  * Plays background music with no UI. Resolution:
  *   in a chat → music cue ▸ thread OST ▸ chatDefault
@@ -45,15 +49,40 @@ export function AudioProvider() {
   const rawCue = useGameStore((s) => s.cues.music);
   const musicCue = rawCue && rawCue !== "base" ? rawCue : null;
 
-  const playlist = useRef<{ urls: string[]; idx: number; howl: Howl | null; key: string }>({
-    urls: [],
-    idx: 0,
-    howl: null,
-    key: "",
-  });
+  const ctxRef = useRef<AudioContext | null>(null);
+  const deck = useRef<Deck | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  function getCtx(): AudioContext {
+    if (!ctxRef.current) {
+      const Ctor =
+        window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctxRef.current = new Ctor();
+    }
+    return ctxRef.current;
+  }
+
+  // iOS/WKWebView blocks audio until a user gesture and starts the audio context
+  // "suspended". Create + resume it inside the first tap, then begin playback.
+  const [unlocked, setUnlocked] = useState(false);
   useEffect(() => {
+    if (unlocked) return;
+    const unlock = () => {
+      const ctx = getCtx();
+      if (ctx.state !== "running") void ctx.resume();
+      setUnlocked(true);
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchend", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchend", unlock);
+    };
+  }, [unlocked]);
+
+  useEffect(() => {
+    if (!unlocked) return; // can't start before the gesture unlocks audio on iOS
+
     let folders: string[];
     if (thread) {
       const ost = manifest.threads[thread]?.ost;
@@ -64,12 +93,29 @@ export function AudioProvider() {
 
     const urls = tracksForFolders(folders);
     const key = urls.join("|");
-    if (key === playlist.current.key) return; // already on this set
+    if (key === deck.current?.key) return; // already on this set
 
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => switchTo(urls, key), DEBOUNCE_MS);
-    // switchTo/playTrack only read refs — not reactive deps
-  }, [thread, musicCue]); // eslint-disable-line react-hooks/exhaustive-deps
+    // switchTo reads refs — not reactive deps
+  }, [thread, musicCue, unlocked]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // linear gain ramp from the current value to `to` over the crossfade window
+  function ramp(gain: GainNode, to: number) {
+    const now = getCtx().currentTime;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.linearRampToValueAtTime(to, now + CROSSFADE_MS / 1000);
+  }
+
+  function teardown(d: Deck) {
+    ramp(d.gain, 0);
+    setTimeout(() => {
+      d.audio.pause();
+      d.audio.removeAttribute("src");
+      d.gain.disconnect();
+    }, CROSSFADE_MS);
+  }
 
   // crossfade from the current playlist to a new one
   function switchTo(urls: string[], key: string) {
@@ -80,38 +126,45 @@ export function AudioProvider() {
       }
       return;
     }
-    const old = playlist.current.howl;
-    if (old) {
-      old.fade(old.volume(), 0, CROSSFADE_MS);
-      setTimeout(() => old.unload(), CROSSFADE_MS);
-    }
-    playlist.current = { urls, idx: 0, howl: null, key };
-    playTrack(0, true);
-  }
 
-  function playTrack(idx: number, fadeIn: boolean) {
-    const single = playlist.current.urls.length === 1;
-    const howl = new Howl({
-      src: [playlist.current.urls[idx]!],
-      loop: single, // a one-track theme loops gaplessly; many rotate via onend
-      volume: fadeIn ? 0 : 1,
-      onend: () => {
-        if (single) return;
-        const next = (playlist.current.idx + 1) % playlist.current.urls.length;
-        playlist.current.idx = next;
-        playTrack(next, true);
-      },
-    });
-    howl.play();
-    if (fadeIn) howl.fade(0, 1, CROSSFADE_MS);
-    playlist.current.howl = howl;
-    playlist.current.idx = idx;
+    const ctx = getCtx();
+    if (deck.current) teardown(deck.current);
+
+    const audio = new Audio();
+    audio.preload = "auto";
+    const source = ctx.createMediaElementSource(audio);
+    const gain = ctx.createGain();
+    gain.gain.value = 0;
+    source.connect(gain).connect(ctx.destination);
+
+    const d: Deck = { audio, gain, urls, idx: 0, key };
+    deck.current = d;
+
+    const single = urls.length === 1;
+    audio.loop = single; // one track loops; many rotate via "ended"
+    if (!single) {
+      audio.addEventListener("ended", () => {
+        d.idx = (d.idx + 1) % d.urls.length;
+        d.audio.src = d.urls[d.idx]!;
+        void d.audio.play().catch(() => {});
+      });
+    }
+    audio.addEventListener("error", () =>
+      console.warn(`[audio] failed to load ${audio.src}`, audio.error),
+    );
+
+    audio.src = urls[0]!;
+    void audio.play().catch(() => {});
+    ramp(gain, 1);
   }
 
   useEffect(
     () => () => {
       if (debounce.current) clearTimeout(debounce.current);
-      playlist.current.howl?.unload();
+      if (deck.current) {
+        deck.current.audio.pause();
+        deck.current.gain.disconnect();
+      }
     },
     [],
   );
