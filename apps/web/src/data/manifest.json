@@ -13,8 +13,7 @@
       "route": "common",
       "segments": [
         "demo_3",
-        "demo_4",
-        "demo_5"
+        "demo_4"
       ]
     }
   ],
@@ -45,36 +44,24 @@
       "type": "group_chat",
       "route": "common",
       "day": 2,
-      "thread_id": "day2_01",
-      "condition": "candles < 60"
-    },
-    "demo_5": {
-      "id": "demo_5",
-      "type": "group_chat",
-      "route": "common",
-      "day": 2,
-      "thread_id": "day2_01"
+      "thread_id": "day2_02"
     }
   },
   "threads": {
     "day1_01": {
-      "display_name": "Arriving",
-      "ost": "chat_day"
+      "display_name": "Oiwa",
+      "ost": "chat_night"
     },
     "day1_02": {
-      "display_name": "Getting to know",
+      "display_name": "Otsuyu",
       "ost": "chat_night"
     },
     "day2_01": {
-      "display_name": "Photo from bar",
-      "ost": "chat_day"
+      "display_name": "Okiku",
+      "ost": "chat_night"
     },
     "day2_02": {
-      "display_name": "Whatever",
-      "ost": "chat_day"
-    },
-    "day2_03": {
-      "display_name": "Book recommendation",
+      "display_name": "Hanako-san",
       "ost": "chat_night"
     }
   }

@@ -1,16 +1,22 @@
 [
   {
-    "block_id": "demo_1",
+    "block_id": "",
     "items": [
       {
-        "type": "status",
-        "text": "{MC} joined the room."
-      },
+        "type": "cue",
+        "channel": "music",
+        "value": "kaidan"
+      }
+    ]
+  },
+  {
+    "block_id": "demo_1",
+    "items": [
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "demo_1"
+          "ok you wanted a scary one - lights off"
         ],
         "effects": [
           {
@@ -20,13 +26,18 @@
         ]
       },
       {
-        "type": "typing",
-        "character": "Haruki"
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "most cursed ghost story in Japan — people still won't say her name on a film set without visiting her grave first"
+        ]
       },
       {
-        "type": "image",
-        "character": "Tatsumi",
-        "file": "kojiki1.jpg",
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "her name is <b>Oiwa</b>"
+        ],
         "effects": [
           {
             "axis": "candles",
@@ -35,14 +46,414 @@
         ]
       },
       {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "💀 it's midnight why did i ask"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Edo period. Oiwa's married to a rōnin named <b>Iemon.</b>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "broke, mean, she just had his baby, still weak from the birth"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "and he wants out — for a richer wife"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          "I don't like where this is going."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "so they send Oiwa \"medicine\", told her it'll help her recover"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "it's poison"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "and it doesn't kill her - it disfigures her"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "half her face collapses, her hair starts coming out in fistfuls"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "[sigh]"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "here's the image that haunts every version"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "she's at her mirror, combing her hair to look nice. and it just keeps coming"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "a whole pile of it, and underneath, the comb is wet"
+        ]
+      },
+      {
         "type": "choice",
         "options": [
           {
-            "text": "helo."
+            "text": "Not me reading this in the bath -_-"
           },
           {
-            "text": "Hi!!"
+            "text": "I'm under a blanket now"
           }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "she sees her reflection"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "sees what they did"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "and with her dying breath <b>she curses Iemon's name</b>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "And a curse spoken in the moment of dying is the kind that holds. Those are the ones that don't loosen."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "right"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Iemon's solution:"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "he nails her body to a door"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "nails a dead servant to the other side"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "frames them as lovers"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "dumps the whole thing in the river 👍"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "the casual 👍 is killing me"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "laugh now - doors come back"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "wedding night with the rich girl"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "he lifts her veil - and it's Oiwa's ruined face"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "he panics, grabs his sword, cuts the demon down"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "lights up. not Oiwa."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "his new bride. he just killed her!"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "NO"
+          },
+          {
+            "text": "Oh. My. God."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "that's the whole trick"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "she never chases him, she just makes him do it to himself"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "he goes to confess, sees Oiwa, swings — kills her father too"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "he goes fishing to clear his head"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "pulls something out of the water"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "it's the door"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "her face on one side, still wet"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "take the door back i don't want the door"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "it follows him everywhere"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "nets turn into her hair"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "lanterns into her eyes"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "his own baby looks up with her face"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "and the curse takes the whole household down with him"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "one by one, till the bloodline's just gone"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "most ghosts haunt and fade"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Oiwa stays until there's nothing left of him to ruin"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "The play premiered in 1825. People watched it once, then began to insist the role itself was cursed — accidents, injuries, deaths, all laid at her feet."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "So even now, before any troupe stages or films it, they make the trip to her actual grave at Myōgyō-ji in Tokyo. They kneel. They ask Oiwa for her permission first."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          "You can call that superstition if it comforts you. The custom has outlasted everyone who first dismissed it."
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Wait, that's a REAL grave??"
+          },
+          {
+            "text": "..."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "real grave, real temple, directors still make the trip, the ones who skip it have stories"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "so the curse worked so well it started haunting the people TELLING it"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "she's the only one who got out of the play"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "sleep well 🙂"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          "<b>absolutely not</b>, not after the wet comb"
         ]
       }
     ]

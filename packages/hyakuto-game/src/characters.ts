@@ -49,7 +49,7 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     tailUrl: 'tail_04.png',
   },
   suzune: {
-    displayName: "Mio",
+    displayName: "Suzune",
     textColor: "#e2a9f1",
     borderColor: "#4a374f",
     bgColor: "rgba(18, 28, 37, 0.9)",
@@ -59,9 +59,9 @@ export const characterDesigns: Record<string, CharacterDesign> = {
   mc: {
     displayName: "MC",
     textColor: "#121c25",
-    borderColor: "#fff2e3",
-    bgColor: "rgba(206, 192, 196, 0.9)",
-    shadow: "0 0 10px rgba(255,242,226,0.5)",
+    borderColor: "#c7dbf5",
+    bgColor: "rgba(165, 203, 253, 0.9)",
+    shadow: "0 0 10px rgba(110, 180, 255, 0.55)",
     tailUrl: '',
   },
 };

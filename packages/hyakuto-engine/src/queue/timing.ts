@@ -2,7 +2,7 @@
 const BASE_TYPING_MS = 500;
 const CHAR_RATE_MS = 30; // ms per character
 const MAX_TYPING_MS = 4000;
-const BASE_DELAY_MS = 800;
+const BASE_DELAY_MS = 1200;
 
 export type PaceLevel = 1.5 | 1.0 | 0.5 | 0;
 
