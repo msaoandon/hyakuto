@@ -5,6 +5,9 @@ export type GameState = {
   counters: Record<string, number>;
   flags: Set<string>;
   poolSelections: Record<string, number>; // messageId -> chosen idx
+  /** Completed thread key (`day:thread_id`) -> completion time (epoch ms). The
+   *  timestamp anchors time-gated unlocks, so it must record *when*, not just *whether*. */
+  completed: Record<string, number>;
 };
 
 export function createGameState(config: GameConfig): GameState {
@@ -23,6 +26,7 @@ export function createGameState(config: GameConfig): GameState {
     counters,
     flags: new Set(),
     poolSelections: {},
+    completed: {},
   };
 }
 

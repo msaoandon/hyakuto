@@ -45,7 +45,12 @@ export {
   listDays,
   listThreads,
   stripEffects,
+  threadKey,
+  previousThread,
+  nextUnlockAt,
+  isThreadUnlocked,
   type SegmentMeta,
+  type ThreadMeta,
   type Manifest,
   type LoadedDay,
 } from "./manifest/manifest";

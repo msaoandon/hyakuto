@@ -18,10 +18,21 @@ export type SegmentMeta = {
   condition?: string;
 };
 
+/** Per-thread (chat) envelope from the `_threads` tab. */
+export type ThreadMeta = {
+  display_name: string;
+  condition?: string;
+  ost?: string;
+  /** Wall-clock time-of-day ("HH:MM") before which the chat stays locked. */
+  unlock_after?: string;
+  /** Explicit prerequisite chat; defaults to the previous chat in day order. */
+  requires?: string;
+};
+
 export type Manifest = {
   days: DayConfig[];
   segments: Record<string, SegmentMeta>;
-  threads: Record<string, { display_name: string; condition?: string; ost?: string }>;
+  threads: Record<string, ThreadMeta>;
 };
 
 export type LoadedDay = {
@@ -60,6 +71,91 @@ export function listThreads(
 export function isSegmentAvailable(meta: SegmentMeta | undefined, state: GameState): boolean {
   if (!meta?.condition) return true;
   return evaluateCondition(meta.condition, state);
+}
+
+// ─── THREAD UNLOCK ───────────────────────────────────────
+// A chat unlocks once its prerequisite chat is complete AND a wall-clock time
+// has passed, with a paid skip to bypass the wait. The rule is derived from the
+// manifest's declared order + structured `unlock_after` — never authored flags.
+
+/** The day-scoped completion key used by the save's `completed` map. */
+export function threadKey(day: number, threadId: string): string {
+  return `${day}:${threadId}`;
+}
+
+/** The chat immediately before `threadId` in the day's order, if any. */
+export function previousThread(
+  manifest: Manifest,
+  day: number,
+  threadId: string,
+): string | undefined {
+  const order = listThreads(manifest, day).map((t) => t.id);
+  const i = order.indexOf(threadId);
+  return i > 0 ? order[i - 1] : undefined;
+}
+
+/** Parse "HH:MM" into minutes-since-midnight; throws (fail-loud) on malformed input. */
+function parseTimeOfDay(hhmm: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) throw new Error(`Malformed unlock_after "${hhmm}" (expected "HH:MM")`);
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) throw new Error(`Out-of-range unlock_after "${hhmm}"`);
+  return h * 60 + min;
+}
+
+/**
+ * The concrete instant a chat becomes available, or `null` if its prerequisite
+ * isn't complete yet (nothing to anchor to). The time gate is anchored to *when
+ * the prerequisite completed*, so it resolves to a stable future timestamp (no
+ * next-morning re-lock) that a notification scheduler / paywall countdown can use.
+ * `now` is injected so a trusted server clock can replace `Date.now()` later.
+ */
+export function nextUnlockAt(
+  manifest: Manifest,
+  day: number,
+  threadId: string,
+  state: GameState,
+  now: number,
+): number | null {
+  const meta = manifest.threads[threadId];
+  const prev = meta?.requires ?? previousThread(manifest, day, threadId);
+  const prevAt = prev ? state.completed[threadKey(day, prev)] : undefined;
+  if (prev && prevAt === undefined) return null; // prerequisite not done
+
+  if (!meta?.unlock_after) return prevAt ?? now; // no time gate → ready once prereq done
+
+  const anchor = prevAt ?? now; // a first chat with a time gate anchors to now
+  const target = parseTimeOfDay(meta.unlock_after);
+  const d = new Date(anchor);
+  const anchorMinutes = d.getHours() * 60 + d.getMinutes();
+  if (anchorMinutes >= target) return anchor; // the prerequisite finished past the time
+  d.setHours(Math.floor(target / 60), target % 60, 0, 0);
+  return d.getTime();
+}
+
+/**
+ * Whether a chat is open at `now`. Gating is opt-in: a thread with no
+ * `unlock_after`/`requires` is always open (back-compat). A purchased
+ * `skip:<key>` flag bypasses the time wait but still requires the prerequisite.
+ */
+export function isThreadUnlocked(
+  manifest: Manifest,
+  day: number,
+  threadId: string,
+  state: GameState,
+  now: number,
+): boolean {
+  const meta = manifest.threads[threadId];
+  if (!meta?.unlock_after && !meta?.requires) return true; // not gated
+
+  const prev = meta.requires ?? previousThread(manifest, day, threadId);
+  const prevDone = !prev || state.completed[threadKey(day, prev)] !== undefined;
+  if (!prevDone) return false;
+
+  if (state.flags.has(`skip:${threadKey(day, threadId)}`)) return true; // paid skip
+  const at = nextUnlockAt(manifest, day, threadId, state, now);
+  return at !== null && now >= at;
 }
 
 // ─── BLOCK → SEGMENT ─────────────────────────────────────

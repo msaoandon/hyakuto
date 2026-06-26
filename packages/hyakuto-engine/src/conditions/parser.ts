@@ -14,6 +14,11 @@ interface FlagExpr {
   flag: string;
 }
 
+interface CompletedExpr {
+  kind: 'completed';
+  key: string;
+}
+
 interface NotExpr {
   kind: 'not';
   expr: Expr;
@@ -31,7 +36,7 @@ interface OrExpr {
   right: Expr;
 }
 
-type Expr = ComparisonExpr | FlagExpr | NotExpr | AndExpr | OrExpr;
+type Expr = ComparisonExpr | FlagExpr | CompletedExpr | NotExpr | AndExpr | OrExpr;
 
 // ─── TOKENIZER ───────────────────────────────────────────
 
@@ -43,6 +48,7 @@ type Token =
   | { type: 'or' }
   | { type: 'not' }
   | { type: 'flag'; value: string }
+  | { type: 'completed'; value: string }
   | { type: 'lparen' }
   | { type: 'rparen' };
 
@@ -96,6 +102,10 @@ function tokenize(input: string): Token[] {
       if (word === 'NOT') { tokens.push({ type: 'not' }); continue; }
       if (word.startsWith('flag:')) {
         tokens.push({ type: 'flag', value: word.slice(5) });
+        continue;
+      }
+      if (word.startsWith('completed:')) {
+        tokens.push({ type: 'completed', value: word.slice(10) });
         continue;
       }
       tokens.push({ type: 'ident', value: word });
@@ -177,6 +187,12 @@ class Parser {
       return { kind: 'flag', flag: token.value };
     }
 
+    // Completed-thread predicate
+    if (token.type === 'completed') {
+      this.advance();
+      return { kind: 'completed', key: token.value };
+    }
+
     // Comparison: identifier op number
     if (token.type === 'ident') {
       this.advance();
@@ -233,6 +249,8 @@ function evaluate(expr: Expr, state: GameState): boolean {
     }
     case 'flag':
       return state.flags.has(expr.flag);
+    case 'completed':
+      return expr.key in state.completed;
     case 'not':
       return !evaluate(expr.expr, state);
     case 'and':

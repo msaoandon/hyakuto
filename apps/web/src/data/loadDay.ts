@@ -4,7 +4,9 @@ import type { StoryFile, GameState, Manifest } from "@hyakuto/engine";
 import {
   assembleThread as assemble,
   listDays as days,
-  listThreads as threads
+  listThreads as threads,
+  isThreadUnlocked as unlocked,
+  nextUnlockAt as unlockAt,
 } from "@hyakuto/engine";
 import manifestData from "./manifest.json";
 import demoData from "./demo.json";
@@ -20,5 +22,11 @@ export const assembleThread = (day: number, threadId: string, state: GameState) 
 export const listDays = () => days(manifest);
 
 export const listThreads = (day: number) => threads(manifest, day);
+
+export const isThreadUnlocked = (day: number, threadId: string, state: GameState, now: number) =>
+  unlocked(manifest, day, threadId, state, now);
+
+export const nextUnlockAt = (day: number, threadId: string, state: GameState, now: number) =>
+  unlockAt(manifest, day, threadId, state, now);
 
 export { stripEffects } from "@hyakuto/engine";

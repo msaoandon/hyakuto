@@ -83,6 +83,9 @@ export function createEngine(options: CreateEngineOptions): Engine {
       counters: { ...options.savedState.counters },
       flags: new Set(options.savedState.flags),
       poolSelections: { ...options.savedState.poolSelections },
+      // Completion is app-managed save state (used for thread-unlock gating, not
+      // the play loop); the engine's per-play SaveState doesn't carry it.
+      completed: {},
     };
   } else {
     state = createGameState(config);

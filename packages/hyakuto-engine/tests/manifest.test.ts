@@ -6,8 +6,13 @@ import {
   listDays,
   listThreads,
   stripEffects,
+  previousThread,
+  nextUnlockAt,
+  isThreadUnlocked,
+  threadKey,
   type Manifest,
 } from "../src/manifest/manifest";
+import { evaluateCondition } from "../src/conditions/parser";
 import type { Block, StoryFile } from "../src/schemas/block";
 import type { GameState } from "../src/state/game-state";
 import type { SegmentInput } from "../src/engine";
@@ -17,6 +22,7 @@ const emptyState = (): GameState => ({
   counters: {},
   flags: new Set(),
   poolSelections: {},
+  completed: {},
 });
 
 describe("convertBlockToSegment", () => {
@@ -263,5 +269,80 @@ describe("stripEffects", () => {
     };
 
     expect(stripEffects(seg).messages).toEqual([{ id: "m", character: "Kou", text: "hello" }]);
+  });
+});
+
+describe("thread unlock", () => {
+  // Day order: alpha (ungated) → beta (requires alpha) → gamma (requires alpha, after 6pm).
+  const manifest = {
+    days: [{ day: 1, route: "common", segments: ["a1", "b1", "g1"] }],
+    segments: {
+      a1: { id: "a1", type: "group_chat", day: 1, thread_id: "alpha" },
+      b1: { id: "b1", type: "group_chat", day: 1, thread_id: "beta" },
+      g1: { id: "g1", type: "group_chat", day: 1, thread_id: "gamma" },
+    },
+    threads: {
+      alpha: { display_name: "Alpha" },
+      beta: { display_name: "Beta", requires: "alpha" },
+      gamma: { display_name: "Gamma", requires: "alpha", unlock_after: "18:00" },
+    },
+  } satisfies Manifest;
+
+  const at = (h: number, m = 0) => new Date(2026, 0, 1, h, m, 0).getTime();
+  const stateWith = (completed: Record<string, number>, flags: string[] = []): GameState => ({
+    ...emptyState(),
+    completed,
+    flags: new Set(flags),
+  });
+
+  it("previousThread follows day order, undefined for the first", () => {
+    expect(previousThread(manifest, 1, "alpha")).toBeUndefined();
+    expect(previousThread(manifest, 1, "beta")).toBe("alpha");
+    expect(previousThread(manifest, 1, "gamma")).toBe("beta");
+  });
+
+  it("an ungated thread is always open", () => {
+    expect(isThreadUnlocked(manifest, 1, "alpha", emptyState(), at(3))).toBe(true);
+  });
+
+  it("a completion-gated thread is locked until its prerequisite is done", () => {
+    expect(isThreadUnlocked(manifest, 1, "beta", emptyState(), at(20))).toBe(false);
+    const done = stateWith({ [threadKey(1, "alpha")]: at(9) });
+    expect(isThreadUnlocked(manifest, 1, "beta", done, at(9))).toBe(true);
+  });
+
+  it("returns no unlock time while the prerequisite is incomplete", () => {
+    expect(nextUnlockAt(manifest, 1, "gamma", emptyState(), at(20))).toBeNull();
+    expect(isThreadUnlocked(manifest, 1, "gamma", emptyState(), at(20))).toBe(false);
+  });
+
+  it("anchors the time gate to when the prerequisite completed", () => {
+    // alpha finished at 2pm → gamma unlocks at 6pm the same day, not before.
+    const done = stateWith({ [threadKey(1, "alpha")]: at(14) });
+    expect(nextUnlockAt(manifest, 1, "gamma", done, at(14))).toBe(at(18));
+    expect(isThreadUnlocked(manifest, 1, "gamma", done, at(14))).toBe(false);
+    expect(isThreadUnlocked(manifest, 1, "gamma", done, at(18, 30))).toBe(true);
+  });
+
+  it("unlocks immediately when the prerequisite finished past the gate time", () => {
+    // alpha finished at 8pm — already past 6pm → no wait.
+    const done = stateWith({ [threadKey(1, "alpha")]: at(20) });
+    expect(nextUnlockAt(manifest, 1, "gamma", done, at(20))).toBe(at(20));
+    expect(isThreadUnlocked(manifest, 1, "gamma", done, at(20))).toBe(true);
+  });
+
+  it("a purchased skip bypasses the time wait but not the prerequisite", () => {
+    const skip = `skip:${threadKey(1, "gamma")}`;
+    // Skip without the prerequisite done → still locked.
+    expect(isThreadUnlocked(manifest, 1, "gamma", stateWith({}, [skip]), at(14))).toBe(false);
+    // Prerequisite done + skip → open before 6pm.
+    const done = stateWith({ [threadKey(1, "alpha")]: at(14) }, [skip]);
+    expect(isThreadUnlocked(manifest, 1, "gamma", done, at(14))).toBe(true);
+  });
+
+  it("evaluates a completed:<key> condition against the completed map", () => {
+    const done = stateWith({ [threadKey(1, "alpha")]: at(9) });
+    expect(evaluateCondition("completed:1:alpha", done)).toBe(true);
+    expect(evaluateCondition("completed:1:beta", done)).toBe(false);
   });
 });

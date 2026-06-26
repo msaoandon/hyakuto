@@ -35,8 +35,8 @@ export function ChatView({ day, thread }: { day: string; thread: string }) {
   const completed = useGameStore((s) => s.completed);
 
   const segment = useMemo(() => {
-    const seg = assembleThread(dayNum, thread, saveToState(save));
-    const isReplay = completed.includes(`${dayNum}:${thread}`);
+    const seg = assembleThread(dayNum, thread, saveToState(save, completed));
+    const isReplay = `${dayNum}:${thread}` in completed;
     return isReplay ? stripEffects(seg) : seg;
   }, [dayNum, thread, save, completed]);
 
