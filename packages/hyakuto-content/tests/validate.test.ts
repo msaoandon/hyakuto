@@ -1,0 +1,72 @@
+import { describe, it, expect } from 'vitest';
+import { mergeBlocks, validateManifest, isManifest } from '../src/validate';
+import type { Manifest } from '@hyakuto/engine';
+
+const block = (id: string) => ({
+  block_id: id,
+  items: [{ type: 'message' as const, character: 'Kou', messages: ['hi'] }],
+});
+
+const poolOf = (...ids: string[]) =>
+  mergeBlocks([{ path: 'f.json', data: ids.map(block) }]).pool;
+
+const manifest = (over: Partial<Manifest> = {}): Manifest => ({
+  days: [{ day: 1, route: 'common', segments: ['demo_1'] }],
+  segments: { demo_1: { id: 'demo_1', type: 'group_chat', day: 1, thread_id: 'alpha' } },
+  threads: { alpha: { display_name: 'Alpha' } },
+  ...over,
+});
+
+describe('mergeBlocks id integrity', () => {
+  it('flags an empty block_id (the orphaned-cue bug)', () => {
+    const { errors, pool } = mergeBlocks([{ path: 'f.json', data: [block(''), block('demo_1')] }]);
+    expect(errors.some((e) => e.message.includes('empty block_id'))).toBe(true);
+    expect(pool.has('')).toBe(false); // not pooled
+  });
+
+  it('flags a duplicate block_id across files', () => {
+    const { errors } = mergeBlocks([
+      { path: 'a.json', data: [block('demo_1')] },
+      { path: 'b.json', data: [block('demo_1')] },
+    ]);
+    expect(errors.some((e) => e.message.includes('Duplicate'))).toBe(true);
+  });
+});
+
+describe('validateManifest cross-refs', () => {
+  it('passes a consistent manifest + blocks', () => {
+    expect(validateManifest(poolOf('demo_1'), manifest())).toEqual([]);
+  });
+
+  it('flags an orphan block no segment references (it would never play)', () => {
+    const errs = validateManifest(poolOf('demo_1', 'stray'), manifest());
+    expect(errs.some((e) => e.segmentId === 'stray' && e.message.includes('orphan'))).toBe(true);
+  });
+
+  it('flags a manifest segment with no block', () => {
+    const errs = validateManifest(poolOf(), manifest());
+    expect(errs.some((e) => e.segmentId === 'demo_1' && e.message.includes('no matching block'))).toBe(true);
+  });
+
+  it('flags a day referencing an undeclared segment', () => {
+    const m = manifest({ days: [{ day: 1, route: 'common', segments: ['demo_1', 'ghost'] }] });
+    const errs = validateManifest(poolOf('demo_1'), m);
+    expect(errs.some((e) => e.segmentId === 'ghost' && e.message.includes('undeclared segment'))).toBe(true);
+  });
+
+  it('flags a segment with an undeclared thread_id', () => {
+    const m = manifest({
+      segments: { demo_1: { id: 'demo_1', type: 'group_chat', day: 1, thread_id: 'ghost' } },
+    });
+    const errs = validateManifest(poolOf('demo_1'), m);
+    expect(errs.some((e) => e.message.includes('undeclared thread'))).toBe(true);
+  });
+});
+
+describe('isManifest', () => {
+  it('recognizes the manifest envelope and rejects a block array', () => {
+    expect(isManifest(manifest())).toBe(true);
+    expect(isManifest([block('demo_1')])).toBe(false);
+    expect(isManifest(null)).toBe(false);
+  });
+});

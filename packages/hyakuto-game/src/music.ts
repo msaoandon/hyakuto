@@ -3,6 +3,8 @@
 // public/music/; the AudioProvider pools their tracks into one playlist
 // (1 file loops, many rotate). Folders are referenced, never duplicated, so a
 // shared track (e.g. the default melody) ships once and is pooled into many themes.
+// A cue, by contrast, switches to its own folder only — it does not pool the
+// default, so cue time plays the cue and nothing else.
 
 export type MusicConfig = {
   /** Fallback chat playlist when a thread has no OST theme and no cue. */
