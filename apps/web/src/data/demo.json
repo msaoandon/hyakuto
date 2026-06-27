@@ -1,17 +1,12 @@
 [
   {
-    "block_id": "",
+    "block_id": "demo_1",
     "items": [
       {
         "type": "cue",
         "channel": "music",
         "value": "kaidan"
-      }
-    ]
-  },
-  {
-    "block_id": "demo_1",
-    "items": [
+      },
       {
         "type": "message",
         "character": "Kou",

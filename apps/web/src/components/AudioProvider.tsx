@@ -32,7 +32,15 @@ function tracksForFolders(folders: string[]): string[] {
 // via the gain. (The element also streams and loops without buffering the whole
 // track in memory — Web Audio buffer loading works fine here too, this is just
 // simpler.) The crossfade only works because the GainNode does, not the element.
-type Deck = { audio: HTMLAudioElement; gain: GainNode; urls: string[]; idx: number; key: string };
+type Deck = {
+  audio: HTMLAudioElement;
+  gain: GainNode;
+  urls: string[];
+  idx: number;
+  key: string;
+  /** Set on teardown so a retired deck's `ended` handler can't resurrect it over the new one. */
+  dead?: boolean;
+};
 
 /**
  * Plays background music with no UI. Resolution:
@@ -116,6 +124,7 @@ export function AudioProvider() {
   }
 
   function teardown(d: Deck) {
+    d.dead = true; // stop its `ended` handler from replaying after we've moved on
     ramp(d.gain, 0);
     setTimeout(() => {
       d.audio.pause();
@@ -147,15 +156,17 @@ export function AudioProvider() {
     const d: Deck = { audio, gain, urls, idx: 0, key };
     deck.current = d;
 
-    const single = urls.length === 1;
-    audio.loop = single; // one track loops; many rotate via "ended"
-    if (!single) {
-      audio.addEventListener("ended", () => {
-        d.idx = (d.idx + 1) % d.urls.length;
-        d.audio.src = d.urls[d.idx]!;
-        void d.audio.play().catch(() => {});
-      });
-    }
+    // Continue the playlist on every track end: a single track replays (loop),
+    // many rotate. We drive this off `ended` rather than the element's native
+    // `loop` flag, because a media element routed through a MediaElementSource
+    // does NOT reliably honour `loop` in iOS WKWebView — so a one-track cue would
+    // stop instead of holding until the cue changes. `dead` guards a retired deck.
+    audio.addEventListener("ended", () => {
+      if (d.dead) return;
+      d.idx = (d.idx + 1) % d.urls.length;
+      d.audio.src = d.urls[d.idx]!;
+      void d.audio.play().catch(() => {});
+    });
     audio.addEventListener("error", () =>
       console.warn(`[audio] failed to load ${audio.src}`, audio.error),
     );
