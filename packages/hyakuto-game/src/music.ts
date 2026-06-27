@@ -17,7 +17,7 @@ export const musicConfig: MusicConfig = {
   chatDefault: ["chat_default"],
   themes: {
     chat_day: ["chat_day", "chat_default"],
-    chat_night: ["chat_night", "chat_default"],
+    chat_night: ["chat_night"], // night plays its theme only — the default melody sounds off against it
   },
 };
 
