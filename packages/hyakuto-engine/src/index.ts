@@ -14,6 +14,9 @@ export { Block, BlockItem, StoryFile } from "./schemas/block";
 export { createGameState, applyEffect, setFlag, updateCounter } from "./state/game-state";
 export type { GameState } from "./state/game-state";
 
+// Reserved characters (registered automatically — no game-config entry needed)
+export { NARRATOR, RESERVED_CHARACTERS } from "./reserved";
+
 // Parsers
 export { parseCondition, evaluateCondition } from "./conditions/parser";
 export { collectConditionRefs } from "./conditions/refs";
@@ -51,6 +54,8 @@ export {
   isThreadUnlocked,
   type SegmentMeta,
   type ThreadMeta,
+  type ThreadKind,
+  type ThreadEntry,
   type Manifest,
   type LoadedDay,
 } from "./manifest/manifest";

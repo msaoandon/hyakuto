@@ -5,6 +5,7 @@
       "route": "common",
       "segments": [
         "demo_1",
+        "vn_1",
         "demo_2"
       ]
     },
@@ -24,6 +25,13 @@
       "route": "common",
       "day": 1,
       "thread_id": "day1_01"
+    },
+    "vn_1": {
+      "id": "vn_1",
+      "type": "vn",
+      "route": "common",
+      "day": 1,
+      "thread_id": "day1_vn_01"
     },
     "demo_2": {
       "id": "demo_2",
@@ -55,6 +63,9 @@
     "day1_02": {
       "display_name": "Otsuyu",
       "ost": "chat_night"
+    },
+    "day1_vn_01": {
+      "display_name": "Test VN"
     },
     "day2_01": {
       "display_name": "Okiku",

@@ -7,4 +7,7 @@ export const en = {
   "play.chat": "Chat",
   "play.reply": "Reply",
   "play.exit": "Exit",
+  "play.next": "Next",
+  "play.skip": "Skip",
+  "play.auto": "Auto",
 } as const;

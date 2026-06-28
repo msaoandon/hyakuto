@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { mergeBlocks, validateManifest, isManifest } from '../src/validate';
-import type { Manifest } from '@hyakuto/engine';
+import { mergeBlocks, validateBlocks, validateManifest, isManifest } from '../src/validate';
+import type { GameConfig, Manifest } from '@hyakuto/engine';
+
+const config: GameConfig = {
+  axes: ['trust'],
+  characters: [{ id: 'Kou', typing_rate: 1 }],
+  counters: [{ id: 'candles', start: 100, end: 0, direction: 'down' }],
+};
 
 const block = (id: string) => ({
   block_id: id,
@@ -60,6 +66,45 @@ describe('validateManifest cross-refs', () => {
     });
     const errs = validateManifest(poolOf('demo_1'), m);
     expect(errs.some((e) => e.message.includes('undeclared thread'))).toBe(true);
+  });
+});
+
+describe('validateBlocks — VN scene cues, empty text, narrator', () => {
+  const poolWith = (items: unknown[]) =>
+    mergeBlocks([{ path: 'f.json', data: [{ block_id: 'vn_1', items }] }]).pool;
+
+  it('accepts a known scene cue and the reserved narrator voice', () => {
+    const pool = poolWith([
+      { type: 'cue', channel: 'scene', value: 'bookshop_dusk' },
+      { type: 'message', character: 'narrator', messages: ['It is quiet.'] },
+    ]);
+    expect(validateBlocks(pool, config, ['bookshop_dusk'])).toEqual([]);
+  });
+
+  it('flags a scene cue whose value is not a known scene', () => {
+    const pool = poolWith([{ type: 'cue', channel: 'scene', value: 'nope' }]);
+    const errs = validateBlocks(pool, config, ['bookshop_dusk']);
+    expect(errs.some((e) => e.message.includes('Unknown scene "nope"'))).toBe(true);
+  });
+
+  it('flags an empty message text', () => {
+    const pool = poolWith([{ type: 'message', character: 'narrator', messages: ['  '] }]);
+    const errs = validateBlocks(pool, config, []);
+    expect(errs.some((e) => e.message.includes('empty text'))).toBe(true);
+  });
+});
+
+describe('validateManifest — homogeneous thread type', () => {
+  it('flags a thread that mixes chat and vn segments', () => {
+    const m = manifest({
+      days: [{ day: 1, route: 'common', segments: ['demo_1', 'demo_2'] }],
+      segments: {
+        demo_1: { id: 'demo_1', type: 'group_chat', day: 1, thread_id: 'alpha' },
+        demo_2: { id: 'demo_2', type: 'vn', day: 1, thread_id: 'alpha' },
+      },
+    });
+    const errs = validateManifest(poolOf('demo_1', 'demo_2'), m);
+    expect(errs.some((e) => e.message.includes('mixes segment types'))).toBe(true);
   });
 });
 

@@ -7,4 +7,7 @@ export const uk = {
   "play.chat": "Чат",
   "play.reply": "Відповісти",
   "play.exit": "Вийти",
+  "play.next": "Далі",
+  "play.skip": "Пропустити",
+  "play.auto": "Авто",
 };

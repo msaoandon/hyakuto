@@ -3,7 +3,9 @@ import { ChatView } from "./ChatView";
 
 export function generateStaticParams() {
   return listDays().flatMap((d) =>
-    listThreads(d.day).map((th) => ({ day: String(d.day), thread: th.id })),
+    listThreads(d.day)
+      .filter((th) => th.kind !== "vn") // VN units have their own /vn/[id] route
+      .map((th) => ({ day: String(d.day), thread: th.id })),
   );
 }
 

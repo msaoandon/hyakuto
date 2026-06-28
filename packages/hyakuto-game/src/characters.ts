@@ -64,6 +64,16 @@ export const characterDesigns: Record<string, CharacterDesign> = {
     shadow: "0 0 10px rgba(110, 180, 255, 0.55)",
     tailUrl: '',
   },
+  // The VN prose voice. Rendered without an avatar/name/bubble — only the text
+  // colour is read by VnNarration.
+  narrator: {
+    displayName: "",
+    textColor: "#d8cfd6",
+    borderColor: "transparent",
+    bgColor: "transparent",
+    shadow: "none",
+    tailUrl: '',
+  },
 };
 
 export const DEFAULT_DESIGN: CharacterDesign = {

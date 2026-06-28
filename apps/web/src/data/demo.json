@@ -631,5 +631,59 @@
         ]
       }
     ]
+  },
+  {
+    "block_id": "vn_1",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "suspense"
+      },
+      {
+        "type": "cue",
+        "channel": "scene",
+        "value": "bookshop"
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          "most cursed ghost story in Japan — people still won't say her name on a film set without visiting her grave first"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          "her name is <b>Oiwa</b>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          "Edo period. Oiwa's married to a rōnin named <b>Iemon.</b>"
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          "broke, mean, she just had his baby, still weak from the birth"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "💀 it's midnight why did i ask"
+          },
+          {
+            "text": "omg"
+          }
+        ]
+      }
+    ]
   }
 ]

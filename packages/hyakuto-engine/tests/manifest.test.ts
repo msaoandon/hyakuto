@@ -216,8 +216,8 @@ describe("navigation", () => {
 
   it("listThreads dedupes a day's threads in first-appearance order, with names", () => {
     expect(listThreads(manifest, 1)).toEqual([
-      { id: "alpha", display_name: "Alpha" },
-      { id: "beta", display_name: "Beta" },
+      { id: "alpha", display_name: "Alpha", kind: "chat" },
+      { id: "beta", display_name: "Beta", kind: "chat" },
     ]);
   });
 
@@ -227,7 +227,7 @@ describe("navigation", () => {
       segments: { x: { id: "x", type: "dm", day: 1, thread_id: "lonely" } },
       threads: {},
     } satisfies Manifest;
-    expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely" }]);
+    expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely", kind: "chat" }]);
   });
 });
 

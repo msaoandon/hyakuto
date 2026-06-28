@@ -1,4 +1,4 @@
-import { StoryFile, collectConditionRefs } from '@hyakuto/engine';
+import { StoryFile, collectConditionRefs, RESERVED_CHARACTERS } from '@hyakuto/engine';
 import type { Block, GameConfig, Manifest } from '@hyakuto/engine';
 
 export type ValidationError = { source: string; segmentId?: string; message: string };
@@ -16,8 +16,8 @@ export function isManifest(data: unknown): data is Manifest {
   );
 }
 
-const RESERVED = ['MC', 'dev'];
-const CUE_CHANNELS = ['music', 'glitch'];
+const RESERVED = [...RESERVED_CHARACTERS];
+const CUE_CHANNELS = ['music', 'glitch', 'scene'];
 
 // Parse each file, merge into one pool, catch cross-file id collisions
 export function mergeBlocks(sources: ContentSource[]) {
@@ -53,10 +53,14 @@ export function mergeBlocks(sources: ContentSource[]) {
 export function validateBlocks(
   pool: Map<string, { block: Block; source: string }>,
   config: GameConfig,
+  /** Valid VN scene IDs (keys of the game's sceneDesigns). Passed in to keep this
+   *  validator game-agnostic. Empty → scene cue values are not cross-checked. */
+  scenes: Iterable<string> = [],
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   const chars = new Set([...config.characters.map(c => c.id), ...RESERVED]);
   const targets = new Set([...config.axes, ...config.counters.map(c => c.id)]);
+  const sceneSet = new Set(scenes);
 
   for (const { block, source } of pool.values()) {
     const ctx = { source, segmentId: block.block_id };
@@ -82,13 +86,21 @@ export function validateBlocks(
       if ('condition' in item) condCheck(item.condition);
       if ('effects' in item) fxCheck(item.effects);
 
+      if (item.type === 'message')
+        for (const m of item.messages)
+          if (!m.trim()) errors.push({ ...ctx, message: 'Message has empty text' });
+
       if (item.type === 'choice') {
         if (item.character && !chars.has(item.character))
           errors.push({ ...ctx, message: `Unknown choice character "${item.character}"` });
         for (const opt of item.options) { condCheck(opt.condition); fxCheck(opt.effects); }
       }
-      if (item.type === 'cue' && !CUE_CHANNELS.includes(item.channel))
-        errors.push({ ...ctx, message: `Unknown cue channel "${item.channel}"` });
+      if (item.type === 'cue') {
+        if (!CUE_CHANNELS.includes(item.channel))
+          errors.push({ ...ctx, message: `Unknown cue channel "${item.channel}"` });
+        else if (item.channel === 'scene' && sceneSet.size > 0 && !sceneSet.has(item.value))
+          errors.push({ ...ctx, message: `Unknown scene "${item.value}" (not in sceneDesigns)` });
+      }
     }
   }
   return errors;
@@ -128,6 +140,21 @@ export function validateManifest(
   for (const [id, meta] of Object.entries(manifest.segments))
     if (meta.thread_id && !manifest.threads[meta.thread_id])
       errors.push({ source, segmentId: id, message: `Segment references undeclared thread "${meta.thread_id}"` });
+
+  // A thread's segments must share one type, so its render kind (chat vs VN) is
+  // unambiguous — a thread can't be half chat, half VN.
+  const threadType = new Map<string, { type: string; first: string }>();
+  for (const [id, meta] of Object.entries(manifest.segments)) {
+    if (!meta.thread_id) continue;
+    const seen = threadType.get(meta.thread_id);
+    if (!seen) threadType.set(meta.thread_id, { type: meta.type, first: id });
+    else if (seen.type !== meta.type)
+      errors.push({
+        source,
+        segmentId: id,
+        message: `Thread "${meta.thread_id}" mixes segment types (${seen.type} in "${seen.first}", ${meta.type} here)`,
+      });
+  }
 
   return errors;
 }

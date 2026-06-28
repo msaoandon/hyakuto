@@ -48,19 +48,32 @@ export function listDays(manifest: Manifest): DayConfig[] {
   return manifest.days;
 }
 
-/** The chats (threads) playable on a day, in first-appearance order, deduped. */
-export function listThreads(
-  manifest: Manifest,
-  day: number,
-): { id: string; display_name: string }[] {
+/** How a playable unit renders: a scrolling chat, or a step-through VN reader. */
+export type ThreadKind = "chat" | "vn";
+
+/** A playable unit (thread) on a day, with its render kind. */
+export type ThreadEntry = { id: string; display_name: string; kind: ThreadKind };
+
+/**
+ * The playable units (threads) on a day, in first-appearance order, deduped.
+ * `kind` is derived from the unit's segment `type` (a `vn` segment makes a VN
+ * unit; everything else is a chat) — structural, not an authored flag. Content
+ * validation enforces that a unit's segments are homogeneous in type.
+ */
+export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
   const dayCfg = manifest.days.find((d) => d.day === day);
   const seen = new Set<string>();
-  const threads: { id: string; display_name: string }[] = [];
+  const threads: ThreadEntry[] = [];
   for (const id of dayCfg?.segments ?? []) {
-    const tid = manifest.segments[id]?.thread_id;
+    const meta = manifest.segments[id];
+    const tid = meta?.thread_id;
     if (!tid || seen.has(tid)) continue;
     seen.add(tid);
-    threads.push({ id: tid, display_name: manifest.threads[tid]?.display_name ?? tid });
+    threads.push({
+      id: tid,
+      display_name: manifest.threads[tid]?.display_name ?? tid,
+      kind: meta?.type === "vn" ? "vn" : "chat",
+    });
   }
   return threads;
 }

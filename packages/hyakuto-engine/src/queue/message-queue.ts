@@ -69,10 +69,12 @@ export function resolveQueue(
     if (msg.pool) {
       const variant = selectFromPool(msg.id, msg.pool, state);
       text = variant.text;
-    } else if (msg.text) {
-      text = msg.text;
-    } else {
+    } else if (msg.text === undefined) {
       throw new Error(`Message "${msg.id}" has neither text nor pool`);
+    } else if (msg.text.trim() === "") {
+      throw new Error(`Message "${msg.id}" has empty text`);
+    } else {
+      text = msg.text;
     }
 
     // Look up character typing rate

@@ -603,3 +603,82 @@ describe("playDay", () => {
     await expect(engine.playDay()).rejects.toThrow("No day loaded");
   });
 });
+
+describe("stepped play (VN reader)", () => {
+  const vnSegment: SegmentInput = {
+    id: "vn_seg",
+    messages: [
+      { id: "n1", character: "narrator", text: "The shop is empty." },
+      { id: "n2", character: "narrator", text: "Lanterns flicker." },
+    ],
+  };
+
+  it("shows one message at a time, blocking until advance()", async () => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(vnSegment);
+
+    const done = engine.play({ stepped: true }); // not awaited — it parks on the gate
+
+    // Let the microtask queue flush, then assert only the first line showed.
+    await Promise.resolve();
+    expect(shownTexts(events)).toEqual(["The shop is empty."]);
+    expect(events.some((e) => e.type === "segment_complete")).toBe(false);
+
+    engine.advance();
+    await Promise.resolve();
+    expect(shownTexts(events)).toEqual(["The shop is empty.", "Lanterns flicker."]);
+
+    engine.advance(); // release the final line's gate → completes
+    await done;
+    expect(events.some((e) => e.type === "segment_complete")).toBe(true);
+  });
+
+  it("emits no typing-indicator events in stepped mode", async () => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(vnSegment);
+    const done = engine.play({ stepped: true });
+    engine.advance();
+    await Promise.resolve();
+    engine.advance();
+    await done;
+    expect(events.some((e) => e.type === "typing_start")).toBe(false);
+    expect(events.some((e) => e.type === "typing_end")).toBe(false);
+  });
+
+  it("advance() is a no-op when nothing is waiting", () => {
+    const engine = createEngine({ config, onEvent: () => {} });
+    expect(() => engine.advance()).not.toThrow();
+  });
+
+  it("a choice gates instead of advance(); chooseOption resumes the reader", async () => {
+    const events: EngineEvent[] = [];
+    const seg: SegmentInput = {
+      id: "vn_choice",
+      messages: [{ id: "q", character: "narrator", text: "Pick." }],
+      choices: { q: { options: [{ text: "A" }, { text: "B" }] } },
+    };
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(seg);
+    const done = engine.play({ stepped: true });
+    await Promise.resolve();
+    expect(events.some((e) => e.type === "choice_required")).toBe(true);
+    engine.chooseOption(0);
+    await done;
+    expect(events.some((e) => e.type === "segment_complete")).toBe(true);
+  });
+});
+
+describe("empty message text", () => {
+  it("throws a clear error on a blank message", async () => {
+    const engine = createEngine({ config, onEvent: () => {} });
+    engine.setPace(0);
+    expect(() =>
+      engine.loadSegment({
+        id: "blank",
+        messages: [{ id: "e1", character: "narrator", text: "   " }],
+      }),
+    ).toThrow("empty text");
+  });
+});

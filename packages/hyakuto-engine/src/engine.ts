@@ -47,7 +47,15 @@ type EventHandler = (event: EngineEvent) => void;
 
 export interface Engine {
   loadSegment(segment: SegmentInput): void;
-  play(): Promise<void>;
+  /**
+   * Play the loaded segment. In `stepped` mode (VN reader) the loop pauses after
+   * each shown message until `advance()` is called, and emits no typing-indicator
+   * events (the UI reveals text word-by-word instead). Default mode drips messages
+   * on timers with typing indicators (chat).
+   */
+  play(opts?: { stepped?: boolean }): Promise<void>;
+  /** Resolve the pending step in `stepped` mode; no-op if nothing is waiting. */
+  advance(): void;
   loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void;  // ← add
   playDay(): Promise<void>;                                               // ← add
   chooseOption(index: number): void;
@@ -97,6 +105,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
   let segmentsById: Record<string, SegmentInput> = {};
   let queue: QueuedMessage[] = [];
   let waitingForChoice: ((index: number) => void) | null = null;
+  let waitingForAdvance: (() => void) | null = null;
 
   function applyMessageEffects(msg: QueuedMessage): void {
     if (msg.effects) {
@@ -156,29 +165,32 @@ export function createEngine(options: CreateEngineOptions): Engine {
       return counter.start;
     },
 
-    async play(): Promise<void> {
+    async play(opts?: { stepped?: boolean }): Promise<void> {
       if (!currentSegment) {
         throw new Error("No segment loaded. Call loadSegment() first.");
       }
-      
+      const stepped = opts?.stepped ?? false;
+
       onEvent({ type: "segment_start", segmentId: currentSegment.id });
 
       for (const item of queue) {
         if (item.kind === "cue") {
+          // Cues (incl. the VN `scene` cue) fire immediately — they precede a
+          // message and never gate, in either mode.
           onEvent({ type: "cue", channel: item.channel!, value: item.value! });
           continue;
         }
 
-        // Delay before typing
-        if (item.delay_ms > 0) {
-          await sleep(item.delay_ms);
-        }
-
-        // Typing indicator
-        if (item.typing_ms > 0) {
-          onEvent({ type: "typing_start", character: item.character, duration: item.typing_ms });
-          await sleep(item.typing_ms);
-          onEvent({ type: "typing_end", character: item.character });
+        if (!stepped) {
+          // Timed playback: delay, then a typing indicator before the message.
+          if (item.delay_ms > 0) {
+            await sleep(item.delay_ms);
+          }
+          if (item.typing_ms > 0) {
+            onEvent({ type: "typing_start", character: item.character, duration: item.typing_ms });
+            await sleep(item.typing_ms);
+            onEvent({ type: "typing_end", character: item.character });
+          }
         }
 
         // Show message
@@ -237,6 +249,12 @@ export function createEngine(options: CreateEngineOptions): Engine {
               }
             }
           }
+        } else if (stepped) {
+          // VN reader: hold on this message until the player advances. A choice
+          // is its own gate, so only non-choice messages wait here.
+          await new Promise<void>((resolve) => {
+            waitingForAdvance = resolve;
+          });
         }
       }
 
@@ -268,6 +286,15 @@ export function createEngine(options: CreateEngineOptions): Engine {
       }
       waitingForChoice(index);
       waitingForChoice = null;
+    },
+
+    advance(): void {
+      // No-op when nothing is waiting: the UI may call this during text reveal
+      // or after the segment has already completed.
+      if (!waitingForAdvance) return;
+      const resume = waitingForAdvance;
+      waitingForAdvance = null;
+      resume();
     },
 
     setPace(newPace: PaceLevel): void {

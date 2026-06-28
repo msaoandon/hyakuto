@@ -49,12 +49,19 @@ export function DayView({ day }: { day: string }) {
           );
         }
 
+        // VN units render in a different player than chats; route by kind.
+        const href =
+          thread.kind === "vn"
+            ? `/play/day/${dayNum}/vn/${thread.id}`
+            : `/play/day/${dayNum}/${thread.id}`;
+
         return (
           <Link
             key={thread.id}
-            href={`/play/day/${dayNum}/${thread.id}`}
+            href={href}
             className={`w-64 text-center py-2 rounded-lg bg-[#a5cbfd] text-ink-black ${done ? "opacity-60" : ""}`}
           >
+            {thread.kind === "vn" ? "📖 " : ""}
             {thread.display_name}
             {done ? " ✓" : ""}
           </Link>
