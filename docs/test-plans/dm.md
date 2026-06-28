@@ -62,7 +62,7 @@ has "messaged" you. (The DM surfaces on its first segment's condition.)
 
 Steps:
   1. Tap Ren in the inbox.
-Expected: opens a chat-style conversation (`/story/dms/dm_ren`) with the contact's
+Expected: opens a chat-style conversation (`/story/dms/dm_1`) with the contact's
 name in the header; messages stream, typing indicators show, and MC choices work
 exactly as in a group chat.
 
@@ -115,17 +115,17 @@ Steps:
 Expected: the DM's OST plays (cue ▸ thread `ost` ▸ default) — the `/story/dms`
 route resolves music, it is not stuck on app-ambient.
 
-## DM-09 — Replaying a completed DM strips effects
+## DM-09 — Replaying a caught-up DM is read-only
 - area: dm
 - priority: med
 - platforms: [ios, android, web]
 - automatable: yes
 
-Preconditions: the Ren DM completed once.
+Preconditions: the Ren DM fully read (no unread).
 Steps:
-  1. Re-open it from the inbox and play through.
-Expected: lines and choices still render, but effects do not re-apply (no
-double-counting). Replay is read-only.
+  1. Re-open it from the inbox.
+Expected: the conversation re-shows as a read-back — effects do not re-apply (no
+double-counting) and choices are not prompted. (See DM-18 for the no-prompt UX.)
 
 ## DM-10 — Interrupted DM is not completed
 - area: dm
@@ -147,7 +147,7 @@ the partial play persist.
 
 Steps:
   1. Inspect each day's chat list for the DM's `thread_id`.
-  2. Navigate directly to `/story/chat/1/dm_ren`.
+  2. Navigate directly to `/story/chat/1/dm_1`.
 Expected: the DM never lists in a day; the chat route is not generated for a `dm`
 thread (it lives only at `/story/dms/<thread>`).
 
@@ -163,3 +163,89 @@ Steps:
 Expected: validation errors — DMs gate by `condition`, not the wall-clock
 `unlock_after`. (Also: a thread mixing `dm` and non-`dm` segments fails the
 homogeneous-type check.)
+
+## DM-13 — Unread badge appears when a DM has new messages
+- area: dm
+- priority: high
+- platforms: [ios, android, web]
+- automatable: yes
+
+Steps:
+  1. Complete the day-1 Oiwa chat.
+  2. Look at the Story hub's DMs door and the inbox.
+Expected: the DMs door shows a total-unread badge and the inbox shows a per-DM
+unread count (Ren = 1) — the opener `dm_1a` is unread.
+
+## DM-14 — Reading a DM clears its unread badge
+- area: dm
+- priority: high
+- platforms: [ios, android, web]
+- automatable: partial
+
+Preconditions: Ren shows unread.
+Steps:
+  1. Open Ren and play to the end.
+  2. Return to the inbox / hub.
+Expected: after completion the unread count clears — the inbox shows ✓, the hub
+badge drops. (Read state is marked on completion, not merely on open.)
+
+## DM-15 — A later-gated segment arrives as a new message
+- area: dm
+- priority: high
+- platforms: [ios, android, web]
+- automatable: yes
+
+Preconditions: `dm_1a` already read (DM caught up, ✓).
+Steps:
+  1. Complete the day-2 Okiku chat (`day2_01`).
+  2. Open the inbox.
+Expected: Ren shows an unread badge again (1) — only the newly-unlocked `dm_1b`
+counts as unread; the already-read opener does not.
+
+## DM-16 — Re-entry plays only the new messages (no replay, no re-prompt)
+- area: dm
+- priority: high
+- platforms: [ios, android, web]
+- automatable: partial
+
+Preconditions: `dm_1a` read; `dm_1b` now unread (DM-15).
+Steps:
+  1. Open Ren.
+Expected: only the new `dm_1b` line(s) play — the day-1 opener does NOT replay,
+and the day-1 choice is NOT prompted again. (Regression guard: re-entry used to
+rebuild the whole conversation and re-prompt the answered choice.)
+
+## DM-17 — New-message effects apply once; read history doesn't double-count
+- area: dm
+- priority: high
+- platforms: [ios, android, web]
+- automatable: yes
+
+Steps:
+  1. Note affinity/counters, then read a DM whose new segment carries an effect.
+  2. Re-open the DM after it's caught up.
+Expected: the new segment's effect applies exactly once (the first read);
+re-opening a caught-up DM applies no effects (the read-back is non-interactive).
+
+## DM-18 — Caught-up DM shows a read-back, not a re-prompt
+- area: dm
+- priority: med
+- platforms: [ios, android, web]
+- automatable: partial
+
+Preconditions: Ren fully read (no unread).
+Steps:
+  1. Open Ren again.
+Expected: the conversation shows as a read-back (messages only) — no choice
+prompt appears and no Reply is required; reaching the end offers Exit.
+
+## DM-19 — Read state survives a restart
+- area: dm
+- priority: med
+- platforms: [ios, android, web]
+- automatable: yes
+
+Steps:
+  1. Read a DM, close/reopen the app.
+Expected: the DM stays marked read (no phantom unread badge) — the read cursor
+persists with the save.
