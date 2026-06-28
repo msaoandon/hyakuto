@@ -7,7 +7,7 @@
         "demo_1",
         "vn_1",
         "demo_2",
-        "dm_ren_1"
+        "dm_1a"
       ]
     },
     {
@@ -16,7 +16,7 @@
       "segments": [
         "demo_3",
         "demo_4",
-        "dm_ren_2"
+        "dm_1b"
       ]
     }
   ],
@@ -56,21 +56,21 @@
       "day": 2,
       "thread_id": "day2_02"
     },
-    "dm_ren_1": {
-      "id": "dm_ren_1",
+    "dm_1a": {
+      "id": "dm_1a",
       "type": "dm",
       "route": "common",
       "day": 1,
-      "thread_id": "dm_ren",
+      "thread_id": "dm_1",
       "condition": "completed:1:day1_01"
     },
-    "dm_ren_2": {
-      "id": "dm_ren_2",
+    "dm_1b": {
+      "id": "dm_1b",
       "type": "dm",
       "route": "common",
       "day": 2,
-      "thread_id": "dm_ren",
-      "condition": "completed:1:day1_01"
+      "thread_id": "dm_1",
+      "condition": "completed:2:day2_01"
     }
   },
   "threads": {
@@ -85,17 +85,17 @@
     "day1_vn_01": {
       "display_name": "Test VN"
     },
+    "dm_1": {
+      "display_name": "Ren",
+      "contact": "ren",
+      "ost": "chat_night"
+    },
     "day2_01": {
       "display_name": "Okiku",
       "ost": "chat_night"
     },
     "day2_02": {
       "display_name": "Hanako-san",
-      "ost": "chat_night"
-    },
-    "dm_ren": {
-      "display_name": "Ren",
-      "contact": "Ren",
       "ost": "chat_night"
     }
   }

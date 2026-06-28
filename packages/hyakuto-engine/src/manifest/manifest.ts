@@ -187,10 +187,14 @@ export function isThreadUnlocked(
 // so it can't desync. A day is complete once all its threads are done; the
 // current day is the first incomplete one; the timeline classifies the rest.
 
-/** Every thread on the day has been completed (by its day-scoped key). */
+/**
+ * Every required thread on the day has been completed (by its day-scoped key).
+ * DMs are excluded — they're cross-day, relationship-gated, optional, and tracked
+ * under a separate `dm:` key, so they must not gate day progression.
+ */
 export function isDayComplete(manifest: Manifest, day: number, state: GameState): boolean {
-  const threads = listThreads(manifest, day);
-  if (threads.length === 0) return false; // a day with no threads is never "done"
+  const threads = listThreads(manifest, day).filter((t) => t.kind !== "dm");
+  if (threads.length === 0) return false; // a day with no required threads is never "done"
   return threads.every((t) => state.completed[threadKey(day, t.id)] !== undefined);
 }
 
@@ -402,7 +406,7 @@ export function assembleThread(
 // relationship conditions (segment `condition`), not the day's sequence/time
 // rule. They surface in the Messages inbox, never the day chat list.
 
-/** A DM thread for the inbox: its contact, and whether it has surfaced yet. */
+/** A DM thread for the inbox: its contact, surfaced state, and unlocked segments. */
 export type DmEntry = {
   id: string; // thread_id
   display_name: string; // contact name
@@ -410,6 +414,9 @@ export type DmEntry = {
   /** True once the *first* segment's gate passes — the conversation has started
    *  (the contact has messaged you). Later segments append as they unlock. */
   available: boolean;
+  /** The currently-unlocked segment ids, in day order. Diff against the save's
+   *  read cursor to compute unread ("new messages"). */
+  segments: string[];
 };
 
 /** The completion key for a DM. Cross-day, so distinct from the day-scoped key. */
@@ -436,7 +443,13 @@ function dmSegmentsByThread(manifest: Manifest): { order: string[]; byThread: Re
   return { order, byThread };
 }
 
-/** All DM threads, with their contact and whether any segment has unlocked yet. */
+/** The unlocked segment ids of a DM thread, in day order. */
+export function availableDmSegments(manifest: Manifest, threadId: string, state: GameState): string[] {
+  const { byThread } = dmSegmentsByThread(manifest);
+  return (byThread[threadId] ?? []).filter((id) => isSegmentAvailable(manifest.segments[id], state));
+}
+
+/** All DM threads, with their contact, surfaced state, and unlocked segments. */
 export function listDMs(manifest: Manifest, state: GameState): DmEntry[] {
   const { order, byThread } = dmSegmentsByThread(manifest);
   return order.map((tid) => ({
@@ -445,28 +458,36 @@ export function listDMs(manifest: Manifest, state: GameState): DmEntry[] {
     contact: manifest.threads[tid]?.contact,
     // The first segment in day order is the conversation's opener.
     available: isSegmentAvailable(manifest.segments[byThread[tid]![0]!], state),
+    segments: byThread[tid]!.filter((id) => isSegmentAvailable(manifest.segments[id], state)),
   }));
 }
 
 /**
- * Assemble a DM thread into one flat segment across *all* days, skipping any
- * segment whose gate fails. The cross-day sibling of assembleThread.
+ * Assemble a DM thread into one flat segment. By default it includes every
+ * currently-unlocked segment; pass `segmentIds` to play a subset (e.g. only the
+ * unread "new messages" on re-entry). Ids are intersected with the unlocked set,
+ * so a locked segment can never be forced in. The cross-day sibling of
+ * assembleThread.
+ *
+ * Note: choices are interactive and we don't yet record which option was chosen
+ * (Phase 3). So an *already-read* segment must NOT be replayed interactively — it
+ * would re-prompt. Callers play only unread segments, and use `stripChoices` for
+ * a non-interactive read-back of history.
  */
 export function assembleDM(
   manifest: Manifest,
   content: StoryFile,
   threadId: string,
   state: GameState,
+  segmentIds?: string[],
 ): SegmentInput {
-  const { byThread } = dmSegmentsByThread(manifest);
-  const segmentIds = (byThread[threadId] ?? []).filter((id) =>
-    isSegmentAvailable(manifest.segments[id], state),
-  );
+  const available = availableDmSegments(manifest, threadId, state);
+  const ids = (segmentIds ?? available).filter((id) => available.includes(id));
 
   const blockById: Record<string, Block> = {};
   for (const b of content) blockById[b.block_id] = b;
 
-  const segs = segmentIds
+  const segs = ids
     .map((id) => blockById[id])
     .filter((b): b is Block => Boolean(b))
     .map(convertBlockToSegment);
@@ -492,4 +513,11 @@ export function stripEffects(segment: SegmentInput): SegmentInput {
         )
       : undefined,
   };
+}
+
+/** Return a copy of a segment with its choices removed — a non-interactive
+ *  read-back (the messages stream, but no prompt re-appears). Pairs with
+ *  stripEffects for re-reading a DM that's fully caught up. */
+export function stripChoices(segment: SegmentInput): SegmentInput {
+  return { ...segment, choices: undefined };
 }

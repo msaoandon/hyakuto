@@ -22,10 +22,13 @@ export function ThreadPlayer({
   segment,
   title,
   back,
+  onComplete,
 }: {
   segment: SegmentInput;
   title: string;
   back: string;
+  /** Fires when the thread reaches its end (after the committed save is written). */
+  onComplete?: () => void;
 }) {
   const router = useRouter();
   const t = useT();
@@ -90,7 +93,10 @@ export function ThreadPlayer({
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
         onImageTap={setOpenImage}
-        onThreadEnded={() => setThreadEnded(true)}
+        onThreadEnded={() => {
+          setThreadEnded(true);
+          onComplete?.();
+        }}
       />
       <footer className="shrink-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-black/10">
         {showExit ? (

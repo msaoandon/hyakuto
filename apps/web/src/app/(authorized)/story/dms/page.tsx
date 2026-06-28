@@ -16,6 +16,7 @@ export default function DmInboxPage() {
   const t = useT();
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
+  const dmRead = useGameStore((s) => s.dmRead);
 
   const dms = useMemo(
     () => listDMs(saveToState(save, completed)).filter((d) => d.available),
@@ -31,16 +32,24 @@ export default function DmInboxPage() {
           <p className="m-auto text-ink-black/50">{t("story.dmsEmpty")}</p>
         ) : (
           dms.map((dm) => {
-            const done = `dm:${dm.id}` in completed;
+            // Unread = unlocked segments the player hasn't read yet ("new messages").
+            const seen = new Set(dmRead[dm.id] ?? []);
+            const unread = dm.segments.filter((id) => !seen.has(id)).length;
             return (
               <Link
                 key={dm.id}
                 href={`/story/dms/${dm.id}`}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-[#a5cbfd] text-ink-black ${done ? "opacity-60" : ""}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-[#a5cbfd] text-ink-black ${unread === 0 ? "opacity-60" : ""}`}
               >
                 <Avatar name={dm.contact ?? dm.display_name} />
-                <span className="flex-1">{dm.display_name}</span>
-                {done ? <span>✓</span> : null}
+                <span className="flex-1 font-medium">{dm.display_name}</span>
+                {unread > 0 ? (
+                  <span className="min-w-5 h-5 px-1.5 rounded-full bg-ink-black text-beige text-xs font-bold flex items-center justify-center">
+                    {unread}
+                  </span>
+                ) : (
+                  <span>✓</span>
+                )}
               </Link>
             );
           })

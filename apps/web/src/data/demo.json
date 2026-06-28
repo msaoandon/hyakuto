@@ -643,7 +643,7 @@
       {
         "type": "cue",
         "channel": "scene",
-        "value": "bookshop.jpg"
+        "value": "bookshop"
       },
       {
         "type": "message",
@@ -687,20 +687,90 @@
     ]
   },
   {
-    "block_id": "dm_ren_1",
+    "block_id": "demo_5",
     "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "suspense"
+      },
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "hey. that Oiwa story Kō told — you were quiet the whole time."
+          "Are you ok?"
         ]
       },
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "you ok?"
+          "Sweet dreams."
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "You too"
+          },
+          {
+            "text": "I'm good"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_5",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "suspense"
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "Glad to hear that."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "Tell me if domething feels off."
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Got it."
+          },
+          {
+            "text": "Don't worry about me."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "dm_1a",
+    "items": [
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "hey. that Oiwa story — you went quiet."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "you good?"
         ]
       },
       {
@@ -716,7 +786,7 @@
             ]
           },
           {
-            "text": "That comb part got me, not gonna lie."
+            "text": "That comb part got me."
           }
         ]
       },
@@ -730,20 +800,20 @@
     ]
   },
   {
-    "block_id": "dm_ren_2",
+    "block_id": "dm_1b",
     "items": [
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "couldn't sleep. kept hearing the comb thing."
+          "couldn't sleep. kept hearing the comb."
         ]
       },
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "anyway. glad you're around."
+          "anyway — glad you're around."
         ]
       }
     ]

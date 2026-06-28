@@ -11,8 +11,9 @@ case-vs-run distinction are documented in [audio.md](audio.md).
 ## Shared preconditions
 
 - App built and synced: `cd apps/web && pnpm build && npx cap sync <platform>` (or `pnpm dev` for web).
-- The demo content: DM `dm_ren` (Ren), gated on completing the day-1 Oiwa chat
-  (`day1_01`), with a day-1 opener + a day-2 continuation.
+- The demo content: DM `dm_1` (Ren) — an opener `dm_1a` gated on completing the
+  day-1 Oiwa chat (`completed:1:day1_01`), and a continuation `dm_1b` gated on the
+  day-2 Okiku chat (`completed:2:day2_01`) so it arrives later as a new message.
 - A way to reach known progress (play chats / dev console).
 
 ---

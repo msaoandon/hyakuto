@@ -15,6 +15,7 @@ import {
   dayStatus,
   listDMs,
   assembleDM,
+  availableDmSegments,
   dmKey,
   type Manifest,
 } from "../src/manifest/manifest";
@@ -372,9 +373,22 @@ describe("day progress (derived current day)", () => {
     completed: Object.fromEntries(keys.map((k) => [k, 0])),
   });
 
-  it("isDayComplete is true only when every thread on the day is done", () => {
+  it("isDayComplete is true only when every required thread on the day is done", () => {
     expect(isDayComplete(m, 1, emptyState())).toBe(false);
     expect(isDayComplete(m, 1, withDone(threadKey(1, "t1")))).toBe(true);
+  });
+
+  it("a DM on the day does NOT block day completion (DMs are optional, cross-day)", () => {
+    const withDm: Manifest = {
+      days: [{ day: 1, route: "common", segments: ["a", "d"] }],
+      segments: {
+        a: { id: "a", type: "group_chat", day: 1, thread_id: "t1" },
+        d: { id: "d", type: "dm", day: 1, thread_id: "dm_ren" },
+      },
+      threads: { t1: { display_name: "T1" }, dm_ren: { display_name: "Ren" } },
+    };
+    // The chat is done; the DM is never completed under a day key — day still completes.
+    expect(isDayComplete(withDm, 1, withDone(threadKey(1, "t1")))).toBe(true);
   });
 
   it("currentDay is the first incomplete day", () => {
@@ -396,56 +410,73 @@ describe("day progress (derived current day)", () => {
 });
 
 describe("DM threads (cross-day, relationship-gated)", () => {
-  // dm_ren spans day 1 (gated on a completed chat) and day 2 (always); a chat
-  // thread sits alongside to prove DMs are separated from the day list.
+  // dm_ren opens on day 1 (gated on chat1) and continues on day 2 (gated on
+  // chat2, later) — so the day-2 line arrives as a "new message".
   const m: Manifest = {
     days: [
       { day: 1, route: "common", segments: ["c1", "d1"] },
-      { day: 2, route: "common", segments: ["d2"] },
+      { day: 2, route: "common", segments: ["c2", "d2"] },
     ],
     segments: {
       c1: { id: "c1", type: "group_chat", day: 1, thread_id: "chat1" },
       d1: { id: "d1", type: "dm", day: 1, thread_id: "dm_ren", condition: "completed:1:chat1" },
-      d2: { id: "d2", type: "dm", day: 2, thread_id: "dm_ren" },
+      c2: { id: "c2", type: "group_chat", day: 2, thread_id: "chat2" },
+      d2: { id: "d2", type: "dm", day: 2, thread_id: "dm_ren", condition: "completed:2:chat2" },
     },
     threads: {
-      chat1: { display_name: "Chat" },
+      chat1: { display_name: "C1" },
+      chat2: { display_name: "C2" },
       dm_ren: { display_name: "Ren", contact: "Ren" },
     },
   };
   const content = [
     { block_id: "c1", items: [{ type: "message", character: "Kou", messages: ["hi"] }] },
-    { block_id: "d1", items: [{ type: "message", character: "Ren", messages: ["day1 dm"] }] },
+    {
+      block_id: "d1",
+      items: [{ type: "message", character: "Ren", messages: ["day1 dm"], effects: [{ axis: "trust", delta: 1 }] }],
+    },
     { block_id: "d2", items: [{ type: "message", character: "Ren", messages: ["day2 dm"] }] },
   ] satisfies StoryFile;
-  const done = (key: string): GameState => ({ ...emptyState(), completed: { [key]: 0 } });
+  const done = (...keys: string[]): GameState => ({
+    ...emptyState(),
+    completed: Object.fromEntries(keys.map((k) => [k, 0])),
+  });
+  const opened = threadKey(1, "chat1");
+  const progressed = threadKey(2, "chat2");
 
   it("listThreads tags a dm segment's unit with kind 'dm'", () => {
     expect(listThreads(m, 1).find((t) => t.id === "dm_ren")?.kind).toBe("dm");
   });
 
-  it("listDMs reports availability from the first segment (conversation start)", () => {
+  it("listDMs: availability + the growing set of unlocked segments", () => {
     expect(listDMs(m, emptyState())).toEqual([
-      { id: "dm_ren", display_name: "Ren", contact: "Ren", available: false },
+      { id: "dm_ren", display_name: "Ren", contact: "Ren", available: false, segments: [] },
     ]);
-    expect(listDMs(m, done(threadKey(1, "chat1")))[0]!.available).toBe(true);
+    expect(listDMs(m, done(opened))[0]).toMatchObject({ available: true, segments: ["d1"] });
+    expect(listDMs(m, done(opened, progressed))[0]!.segments).toEqual(["d1", "d2"]);
   });
 
-  it("assembleDM concatenates only the unlocked segments across days", () => {
-    // Locked: only the ungated day-2 segment is available.
-    expect(assembleDM(m, content, "dm_ren", emptyState()).messages.map((x) => x.text)).toEqual([
-      "day2 dm",
-    ]);
-    // Unlocked: completing chat1 reveals the day-1 segment too, in day order.
-    const s = done(threadKey(1, "chat1"));
-    expect(assembleDM(m, content, "dm_ren", s).messages.map((x) => x.text)).toEqual([
-      "day1 dm",
-      "day2 dm",
-    ]);
+  it("availableDmSegments grows as later gates pass", () => {
+    expect(availableDmSegments(m, "dm_ren", emptyState())).toEqual([]);
+    expect(availableDmSegments(m, "dm_ren", done(opened))).toEqual(["d1"]);
+    expect(availableDmSegments(m, "dm_ren", done(opened, progressed))).toEqual(["d1", "d2"]);
   });
 
-  it("assembleDM uses a dm: id (cross-day completion key)", () => {
-    expect(assembleDM(m, content, "dm_ren", emptyState()).id).toBe(dmKey("dm_ren"));
-    expect(dmKey("dm_ren")).toBe("dm:dm_ren");
+  it("assembleDM defaults to all unlocked segments, with a dm: id", () => {
+    const seg = assembleDM(m, content, "dm_ren", done(opened, progressed));
+    expect(seg.messages.map((x) => x.text)).toEqual(["day1 dm", "day2 dm"]);
+    expect(seg.id).toBe(dmKey("dm_ren"));
+  });
+
+  it("assembleDM plays only the requested (unread) segments on re-entry", () => {
+    const state = done(opened, progressed);
+    // Re-open after reading d1 → play only the new d2 (no day-1 replay/re-prompt).
+    const seg = assembleDM(m, content, "dm_ren", state, ["d2"]);
+    expect(seg.messages.map((x) => x.text)).toEqual(["day2 dm"]);
+  });
+
+  it("assembleDM never forces in a locked segment", () => {
+    // d2 isn't unlocked yet (only chat1 done) — asking for it yields nothing.
+    expect(assembleDM(m, content, "dm_ren", done(opened), ["d2"]).messages).toEqual([]);
   });
 });

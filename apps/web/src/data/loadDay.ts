@@ -11,6 +11,7 @@ import {
   dayStatus as dayStat,
   listDMs as dms,
   assembleDM as assembleDmThread,
+  availableDmSegments as availDmSegs,
   type DayStatus,
   type DmEntry,
 } from "@hyakuto/engine";
@@ -41,8 +42,11 @@ export const dayStatus = (day: number, state: GameState): DayStatus => dayStat(m
 
 export const listDMs = (state: GameState) => dms(manifest, state);
 
-export const assembleDM = (threadId: string, state: GameState) =>
-  assembleDmThread(manifest, content, threadId, state);
+export const assembleDM = (threadId: string, state: GameState, segmentIds?: string[]) =>
+  assembleDmThread(manifest, content, threadId, state, segmentIds);
+
+export const availableDmSegments = (threadId: string, state: GameState) =>
+  availDmSegs(manifest, threadId, state);
 
 // All DM thread ids (state-independent) — for build-time static params.
 const NO_STATE: GameState = {
@@ -56,4 +60,4 @@ export const dmThreadIds = () => dms(manifest, NO_STATE).map((d) => d.id);
 
 export type { DayStatus, DmEntry };
 
-export { stripEffects } from "@hyakuto/engine";
+export { stripEffects, stripChoices } from "@hyakuto/engine";

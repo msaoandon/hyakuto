@@ -23,7 +23,11 @@ type GameStore = {
   completed: Record<string, number>;
   /** Active cue value per channel during chat playback (transient — not persisted). */
   cues: Record<string, string>;
+  /** Read cursor per DM thread: the segment ids the player has seen. Drives the
+   *  inbox "new message" badge and per-segment effect application on re-entry. */
+  dmRead: Record<string, string[]>;
   completeThread: (key: string, save: SaveState) => void;
+  markDmRead: (threadId: string, segmentIds: string[]) => void;
   reset: () => void;
   setLocale: (locale: Locale) => void;
   setCue: (channel: string, value: string) => void;
@@ -37,11 +41,17 @@ export const useGameStore = create<GameStore>()(
       locale: DEFAULT_LOCALE,
       completed: {},
       cues: {},
+      dmRead: {},
       completeThread: (key, save) =>
         set((s) =>
           key in s.completed ? {} : { save, completed: { ...s.completed, [key]: Date.now() } },
         ),
-      reset: () => set({ save: freshSave(), completed: {} }),
+      markDmRead: (threadId, segmentIds) =>
+        set((s) => {
+          const seen = new Set([...(s.dmRead[threadId] ?? []), ...segmentIds]);
+          return { dmRead: { ...s.dmRead, [threadId]: [...seen] } };
+        }),
+      reset: () => set({ save: freshSave(), completed: {}, dmRead: {} }),
       setLocale: (locale) => set({ locale }),
       setCue: (channel, value) => set((s) => ({ cues: { ...s.cues, [channel]: value } })),
       clearCues: () => set({ cues: {} }),
@@ -50,7 +60,7 @@ export const useGameStore = create<GameStore>()(
       name: "hyakuto-save",
       version: 1,
       storage: createJSONStorage(() => idbStorage),
-      partialize: (s) => ({ save: s.save, locale: s.locale, completed: s.completed }),
+      partialize: (s) => ({ save: s.save, locale: s.locale, completed: s.completed, dmRead: s.dmRead }),
       // v0 stored `completed` as a string[] (membership only). v1 needs timestamps to
       // anchor time-gated unlocks; legacy entries get 0 ("completed long ago"), which
       // leaves any successor's time gate already satisfied — the safe direction.

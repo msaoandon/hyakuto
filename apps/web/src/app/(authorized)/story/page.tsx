@@ -6,7 +6,7 @@ import { gameConfig } from "@hyakuto/game";
 import { Avatar } from "@/components/chat/Avatar";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { LanternBackground } from "@/components/LanternBackground";
-import { currentDay } from "@/data/loadDay";
+import { currentDay, listDMs } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { useT } from "@/i18n";
 
@@ -17,9 +17,20 @@ export default function StoryHubPage() {
   const t = useT();
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
+  const dmRead = useGameStore((s) => s.dmRead);
 
   const day = useMemo(() => currentDay(saveToState(save, completed)), [save, completed]);
   const candles = save.counters.candles ?? 0;
+
+  // Total unread across started DMs — surfaced on the DMs door.
+  const dmUnread = useMemo(() => {
+    return listDMs(saveToState(save, completed))
+      .filter((d) => d.available)
+      .reduce((n, d) => {
+        const seen = new Set(dmRead[d.id] ?? []);
+        return n + d.segments.filter((id) => !seen.has(id)).length;
+      }, 0);
+  }, [save, completed, dmRead]);
 
   return (
     <>
@@ -58,9 +69,14 @@ export default function StoryHubPage() {
           </Link>
           <Link
             href="/story/dms"
-            className="text-center py-4 rounded-2xl text-lg font-semibold bg-ink-black text-beige border-2 border-[#2f406d]"
+            className="relative text-center py-4 rounded-2xl text-lg font-semibold bg-ink-black text-beige border-2 border-[#2f406d]"
           >
             {t("story.dms")}
+            {dmUnread > 0 && (
+              <span className="absolute -top-2 -right-2 min-w-6 h-6 px-1.5 rounded-full bg-red-500 text-white text-sm font-bold flex items-center justify-center">
+                {dmUnread}
+              </span>
+            )}
           </Link>
         </div>
       </div>
