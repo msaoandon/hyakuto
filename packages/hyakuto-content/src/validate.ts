@@ -53,14 +53,10 @@ export function mergeBlocks(sources: ContentSource[]) {
 export function validateBlocks(
   pool: Map<string, { block: Block; source: string }>,
   config: GameConfig,
-  /** Valid VN scene IDs (keys of the game's sceneDesigns). Passed in to keep this
-   *  validator game-agnostic. Empty → scene cue values are not cross-checked. */
-  scenes: Iterable<string> = [],
 ): ValidationError[] {
   const errors: ValidationError[] = [];
   const chars = new Set([...config.characters.map(c => c.id), ...RESERVED]);
   const targets = new Set([...config.axes, ...config.counters.map(c => c.id)]);
-  const sceneSet = new Set(scenes);
 
   for (const { block, source } of pool.values()) {
     const ctx = { source, segmentId: block.block_id };
@@ -98,8 +94,8 @@ export function validateBlocks(
       if (item.type === 'cue') {
         if (!CUE_CHANNELS.includes(item.channel))
           errors.push({ ...ctx, message: `Unknown cue channel "${item.channel}"` });
-        else if (item.channel === 'scene' && sceneSet.size > 0 && !sceneSet.has(item.value))
-          errors.push({ ...ctx, message: `Unknown scene "${item.value}" (not in sceneDesigns)` });
+        else if (item.channel === 'scene' && !item.value.trim())
+          errors.push({ ...ctx, message: 'Scene cue has an empty value (expected an image file name)' });
       }
     }
   }

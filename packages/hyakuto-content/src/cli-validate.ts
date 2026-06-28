@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { gameConfig, sceneDesigns } from '@hyakuto/game';
+import { gameConfig } from '@hyakuto/game';
 import { mergeBlocks, validateBlocks, validateManifest, isManifest } from './validate';
 
 const dir = path.resolve(process.argv[2] ?? 'content');
@@ -18,7 +18,7 @@ const manifests = sources.filter(s => isManifest(s.data));
 const blockSources = sources.filter(s => !isManifest(s.data));
 
 const { pool, errors: merge } = mergeBlocks(blockSources);
-const all = [...merge, ...validateBlocks(pool, gameConfig, Object.keys(sceneDesigns))];
+const all = [...merge, ...validateBlocks(pool, gameConfig)];
 for (const m of manifests) all.push(...validateManifest(pool, m.data, m.path));
 
 if (all.length) {

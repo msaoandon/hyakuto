@@ -643,7 +643,7 @@
       {
         "type": "cue",
         "channel": "scene",
-        "value": "bookshop"
+        "value": "bookshop.jpg"
       },
       {
         "type": "message",

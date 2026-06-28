@@ -73,23 +73,23 @@ describe('validateBlocks — VN scene cues, empty text, narrator', () => {
   const poolWith = (items: unknown[]) =>
     mergeBlocks([{ path: 'f.json', data: [{ block_id: 'vn_1', items }] }]).pool;
 
-  it('accepts a known scene cue and the reserved narrator voice', () => {
+  it('accepts a scene cue (image file name) and the reserved narrator voice', () => {
     const pool = poolWith([
-      { type: 'cue', channel: 'scene', value: 'bookshop_dusk' },
+      { type: 'cue', channel: 'scene', value: 'bookshop.jpg' },
       { type: 'message', character: 'narrator', messages: ['It is quiet.'] },
     ]);
-    expect(validateBlocks(pool, config, ['bookshop_dusk'])).toEqual([]);
+    expect(validateBlocks(pool, config)).toEqual([]);
   });
 
-  it('flags a scene cue whose value is not a known scene', () => {
-    const pool = poolWith([{ type: 'cue', channel: 'scene', value: 'nope' }]);
-    const errs = validateBlocks(pool, config, ['bookshop_dusk']);
-    expect(errs.some((e) => e.message.includes('Unknown scene "nope"'))).toBe(true);
+  it('flags a scene cue with an empty value', () => {
+    const pool = poolWith([{ type: 'cue', channel: 'scene', value: '  ' }]);
+    const errs = validateBlocks(pool, config);
+    expect(errs.some((e) => e.message.includes('Scene cue has an empty value'))).toBe(true);
   });
 
   it('flags an empty message text', () => {
     const pool = poolWith([{ type: 'message', character: 'narrator', messages: ['  '] }]);
-    const errs = validateBlocks(pool, config, []);
+    const errs = validateBlocks(pool, config);
     expect(errs.some((e) => e.message.includes('empty text'))).toBe(true);
   });
 });
