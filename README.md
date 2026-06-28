@@ -131,10 +131,10 @@ Story content is authored in a Google Sheet and exported to JSON via Apps Script
 | Column | Required | Description |
 |--------|----------|-------------|
 | `block_id` | yes | Groups rows into blocks (e.g. `demo_1`). Empty cells auto-fill from the row above |
-| `character` | for messages | Character ID — must match engine config (e.g. `Ao`, `Kou`, `Tatsumi`). On `choice` rows, set to `dev` for a dev-voiced choice; leave blank for MC |
+| `character` | for messages | Character ID — must match engine config (e.g. `Ao`, `Kou`, `Tatsumi`). Use `narrator` for VN prose (no name/avatar). On `choice` rows, set to `dev` for a dev-voiced choice; leave blank for MC |
 | `type` | yes | Row type: `message`, `status`, `choice`, `typing`, `pool`, `sticker`, `image`, `cue` |
-| `channel` | for cues | Cue channel: `music`, `glitch`, etc. |
-| `value` | for cues | Target state for the channel (e.g. `ambient_01`, `on`) |
+| `channel` | for cues | Cue channel: `music`, `glitch`, `scene` |
+| `value` | for cues | Target state for the channel (e.g. `suspense`, `on`, `bookshop.jpg`) |
 | `text` | for messages/status | Message content. Supports `{MC}` and `{@MC}` placeholders, and inline `<b>`, `<i>`, `<u>` formatting tags. For `sticker`/`image` rows, the filename |
 | `weight` | for pools | Relative selection weight of a pool variant (default 1) |
 | `if_*` | no | A condition column. One predicate per cell (e.g. `candles<60`, `flag:path_unlocked`). All non-empty `if_` cells on a row are AND-ed together — see *Authoring grammar* below |
@@ -184,8 +184,9 @@ Cues set the state of a named **channel**, and that state holds until another cu
 |---------|---------|----------|
 | `music` | a theme name (e.g. `suspense`, `chat_night`) | `base` — revert to the chat's OST/default playlist (not silence) |
 | `glitch` | `on` | `off` |
+| `scene` | an image file name in `public/scenes/` (e.g. `bookshop.jpg`) | — (no off; the next `scene` cue replaces it) |
 
-A `music` value is a **theme** (a folder under `public/music/`); see the *Threads Tab* OST notes. A cue can carry a `condition` like any other row — e.g. a glitch cue gated on `sanity<5` only fires when the player is rattled.
+A `music` value is a **theme** (a folder under `public/music/`); see the *Threads Tab* OST notes. The `scene` channel is **VN-only** — it sets the full-screen background and is how VN scenes are authored (see *VN Segments*); its value is the image file name, served from `public/scenes/`, and the reader crossfades when it changes. A cue can carry a `condition` like any other row — e.g. a glitch cue gated on `sanity<5` only fires when the player is rattled.
 
 Example — suspense music + glitch turn on as a ghost story begins, then **both turn off** when discussion resumes (note each channel has its own off row, and they don't cancel each other):
 
@@ -196,6 +197,24 @@ Example — suspense music + glitch turn on as a ghost story begins, then **both
 | demo_5 | Kou | message | | | the well was never empty |
 | demo_5 | | cue | glitch | off | |
 | demo_5 | | cue | music | base | |
+
+### VN Segments
+
+A `vn` segment is a **visual-novel scene**, not a chat. It plays in a dedicated full-screen reader (one line at a time, **Next / Auto / Skip** controls), never inside a chat stream. Authoring differs from chat in three ways:
+
+- **Grouping.** Give the `vn` segment a `thread_id` in `_manifest`, just like a chat. It's listed alongside chats on the day and unlocks the same way; its render kind (chat vs VN reader) is derived from `seg_type`. All segments sharing a `thread_id` must be the same `seg_type` (content validation enforces this).
+- **Prose vs speech.** A `narrator` message renders as prose (no name, no avatar). Any other `character` renders as a styled speech caption over the scene. MC `choice` rows work as usual — the chooser appears over the scene once the prompting line finishes, and the picked option shows as the MC's line.
+- **Scene background.** Set the background with an inline `cue | scene | <file>` row in the content tab (**not** the `_manifest` `scene` column, which is unused). The value is an image file name served from `public/scenes/` — include the extension (e.g. `bookshop.jpg`); any web-supported format works (webp/jpg/png). Put a new `scene` cue wherever the background should change; the reader crossfades. No scene cue → a default gradient.
+
+| block_id | character | type | channel | value | text |
+|----------|-----------|------|---------|-------|------|
+| vn_1 | | cue | scene | bookshop.jpg | |
+| vn_1 | narrator | message | | | The shop is empty when you arrive. |
+| vn_1 | Tatsumi | message | | | You came. |
+| vn_1 | | cue | scene | street.jpg | |
+| vn_1 | narrator | message | | | Outside, the lanterns have come on. |
+| vn_1 | MC | choice | | | Walk with him |
+| vn_1 | MC | choice | | | Say goodnight |
 
 ### Condition Syntax (inside `if_` cells)
 
@@ -235,9 +254,9 @@ The `_manifest` tab declares how segments assemble into days and how each segmen
 | `route` | yes | Route this day belongs to (e.g. `tatsumi`) |
 | `segment_id` | yes | Stable segment slug. Joins to a message block via its `block_id`. A blank cell silently drops the row |
 | `seg_type` | yes | Segment type: `group_chat`, `dm`, `vn`, or `system` |
-| `thread_id` | chat types | Chat-list grouping key (e.g. `main_hall`, `dm_ren`). Segments sharing a `thread_id` render as one chat thread. Blank for `vn`/`system` |
+| `thread_id` | yes (chat + vn) | Playable-unit grouping key (e.g. `main_hall`, `dm_ren`, `bookshop`). Segments sharing a `thread_id` group into one unit — a chat thread, or a VN reader for `vn`. All segments of a unit must share one `seg_type`. Blank only for `system` |
 | `characters_present` | no | Comma-separated character IDs (e.g. `Ao,Kou,Ren`) |
-| `scene` | for vn | Scene background ID for VN segments |
+| `scene` | — | **Unused.** VN scenes are set by an inline `cue \| scene \| <file>` row in the content tab (see *VN Segments*), not here. Kept for back-compat; leave blank |
 | `condition` | no | Gate expression (same syntax as message conditions). If it evaluates false against game state, the segment is skipped and the next one loads automatically |
 
 Example:
@@ -245,7 +264,7 @@ Example:
 | day | order | route | segment_id | seg_type | thread_id | characters_present | scene | condition |
 |-----|-------|-------|------------|----------|-----------|--------------------|-------|-----------|
 | 1 | 1 | tatsumi | day1_morning | group_chat | main_hall | Ao,Kou,Ren | | |
-| 1 | 2 | tatsumi | day1_bookshop | vn | | Tatsumi | bookshop_interior | flag:met_tatsumi |
+| 1 | 2 | tatsumi | day1_bookshop | vn | bookshop | Tatsumi | | flag:met_tatsumi |
 | 1 | 3 | tatsumi | day1_ren_dm | dm | dm_ren | Ren | | candles<=90 |
 
 The exporter turns this tab into:
@@ -254,7 +273,7 @@ The exporter turns this tab into:
   ```json
   { "day": 1, "route": "tatsumi", "segments": ["day1_morning", "day1_bookshop", "day1_ren_dm"] }
   ```
-- **`segments`** — the per-segment envelope (`type`, `condition`, `thread_id`, `scene`, `characters_present`), keyed by `segment_id`.
+- **`segments`** — the per-segment envelope (`type`, `condition`, `thread_id`, `characters_present`), keyed by `segment_id`.
 
 The engine consumes these to play a day in order, skipping any segment whose `condition` fails — `engine.loadDay(day, segments)` then `engine.playDay()`.
 

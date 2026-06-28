@@ -12,6 +12,7 @@ coding agent to test against.
 |------|--------|
 | [audio.md](audio.md) | Background music: ambient themes, in-chat themes, cues, crossfades, iOS gesture/silent-switch. **Holds the field legend + case/run conventions.** |
 | [chat.md](chat.md) | Thread playback: streaming, typing, choices, images, MC substitution, segment gating, effects, exit. |
+| [vn.md](vn.md) | VN reader: step-through advance, Skip/Next/Auto, scene cues + crossfade, narrator/speech styling, chooser overlay, no-redundant-tap edges. |
 | [persistence.md](persistence.md) | Save state: restart survival, hydration gate, idempotent commits, replay, reset. |
 | [i18n.md](i18n.md) | UI localization (en/uk), live switching, interpolation, key parity. |
 
