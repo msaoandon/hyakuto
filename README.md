@@ -216,6 +216,36 @@ A `vn` segment is a **visual-novel scene**, not a chat. It plays in a dedicated 
 | vn_1 | MC | choice | | | Walk with him |
 | vn_1 | MC | choice | | | Say goodnight |
 
+### DM Segments
+
+A `dm` segment is a **one-on-one direct message**. DMs render like a chat, but they live in the **Messages inbox** (off the Story hub), never in the day's chat list — and they're **ongoing**: one DM thread accumulates segments across many days. Authoring differs from a group chat in three ways:
+
+- **Cross-day grouping.** Reuse one `thread_id` (e.g. `dm_ren`) on `dm` segments across multiple days. The engine concatenates whichever segments are currently unlocked into a single conversation, in day order. (A group chat's `thread_id`, by contrast, is one day.)
+- **Relationship gating, not wall-clock.** A DM surfaces when its **first segment's `condition`** passes — a `completed:<day>:<chat>` dependency, an affinity threshold, a `flag:`, etc. Do **not** use `unlock_after`/`requires` (the chat model); CI errors if a DM thread does. Gate each segment with the `_manifest` `condition` column.
+- **A contact.** The `_threads` row needs a `contact` column — the contact's character ID — which drives the inbox avatar (the `display_name` is the name shown).
+
+**Content tab** — same as a chat (the contact speaks by name; MC choices work normally):
+
+| block_id | character | type | text |
+|----------|-----------|------|------|
+| dm_ren_1 | Ren | message | hey. you were quiet during that story. |
+| dm_ren_1 | Ren | message | you ok? |
+| dm_ren_1 | MC | choice | Just thinking. |
+| dm_ren_1 | MC | choice | That comb part got me. |
+
+**`_manifest`** — `seg_type: dm`, a shared cross-day `thread_id`, a relationship `condition`, blank `scene`:
+
+| day | order | route | segment_id | seg_type | thread_id | scene | condition |
+|-----|-------|-------|------------|----------|-----------|-------|-----------|
+| 1 | 4 | common | dm_ren_1 | dm | dm_ren | | `completed:1:day1_01` |
+| 2 | 3 | common | dm_ren_2 | dm | dm_ren | | `completed:1:day1_01` |
+
+**`_threads`** — one row, with the new `contact` column (no `unlock_after`):
+
+| thread_id | display_name | contact | condition | ost |
+|-----------|--------------|---------|-----------|-----|
+| dm_ren | Ren | Ren | | chat_night |
+
 ### Condition Syntax (inside `if_` cells)
 
 Each `if_` cell holds one boolean predicate, evaluated against the current game state. Multiple `if_` cells on a row AND together (see *Authoring grammar*).
@@ -254,7 +284,7 @@ The `_manifest` tab declares how segments assemble into days and how each segmen
 | `route` | yes | Route this day belongs to (e.g. `tatsumi`) |
 | `segment_id` | yes | Stable segment slug. Joins to a message block via its `block_id`. A blank cell silently drops the row |
 | `seg_type` | yes | Segment type: `group_chat`, `dm`, `vn`, or `system` |
-| `thread_id` | yes (chat + vn) | Playable-unit grouping key (e.g. `main_hall`, `dm_ren`, `bookshop`). Segments sharing a `thread_id` group into one unit — a chat thread, or a VN reader for `vn`. All segments of a unit must share one `seg_type`. Blank only for `system` |
+| `thread_id` | yes (chat + vn + dm) | Playable-unit grouping key (e.g. `main_hall`, `dm_ren`, `bookshop`). Segments sharing a `thread_id` group into one unit — a chat thread, a VN reader (`vn`), or a cross-day DM (`dm`, reused across days). All segments of a unit must share one `seg_type`. Blank only for `system`. See *DM Segments* for the cross-day pattern |
 | `characters_present` | no | Comma-separated character IDs (e.g. `Ao,Kou,Ren`) |
 | `scene` | — | **Unused.** VN scenes are set by an inline `cue \| scene \| <file>` row in the content tab (see *VN Segments*), not here. Kept for back-compat; leave blank |
 | `condition` | no | Gate expression (same syntax as message conditions). If it evaluates false against game state, the segment is skipped and the next one loads automatically |
@@ -284,11 +314,12 @@ Per-thread display and presentation metadata — one row per `thread_id`. A thre
 | Column | Required | Description |
 |--------|----------|-------------|
 | `thread_id` | yes | Joins to the `thread_id` used in `_manifest` |
-| `display_name` | yes | Chat name shown in the day's chat list |
+| `display_name` | yes | Name shown in the day's chat list (or, for a DM, the inbox) |
+| `contact` | DM only | The DM contact's character ID (drives the inbox avatar). Blank for group chats — see *DM Segments* |
 | `condition` | no | Gate for the whole thread (same syntax as message conditions) |
 | `ost` | no | Music **theme** for this chat — a theme name (e.g. `chat_night`). Blank → the default chat theme. Use a **dropdown** (Data → Data validation → list of theme names) for consistency |
 
-Exported into `threads: { [thread_id]: { display_name, condition?, ost? } }`. A theme is a set of folders under `public/music/`; the app's AudioProvider pools their tracks into one playlist (one file loops, many rotate). A blank `ost` falls back to the default chat theme.
+Exported into `threads: { [thread_id]: { display_name, condition?, ost?, contact? } }`. A theme is a set of folders under `public/music/`; the app's AudioProvider pools their tracks into one playlist (one file loops, many rotate). A blank `ost` falls back to the default chat theme.
 
 ### Apps Script Export
 
