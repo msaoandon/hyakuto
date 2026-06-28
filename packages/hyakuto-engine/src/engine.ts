@@ -173,7 +173,8 @@ export function createEngine(options: CreateEngineOptions): Engine {
 
       onEvent({ type: "segment_start", segmentId: currentSegment.id });
 
-      for (const item of queue) {
+      for (let idx = 0; idx < queue.length; idx++) {
+        const item = queue[idx]!;
         if (item.kind === "cue") {
           // Cues (incl. the VN `scene` cue) fire immediately — they precede a
           // message and never gate, in either mode.
@@ -249,12 +250,30 @@ export function createEngine(options: CreateEngineOptions): Engine {
               }
             }
           }
+
+          if (stepped) {
+            // After the pick, hold on the player's answer until they advance —
+            // but only if more dialogue follows. A choice that ends the thread
+            // needs no trailing tap; fall through to segment_complete.
+            const moreToCome = queue.slice(idx + 1).some((it) => it.kind !== "cue");
+            if (moreToCome) {
+              await new Promise<void>((resolve) => {
+                waitingForAdvance = resolve;
+              });
+            }
+          }
         } else if (stepped) {
-          // VN reader: hold on this message until the player advances. A choice
-          // is its own gate, so only non-choice messages wait here.
-          await new Promise<void>((resolve) => {
-            waitingForAdvance = resolve;
-          });
+          // VN reader: gate *between* messages — hold here until the player
+          // advances, but only if another message still follows. The final
+          // message needs no trailing advance (it would be a redundant tap);
+          // the loop falls straight through to segment_complete. (Cues don't
+          // gate, so a trailing cue doesn't count as "more to come".)
+          const moreToCome = queue.slice(idx + 1).some((it) => it.kind !== "cue");
+          if (moreToCome) {
+            await new Promise<void>((resolve) => {
+              waitingForAdvance = resolve;
+            });
+          }
         }
       }
 

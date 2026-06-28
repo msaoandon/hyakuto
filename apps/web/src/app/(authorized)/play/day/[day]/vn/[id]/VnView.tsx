@@ -17,9 +17,11 @@ import { DevConsole } from "@/components/debug/DevConsole";
 import type { PendingChoice } from "@/components/chat/types";
 
 const AUTO_DELAY_MS = 800;
-// The MC chooser appears only after the prompting line has fully typed, plus a
-// beat — it shouldn't interrupt the narration mid-reveal.
+// The MC chooser appears after the prompting line finishes. On a natural finish
+// we hold a beat so it doesn't snatch control away; on a manual Skip the player
+// asked to move on, so show it almost immediately.
 const CHOOSER_DELAY_MS = 1500;
+const CHOOSER_SKIP_DELAY_MS = 150;
 
 export function VnView({ day, id }: { day: string; id: string }) {
   const router = useRouter();
@@ -29,6 +31,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
   const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
   const [chooserVisible, setChooserVisible] = useState(false);
+  const [skipped, setSkipped] = useState(false);
   const [auto, setAuto] = useState(false);
   const [threadEnded, setThreadEnded] = useState(false);
   const [lastEvent, setLastEvent] = useState<string>();
@@ -79,22 +82,34 @@ export function VnView({ day, id }: { day: string; id: string }) {
     return () => clearTimeout(timer);
   }, [auto, current, done, pendingChoice, threadEnded, advance]);
 
-  // Reveal the chooser only once the prompting line has finished typing, after a
-  // short beat. Reset whenever the choice clears (after the player picks).
+  // A fresh message clears the "skipped" intent (it's per-line).
+  useEffect(() => setSkipped(false), [current?.id]);
+
+  // Reveal the chooser once the prompting line has finished typing. Hold a beat
+  // on a natural finish; show it right away if the player skipped to it. Reset
+  // whenever the choice clears (after the player picks).
   useEffect(() => {
     if (!pendingChoice) {
       setChooserVisible(false);
       return;
     }
     if (!current || !done) return;
-    const timer = setTimeout(() => setChooserVisible(true), CHOOSER_DELAY_MS);
+    const timer = setTimeout(
+      () => setChooserVisible(true),
+      skipped ? CHOOSER_SKIP_DELAY_MS : CHOOSER_DELAY_MS,
+    );
     return () => clearTimeout(timer);
-  }, [pendingChoice, current, done]);
+  }, [pendingChoice, current, done, skipped]);
 
-  // Next: snap a still-revealing line to full, otherwise step forward.
+  // Next: snap a still-revealing line to full (recording the skip intent so the
+  // chooser, if any, shows promptly), otherwise step forward.
   const handleNext = () => {
-    if (current && !done) finish();
-    else advance();
+    if (current && !done) {
+      setSkipped(true);
+      finish();
+    } else {
+      advance();
+    }
   };
 
   const handleExit = () => router.push(`/play/day/${dayNum}`);
@@ -119,7 +134,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
       </div>
 
       <footer className="shrink-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-black/10">
-        {threadEnded ? (
+        {threadEnded && done ? (
           <button
             onClick={handleExit}
             className={`w-full py-2 bg-gradient-to-t from-[#162347] to-[#2f406d] ${controlBtn}`}
@@ -132,21 +147,20 @@ export function VnView({ day, id }: { day: string; id: string }) {
           <div className="h-[2.75rem]" />
         ) : (
           <div className="flex items-center gap-2">
-            <button onClick={finish} className={`flex-1 bg-[#162347]/60 ${controlBtn}`}>
-              {t("play.skip")}
-            </button>
             <button
               onClick={() => setAuto((a) => !a)}
               aria-pressed={auto}
-              className={`flex-1 ${controlBtn} ${auto ? "bg-[#2f406d]" : "bg-[#162347]/60"}`}
+              className={`${controlBtn} ${auto ? "bg-[#2f406d]" : "bg-[#162347]/60"}`}
             >
               {t("play.auto")}
             </button>
+            {/* One button: "Skip" while a line is still typing (snaps it to full),
+                "Next" once it's done (advances to the next message). */}
             <button
               onClick={handleNext}
               className={`flex-1 bg-gradient-to-t from-[#162347] to-[#2f406d] ${controlBtn}`}
             >
-              {t("play.next")}
+              {current && !done ? t("play.skip") : t("play.next")}
             </button>
           </div>
         )}

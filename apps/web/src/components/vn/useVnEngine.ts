@@ -44,7 +44,6 @@ export function useVnEngine(segment: SegmentInput, handlers: VnEngineHandlers) {
   const [scene, setScene] = useState<string | undefined>(undefined);
   const engineRef = useRef<Engine | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
-  const pendingChoiceIndexRef = useRef<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,36 +111,31 @@ export function useVnEngine(segment: SegmentInput, handlers: VnEngineHandlers) {
     };
   }, [segment.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Player picks an option: show their line as MC speech first; resuming the
-  // engine (chooseOption) is deferred to the next advance so the line is read.
+  // Player picks an option: show their line as MC speech and resume the engine
+  // immediately. The engine holds before the next line (so the answer stays on
+  // screen) — or completes, if this choice ended the thread, with no extra tap.
   const choose = useCallback(
     (index: number) => {
       const opt = pendingOptionsRef.current[index];
       if (!opt) return;
-      pendingChoiceIndexRef.current = index;
+      pendingOptionsRef.current = [];
       setCurrent({
-        id: `mc_choice_${index}_${Date.now()}`,
+        id: `mc_${index}_${Date.now()}`,
         character: "MC",
         text: opt.text,
         isNarration: false,
         isMC: true,
       });
       onChoiceConsumed();
+      try {
+        engineRef.current?.chooseOption(index);
+      } catch {}
     },
     [onChoiceConsumed],
   );
 
-  // Next: resume past a just-chosen MC line via chooseOption, else step the reader.
+  // Next: release the engine's between-message (or post-choice) gate.
   const advance = useCallback(() => {
-    const i = pendingChoiceIndexRef.current;
-    if (i !== null) {
-      pendingChoiceIndexRef.current = null;
-      pendingOptionsRef.current = [];
-      try {
-        engineRef.current?.chooseOption(i);
-      } catch {}
-      return;
-    }
     engineRef.current?.advance();
   }, []);
 

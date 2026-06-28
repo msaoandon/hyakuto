@@ -652,6 +652,20 @@ describe("stepped play (VN reader)", () => {
     expect(() => engine.advance()).not.toThrow();
   });
 
+  it("does not gate after the final message — completes without a trailing advance", async () => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(vnSegment); // two messages
+    const done = engine.play({ stepped: true });
+
+    await Promise.resolve();
+    engine.advance(); // reveal the second (final) message
+    await done; // resolves with no further advance — the last message doesn't gate
+
+    expect(shownTexts(events)).toEqual(["The shop is empty.", "Lanterns flicker."]);
+    expect(events.some((e) => e.type === "segment_complete")).toBe(true);
+  });
+
   it("a choice gates instead of advance(); chooseOption resumes the reader", async () => {
     const events: EngineEvent[] = [];
     const seg: SegmentInput = {
@@ -666,6 +680,50 @@ describe("stepped play (VN reader)", () => {
     expect(events.some((e) => e.type === "choice_required")).toBe(true);
     engine.chooseOption(0);
     await done;
+    expect(events.some((e) => e.type === "segment_complete")).toBe(true);
+  });
+
+  it("a terminal choice completes without a trailing advance", async () => {
+    const events: EngineEvent[] = [];
+    const seg: SegmentInput = {
+      id: "vn_end_choice",
+      messages: [{ id: "q", character: "narrator", text: "Pick." }],
+      choices: { q: { options: [{ text: "A" }, { text: "B" }] } },
+    };
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(seg);
+    const done = engine.play({ stepped: true });
+    await Promise.resolve();
+    engine.chooseOption(0); // no message follows → completes, no extra advance
+    await done;
+    expect(events.some((e) => e.type === "segment_complete")).toBe(true);
+  });
+
+  it("a non-terminal choice holds on the answer until advance()", async () => {
+    const flush = () => new Promise((r) => setTimeout(r, 0));
+    const events: EngineEvent[] = [];
+    const seg: SegmentInput = {
+      id: "vn_mid_choice",
+      messages: [
+        { id: "q", character: "narrator", text: "Pick." },
+        { id: "after", character: "narrator", text: "After." },
+      ],
+      choices: { q: { options: [{ text: "A" }, { text: "B" }] } },
+    };
+    const engine = createEngine({ config, onEvent: (e) => events.push(e) });
+    engine.loadSegment(seg);
+    const done = engine.play({ stepped: true });
+    await flush();
+
+    engine.chooseOption(0);
+    await flush();
+    // Engine holds before the next line — "After." not shown, not complete.
+    expect(shownTexts(events)).toEqual(["Pick."]);
+    expect(events.some((e) => e.type === "segment_complete")).toBe(false);
+
+    engine.advance();
+    await done;
+    expect(shownTexts(events)).toEqual(["Pick.", "After."]);
     expect(events.some((e) => e.type === "segment_complete")).toBe(true);
   });
 });
