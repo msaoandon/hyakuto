@@ -14,6 +14,7 @@ coding agent to test against.
 | [navigation.md](navigation.md) | App shell: splash/Touch-to-Start, Lobby, Story hub, current-day Chat + Timeline modal, participant profiles, back/exit chains, derived current day. |
 | [chat.md](chat.md) | Thread playback: streaming, typing, choices, images, MC substitution, segment gating, effects, exit. |
 | [vn.md](vn.md) | VN reader: step-through advance, Skip/Next/Auto, scene cues + crossfade, narrator/speech styling, chooser overlay, no-redundant-tap edges. |
+| [dm.md](dm.md) | DMs: Messages inbox off the hub, relationship gating, cross-day 1:1 conversations, shared chat player, exit-to-inbox, authoring guards. |
 | [persistence.md](persistence.md) | Save state: restart survival, hydration gate, idempotent commits, replay, reset. |
 | [i18n.md](i18n.md) | UI localization (en/uk), live switching, interpolation, key parity. |
 
