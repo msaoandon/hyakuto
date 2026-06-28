@@ -11,6 +11,7 @@ coding agent to test against.
 | Plan | Covers |
 |------|--------|
 | [audio.md](audio.md) | Background music: ambient themes, in-chat themes, cues, crossfades, iOS gesture/silent-switch. **Holds the field legend + case/run conventions.** |
+| [navigation.md](navigation.md) | App shell: splash/Touch-to-Start, Lobby, Story hub, current-day Chat + Timeline modal, participant profiles, back/exit chains, derived current day. |
 | [chat.md](chat.md) | Thread playback: streaming, typing, choices, images, MC substitution, segment gating, effects, exit. |
 | [vn.md](vn.md) | VN reader: step-through advance, Skip/Next/Auto, scene cues + crossfade, narrator/speech styling, chooser overlay, no-redundant-tap edges. |
 | [persistence.md](persistence.md) | Save state: restart survival, hydration gate, idempotent commits, replay, reset. |

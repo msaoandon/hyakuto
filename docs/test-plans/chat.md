@@ -94,8 +94,10 @@ messages, and choice option text. No literal `{MC}` remains visible.
 Preconditions: a thread with a `_threads` condition (e.g. demo_4 gated on
 `candles < 60`), and game state on either side of the threshold.
 Steps:
-  1. With `candles >= 60`, open the day chooser — note which chats list.
-  2. Bring `candles < 60` (play the chats that reduce candles), revisit the day.
+  1. With `candles >= 60`, open the day's chat list (Story → Chat) — note which
+     chats list.
+  2. Bring `candles < 60` (play the chats that reduce candles), revisit the chat
+     list.
 Expected: the gated chat is hidden while its condition is false and appears once
 true. The list never shows a chat whose condition is unmet.
 
@@ -112,7 +114,7 @@ Expected: the counter/affinity updates as those items play (visible via candle
 progress / dev console), matching the authored deltas. Image and sticker items
 also fire their effects.
 
-## CHAT-09 — Thread end shows Exit; Exit returns to day chooser
+## CHAT-09 — Thread end shows Exit; Exit returns to the day's chat list
 - area: chat
 - priority: high
 - platforms: [ios, android, web]
@@ -122,7 +124,7 @@ Steps:
   1. Play a thread to completion.
   2. Tap Exit.
 Expected: at the end the action button switches from Reply to Exit; tapping it
-navigates back to that day's chat chooser.
+navigates back to that day's chat list (`/story/chat/<day>`).
 
 ## CHAT-10 — Completed thread is marked done
 - area: chat
@@ -132,7 +134,7 @@ navigates back to that day's chat chooser.
 
 Preconditions: a thread just completed.
 Steps:
-  1. Return to the day chooser.
+  1. Return to the day's chat list.
 Expected: the completed thread shows a ✓ and is visually de-emphasized (dimmed).
 
 ## CHAT-11 — Interrupted thread is not completed (no resume from middle)

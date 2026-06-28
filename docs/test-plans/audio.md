@@ -72,7 +72,7 @@ Expected: daytime (06:00–17:59) plays `app_default`; night (18:00–05:59) pla
 
 Preconditions: ambient music playing (MUS-02 done).
 Steps:
-  1. From the main screen open Day 1, then open a chat.
+  1. From the Lobby open Story → Chat, then open a chat in the day's list.
 Expected: the ambient theme fades out (~1.2s) while the chat theme fades in — a
 smooth crossfade, no hard cut and no gap of silence.
 
@@ -132,7 +132,7 @@ the music channel. (Glitch's own visual/audio effect is out of scope here.)
 
 Preconditions: music playing in a chat.
 Steps:
-  1. Exit the chat back to the day chooser, then to the main screen, then into
+  1. Exit the chat back to the day's chat list, then to the Lobby, then into
      another chat.
 Expected: music never cuts out abruptly on navigation; it crossfades between
 contexts and never fully stops/restarts mid-transition.
@@ -180,7 +180,7 @@ native audio-session override.
 - platforms: [ios, android]
 - automatable: no
 
-Preconditions: a thread already completed (shows ✓ in the day chooser).
+Preconditions: a thread already completed (shows ✓ in the day's chat list).
 Steps:
   1. Re-open the completed thread.
 Expected: music resolves and plays as on first play (replay strips state effects

@@ -23,7 +23,7 @@ case-vs-run distinction are documented in [audio.md](audio.md).
 - automatable: partial
 
 Steps:
-  1. Open the day chooser for a day with a VN unit.
+  1. Open the day's chat list (Story → Chat) for a day with a VN unit.
   2. Tap the VN entry.
 Expected: the VN unit lists alongside chats (marked `📖`); tapping it opens the
 full-screen VN reader (not the chat feed) at `/play/day/<day>/vn/<id>`.
@@ -259,7 +259,7 @@ Expected: the MC's answer shows (Skip available while it types), then **Exit**
 appears directly — no intervening "Next" tap. The sequence is pick → (skip?) →
 Exit, not pick → Skip → Next → Exit.
 
-## VN-21 — Exit returns to the day chooser
+## VN-21 — Exit returns to the day's chat list
 - area: vn
 - priority: high
 - platforms: [ios, android, web]
@@ -267,7 +267,7 @@ Exit, not pick → Skip → Next → Exit.
 
 Steps:
   1. Finish the VN and tap **Exit**.
-Expected: navigates back to that day's chooser; the completed VN shows a ✓ and is
+Expected: navigates back to that day's chat list; the completed VN shows a ✓ and is
 dimmed.
 
 ## VN-22 — Effects/counters apply during VN play
