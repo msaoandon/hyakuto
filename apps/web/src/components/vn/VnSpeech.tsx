@@ -2,6 +2,7 @@
 
 import { getCharacterDesign } from "@hyakuto/game";
 import { MC_NAME } from "../chat/helpers/mc";
+import { formatText } from "../chat/helpers/formatText";
 
 /** A named character (or MC) speaking within a VN scene — a styled caption. */
 export function VnSpeech({
@@ -19,7 +20,7 @@ export function VnSpeech({
       <span className="text-sm font-bold" style={{ color: design.textColor }}>
         {isMC ? MC_NAME : design.displayName}
       </span>
-      <p className="text-xl leading-relaxed text-[#f0e9ee] whitespace-pre-wrap">{text}</p>
+      <p className="text-xl leading-relaxed text-[#f0e9ee] whitespace-pre-wrap">{formatText(text)}</p>
     </div>
   );
 }

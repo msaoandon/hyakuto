@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
  * consecutive lines with identical text still re-animate. `finish()` snaps to the
  * full text instantly (the Skip button / a Next press during reveal).
  */
-export function useTypewriter(id: string, text: string, wordMs = 55) {
+export function useTypewriter(id: string, text: string, wordMs = 130) {
   // Split keeping whitespace as its own tokens, so join("") reconstructs exactly.
   const tokens = useMemo(() => (text ? text.split(/(\s+)/) : []), [text]);
   const [n, setN] = useState(0);

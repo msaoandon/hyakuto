@@ -56,9 +56,11 @@ type Deck = {
  */
 export function AudioProvider() {
   // useParams() is unreliable for nested dynamic params from the root layout;
-  // usePathname() always gives the full URL. Chat route: /play/day/<day>/<thread>
+  // usePathname() always gives the full URL. Chat route: /play/day/<day>/<thread>;
+  // VN route: /play/day/<day>/vn/<id>. Both resolve music the same way (a VN unit
+  // is a thread too), so capture the trailing id past an optional `vn/` segment.
   const pathname = usePathname();
-  const thread = pathname.match(/^\/play\/day\/[^/]+\/([^/]+)\/?$/)?.[1] ?? null;
+  const thread = pathname.match(/^\/play\/day\/[^/]+\/(?:vn\/)?([^/]+)\/?$/)?.[1] ?? null;
   // select only the music channel — a glitch cue changing cues.glitch won't re-render here.
   // "base" is the revert token: it means "back to the chat's base playlist", i.e. no override.
   const rawCue = useGameStore((s) => s.cues.music);

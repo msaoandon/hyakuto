@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { gameConfig } from "@hyakuto/game";
 import { assembleThread, stripEffects } from "@/data/loadDay";
@@ -16,6 +17,9 @@ import { DevConsole } from "@/components/debug/DevConsole";
 import type { PendingChoice } from "@/components/chat/types";
 
 const AUTO_DELAY_MS = 800;
+// The MC chooser appears only after the prompting line has fully typed, plus a
+// beat — it shouldn't interrupt the narration mid-reveal.
+const CHOOSER_DELAY_MS = 1500;
 
 export function VnView({ day, id }: { day: string; id: string }) {
   const router = useRouter();
@@ -24,6 +28,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
 
   const [candleProgress, setCandleProgress] = useState(1);
   const [pendingChoice, setPendingChoice] = useState<PendingChoice | null>(null);
+  const [chooserVisible, setChooserVisible] = useState(false);
   const [auto, setAuto] = useState(false);
   const [threadEnded, setThreadEnded] = useState(false);
   const [lastEvent, setLastEvent] = useState<string>();
@@ -74,6 +79,18 @@ export function VnView({ day, id }: { day: string; id: string }) {
     return () => clearTimeout(timer);
   }, [auto, current, done, pendingChoice, threadEnded, advance]);
 
+  // Reveal the chooser only once the prompting line has finished typing, after a
+  // short beat. Reset whenever the choice clears (after the player picks).
+  useEffect(() => {
+    if (!pendingChoice) {
+      setChooserVisible(false);
+      return;
+    }
+    if (!current || !done) return;
+    const timer = setTimeout(() => setChooserVisible(true), CHOOSER_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [pendingChoice, current, done]);
+
   // Next: snap a still-revealing line to full, otherwise step forward.
   const handleNext = () => {
     if (current && !done) finish();
@@ -102,15 +119,17 @@ export function VnView({ day, id }: { day: string; id: string }) {
       </div>
 
       <footer className="shrink-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-black/10">
-        {threadEnded && !pendingChoice ? (
+        {threadEnded ? (
           <button
             onClick={handleExit}
             className={`w-full py-2 bg-gradient-to-t from-[#162347] to-[#2f406d] ${controlBtn}`}
           >
             {t("play.exit")}
           </button>
-        ) : pendingChoice ? (
-          <VnChoices options={pendingChoice.options} onChoose={choose} />
+        ) : pendingChoice && done ? (
+          // The prompting line is typed; the chooser overlay is taking over.
+          // Hide the step controls so the player only sees the choice.
+          <div className="h-[2.75rem]" />
         ) : (
           <div className="flex items-center gap-2">
             <button onClick={finish} className={`flex-1 bg-[#162347]/60 ${controlBtn}`}>
@@ -132,6 +151,22 @@ export function VnView({ day, id }: { day: string; id: string }) {
           </div>
         )}
       </footer>
+
+      <AnimatePresence>
+        {chooserVisible && pendingChoice && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="w-full max-w-lg p-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
+              <VnChoices options={pendingChoice.options} onChoose={choose} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {process.env.NODE_ENV === "development" && (
         <DevConsole
