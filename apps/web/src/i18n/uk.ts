@@ -1,7 +1,17 @@
 // Ukrainian UI strings. Keys must match en exactly (see the registry in index.ts
 // and the parity test). {n} placeholders are preserved verbatim.
 export const uk = {
-  "home.start": "Почати",
+  "home.start": "Торкніться, щоб почати",
+  "lobby.story": "Історія",
+  "lobby.settings": "Налаштування",
+  "lobby.album": "Альбом",
+  "lobby.library": "Бібліотека",
+  "lobby.load": "Завантажити",
+  "lobby.history": "Історія ігор",
+  "story.chat": "Чат",
+  "story.dms": "Повідомлення",
+  "story.timeline": "Хронологія",
+  "story.participants": "Учасники",
   "play.chooseDay": "Оберіть день",
   "play.day": "День {n}",
   "play.chat": "Чат",

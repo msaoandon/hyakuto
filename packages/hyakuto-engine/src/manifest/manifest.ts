@@ -171,6 +171,40 @@ export function isThreadUnlocked(
   return at !== null && now >= at;
 }
 
+// ─── DAY PROGRESS ────────────────────────────────────────
+// The active game's "current day" is *derived* from completions, never stored —
+// so it can't desync. A day is complete once all its threads are done; the
+// current day is the first incomplete one; the timeline classifies the rest.
+
+/** Every thread on the day has been completed (by its day-scoped key). */
+export function isDayComplete(manifest: Manifest, day: number, state: GameState): boolean {
+  const threads = listThreads(manifest, day);
+  if (threads.length === 0) return false; // a day with no threads is never "done"
+  return threads.every((t) => state.completed[threadKey(day, t.id)] !== undefined);
+}
+
+/**
+ * The day the player is currently on: the first day that isn't complete, or the
+ * last day if every day is done. Derived from the `completed` map — no pointer.
+ */
+export function currentDay(manifest: Manifest, state: GameState): number {
+  const days = manifest.days.map((d) => d.day).sort((a, b) => a - b);
+  for (const d of days) {
+    if (!isDayComplete(manifest, d, state)) return d;
+  }
+  return days[days.length - 1] ?? 1;
+}
+
+export type DayStatus = "past" | "current" | "future";
+
+/** Timeline classification: past (complete, rereadable), current, or future (locked). */
+export function dayStatus(manifest: Manifest, day: number, state: GameState): DayStatus {
+  const cur = currentDay(manifest, state);
+  if (day < cur) return "past";
+  if (day === cur) return "current";
+  return "future";
+}
+
 // ─── BLOCK → SEGMENT ─────────────────────────────────────
 
 /** Convert an authored content block into a runtime segment the engine can play. */

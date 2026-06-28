@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { gameConfig } from "@hyakuto/game";
-import { assembleThread, stripEffects } from "@/data/loadDay";
+import { assembleThread, stripEffects, manifest } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { useT } from "@/i18n";
+import { StoryHeader } from "@/components/layout/StoryHeader";
 import { VnStage } from "@/components/vn/VnStage";
 import { VnNarration } from "@/components/vn/VnNarration";
 import { VnSpeech } from "@/components/vn/VnSpeech";
@@ -112,7 +113,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
     }
   };
 
-  const handleExit = () => router.push(`/play/day/${dayNum}`);
+  const handleExit = () => router.push(`/story/chat/${dayNum}`);
 
   const controlBtn =
     "px-4 py-2 rounded-xl font-medium border-2 border-solid border-[#2f406d] text-[#daccd0]";
@@ -120,6 +121,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
   return (
     <>
       <VnStage scene={scene} />
+      <StoryHeader back={`/story/chat/${dayNum}`} title={manifest.threads[id]?.display_name ?? ""} />
 
       {/* Dialogue area — tapping it also advances (classic VN). */}
       <div className="flex-1 flex flex-col justify-end p-4" onClick={handleNext}>

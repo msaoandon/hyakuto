@@ -10,6 +10,9 @@ import {
   nextUnlockAt,
   isThreadUnlocked,
   threadKey,
+  isDayComplete,
+  currentDay,
+  dayStatus,
   type Manifest,
 } from "../src/manifest/manifest";
 import { evaluateCondition } from "../src/conditions/parser";
@@ -344,5 +347,47 @@ describe("thread unlock", () => {
     const done = stateWith({ [threadKey(1, "alpha")]: at(9) });
     expect(evaluateCondition("completed:1:alpha", done)).toBe(true);
     expect(evaluateCondition("completed:1:beta", done)).toBe(false);
+  });
+});
+
+describe("day progress (derived current day)", () => {
+  const m: Manifest = {
+    days: [
+      { day: 1, route: "common", segments: ["a"] },
+      { day: 2, route: "common", segments: ["b"] },
+      { day: 3, route: "common", segments: ["c"] },
+    ],
+    segments: {
+      a: { id: "a", type: "group_chat", day: 1, thread_id: "t1" },
+      b: { id: "b", type: "group_chat", day: 2, thread_id: "t2" },
+      c: { id: "c", type: "group_chat", day: 3, thread_id: "t3" },
+    },
+    threads: { t1: { display_name: "T1" }, t2: { display_name: "T2" }, t3: { display_name: "T3" } },
+  };
+  const withDone = (...keys: string[]): GameState => ({
+    ...emptyState(),
+    completed: Object.fromEntries(keys.map((k) => [k, 0])),
+  });
+
+  it("isDayComplete is true only when every thread on the day is done", () => {
+    expect(isDayComplete(m, 1, emptyState())).toBe(false);
+    expect(isDayComplete(m, 1, withDone(threadKey(1, "t1")))).toBe(true);
+  });
+
+  it("currentDay is the first incomplete day", () => {
+    expect(currentDay(m, emptyState())).toBe(1);
+    expect(currentDay(m, withDone(threadKey(1, "t1")))).toBe(2);
+  });
+
+  it("currentDay clamps to the last day when all are complete", () => {
+    const all = withDone(threadKey(1, "t1"), threadKey(2, "t2"), threadKey(3, "t3"));
+    expect(currentDay(m, all)).toBe(3);
+  });
+
+  it("dayStatus classifies past / current / future around the current day", () => {
+    const s = withDone(threadKey(1, "t1")); // current = 2
+    expect(dayStatus(m, 1, s)).toBe("past");
+    expect(dayStatus(m, 2, s)).toBe("current");
+    expect(dayStatus(m, 3, s)).toBe("future");
   });
 });

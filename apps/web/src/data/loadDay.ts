@@ -7,6 +7,9 @@ import {
   listThreads as threads,
   isThreadUnlocked as unlocked,
   nextUnlockAt as unlockAt,
+  currentDay as curDay,
+  dayStatus as dayStat,
+  type DayStatus,
 } from "@hyakuto/engine";
 import manifestData from "./manifest.json";
 import demoData from "./demo.json";
@@ -28,5 +31,11 @@ export const isThreadUnlocked = (day: number, threadId: string, state: GameState
 
 export const nextUnlockAt = (day: number, threadId: string, state: GameState, now: number) =>
   unlockAt(manifest, day, threadId, state, now);
+
+export const currentDay = (state: GameState) => curDay(manifest, state);
+
+export const dayStatus = (day: number, state: GameState): DayStatus => dayStat(manifest, day, state);
+
+export type { DayStatus };
 
 export { stripEffects } from "@hyakuto/engine";

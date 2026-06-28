@@ -8,7 +8,8 @@ import { DevConsole } from "@/components/debug/DevConsole";
 import { gameConfig } from "@hyakuto/game";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { ImageModal } from "@/components/chat/ImageModal";
-import { assembleThread, stripEffects } from "@/data/loadDay";
+import { assembleThread, stripEffects, manifest } from "@/data/loadDay";
+import { StoryHeader } from "@/components/layout/StoryHeader";
 import { useT } from "@/i18n";
 import type { PendingChoice } from "@/components/chat/types";
 
@@ -61,7 +62,7 @@ export function ChatView({ day, thread }: { day: string; thread: string }) {
   const replyEnabled = pendingChoice !== null && chosenText === null;
 
   const handleExit = () => {
-    router.push(`/play/day/${dayNum}`);
+    router.push(`/story/chat/${dayNum}`);
   };
 
   const handleStateChange = (state: {
@@ -90,6 +91,10 @@ export function ChatView({ day, thread }: { day: string; thread: string }) {
   return (
     <>
       <div className="fixed inset-0 -z-10 chat-bg" aria-hidden="true" />
+      <StoryHeader
+        back={`/story/chat/${dayNum}`}
+        title={manifest.threads[thread]?.display_name ?? t("play.chat")}
+      />
       <ChatFeed
         segment={segment}
         onStateChange={handleStateChange}
