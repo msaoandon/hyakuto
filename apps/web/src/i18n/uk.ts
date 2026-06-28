@@ -10,6 +10,7 @@ export const uk = {
   "lobby.history": "Історія ігор",
   "story.chat": "Чат",
   "story.dms": "Повідомлення",
+  "story.dmsEmpty": "Поки що немає повідомлень.",
   "story.timeline": "Хронологія",
   "story.participants": "Учасники",
   "play.chooseDay": "Оберіть день",

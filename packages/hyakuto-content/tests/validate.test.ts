@@ -106,6 +106,16 @@ describe('validateManifest — homogeneous thread type', () => {
     const errs = validateManifest(poolOf('demo_1', 'demo_2'), m);
     expect(errs.some((e) => e.message.includes('mixes segment types'))).toBe(true);
   });
+
+  it('flags a DM thread that uses wall-clock unlock_after', () => {
+    const m = manifest({
+      days: [{ day: 1, route: 'common', segments: ['demo_1'] }],
+      segments: { demo_1: { id: 'demo_1', type: 'dm', day: 1, thread_id: 'dm_ren' } },
+      threads: { dm_ren: { display_name: 'Ren', unlock_after: '18:00' } },
+    });
+    const errs = validateManifest(poolOf('demo_1'), m);
+    expect(errs.some((e) => e.message.includes('unlock_after'))).toBe(true);
+  });
 });
 
 describe('isManifest', () => {

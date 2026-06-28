@@ -137,8 +137,8 @@ export function validateManifest(
     if (meta.thread_id && !manifest.threads[meta.thread_id])
       errors.push({ source, segmentId: id, message: `Segment references undeclared thread "${meta.thread_id}"` });
 
-  // A thread's segments must share one type, so its render kind (chat vs VN) is
-  // unambiguous — a thread can't be half chat, half VN.
+  // A thread's segments must share one type, so its render kind (chat vs VN vs
+  // DM) is unambiguous — a thread can't be half chat, half VN.
   const threadType = new Map<string, { type: string; first: string }>();
   for (const [id, meta] of Object.entries(manifest.segments)) {
     if (!meta.thread_id) continue;
@@ -149,6 +149,17 @@ export function validateManifest(
         source,
         segmentId: id,
         message: `Thread "${meta.thread_id}" mixes segment types (${seen.type} in "${seen.first}", ${meta.type} here)`,
+      });
+  }
+
+  // DMs are relationship-gated, not wall-clock gated — `unlock_after` is the
+  // chat model and would silently do nothing on a DM thread. Flag it.
+  for (const [tid, t] of threadType) {
+    if (t.type === "dm" && manifest.threads[tid]?.unlock_after)
+      errors.push({
+        source,
+        segmentId: t.first,
+        message: `DM thread "${tid}" has unlock_after — DMs gate by condition, not wall-clock`,
       });
   }
 

@@ -6,7 +6,8 @@
       "segments": [
         "demo_1",
         "vn_1",
-        "demo_2"
+        "demo_2",
+        "dm_ren_1"
       ]
     },
     {
@@ -14,7 +15,8 @@
       "route": "common",
       "segments": [
         "demo_3",
-        "demo_4"
+        "demo_4",
+        "dm_ren_2"
       ]
     }
   ],
@@ -53,6 +55,22 @@
       "route": "common",
       "day": 2,
       "thread_id": "day2_02"
+    },
+    "dm_ren_1": {
+      "id": "dm_ren_1",
+      "type": "dm",
+      "route": "common",
+      "day": 1,
+      "thread_id": "dm_ren",
+      "condition": "completed:1:day1_01"
+    },
+    "dm_ren_2": {
+      "id": "dm_ren_2",
+      "type": "dm",
+      "route": "common",
+      "day": 2,
+      "thread_id": "dm_ren",
+      "condition": "completed:1:day1_01"
     }
   },
   "threads": {
@@ -73,6 +91,11 @@
     },
     "day2_02": {
       "display_name": "Hanako-san",
+      "ost": "chat_night"
+    },
+    "dm_ren": {
+      "display_name": "Ren",
+      "contact": "Ren",
       "ost": "chat_night"
     }
   }

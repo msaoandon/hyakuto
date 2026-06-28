@@ -685,5 +685,67 @@
         ]
       }
     ]
+  },
+  {
+    "block_id": "dm_ren_1",
+    "items": [
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "hey. that Oiwa story Kō told — you were quiet the whole time."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "you ok?"
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": "Just thinking.",
+            "effects": [
+              {
+                "axis": "patience",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": "That comb part got me, not gonna lie."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "yeah. it stays with you."
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "dm_ren_2",
+    "items": [
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "couldn't sleep. kept hearing the comb thing."
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          "anyway. glad you're around."
+        ]
+      }
+    ]
   }
 ]

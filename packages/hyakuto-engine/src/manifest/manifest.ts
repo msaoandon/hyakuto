@@ -27,6 +27,8 @@ export type ThreadMeta = {
   unlock_after?: string;
   /** Explicit prerequisite chat; defaults to the previous chat in day order. */
   requires?: string;
+  /** For a DM thread: the contact's character ID (drives the inbox avatar). */
+  contact?: string;
 };
 
 export type Manifest = {
@@ -48,17 +50,26 @@ export function listDays(manifest: Manifest): DayConfig[] {
   return manifest.days;
 }
 
-/** How a playable unit renders: a scrolling chat, or a step-through VN reader. */
-export type ThreadKind = "chat" | "vn";
+/** How a playable unit renders: a scrolling chat, a step-through VN reader, or a
+ *  cross-day 1:1 DM (rendered like a chat, but surfaced in the Messages inbox). */
+export type ThreadKind = "chat" | "vn" | "dm";
 
 /** A playable unit (thread) on a day, with its render kind. */
 export type ThreadEntry = { id: string; display_name: string; kind: ThreadKind };
 
+/** Map a segment type to its unit's render kind. */
+function kindOf(type: SegmentMeta["type"] | undefined): ThreadKind {
+  if (type === "vn") return "vn";
+  if (type === "dm") return "dm";
+  return "chat";
+}
+
 /**
  * The playable units (threads) on a day, in first-appearance order, deduped.
- * `kind` is derived from the unit's segment `type` (a `vn` segment makes a VN
- * unit; everything else is a chat) — structural, not an authored flag. Content
- * validation enforces that a unit's segments are homogeneous in type.
+ * `kind` is derived from the unit's segment `type` — structural, not an authored
+ * flag. Content validation enforces that a unit's segments are homogeneous in
+ * type. DM units appear here too (so the day knows about them), but the day's
+ * chat list filters them out — DMs live in the Messages inbox.
  */
 export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
   const dayCfg = manifest.days.find((d) => d.day === day);
@@ -72,7 +83,7 @@ export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
     threads.push({
       id: tid,
       display_name: manifest.threads[tid]?.display_name ?? tid,
-      kind: meta?.type === "vn" ? "vn" : "chat",
+      kind: kindOf(meta?.type),
     });
   }
   return threads;
@@ -381,6 +392,87 @@ export function assembleThread(
 
   return {
     id: `${day}:${threadId}`,
+    messages: segs.flatMap((s) => s.messages),
+    choices: Object.assign({}, ...segs.map((s) => s.choices ?? {})),
+  };
+}
+
+// ─── DM (cross-day 1:1) ──────────────────────────────────
+// DMs are ongoing one-on-one threads that accumulate across days, gated by
+// relationship conditions (segment `condition`), not the day's sequence/time
+// rule. They surface in the Messages inbox, never the day chat list.
+
+/** A DM thread for the inbox: its contact, and whether it has surfaced yet. */
+export type DmEntry = {
+  id: string; // thread_id
+  display_name: string; // contact name
+  contact?: string; // contact character ID (for the avatar)
+  /** True once the *first* segment's gate passes — the conversation has started
+   *  (the contact has messaged you). Later segments append as they unlock. */
+  available: boolean;
+};
+
+/** The completion key for a DM. Cross-day, so distinct from the day-scoped key. */
+export function dmKey(threadId: string): string {
+  return `dm:${threadId}`;
+}
+
+/** Every DM segment across the manifest, grouped by thread, in first-appearance order. */
+function dmSegmentsByThread(manifest: Manifest): { order: string[]; byThread: Record<string, string[]> } {
+  const order: string[] = [];
+  const byThread: Record<string, string[]> = {};
+  for (const day of manifest.days) {
+    for (const id of day.segments) {
+      const meta = manifest.segments[id];
+      if (meta?.type !== "dm" || !meta.thread_id) continue;
+      const tid = meta.thread_id;
+      if (!(tid in byThread)) {
+        byThread[tid] = [];
+        order.push(tid);
+      }
+      byThread[tid]!.push(id);
+    }
+  }
+  return { order, byThread };
+}
+
+/** All DM threads, with their contact and whether any segment has unlocked yet. */
+export function listDMs(manifest: Manifest, state: GameState): DmEntry[] {
+  const { order, byThread } = dmSegmentsByThread(manifest);
+  return order.map((tid) => ({
+    id: tid,
+    display_name: manifest.threads[tid]?.display_name ?? tid,
+    contact: manifest.threads[tid]?.contact,
+    // The first segment in day order is the conversation's opener.
+    available: isSegmentAvailable(manifest.segments[byThread[tid]![0]!], state),
+  }));
+}
+
+/**
+ * Assemble a DM thread into one flat segment across *all* days, skipping any
+ * segment whose gate fails. The cross-day sibling of assembleThread.
+ */
+export function assembleDM(
+  manifest: Manifest,
+  content: StoryFile,
+  threadId: string,
+  state: GameState,
+): SegmentInput {
+  const { byThread } = dmSegmentsByThread(manifest);
+  const segmentIds = (byThread[threadId] ?? []).filter((id) =>
+    isSegmentAvailable(manifest.segments[id], state),
+  );
+
+  const blockById: Record<string, Block> = {};
+  for (const b of content) blockById[b.block_id] = b;
+
+  const segs = segmentIds
+    .map((id) => blockById[id])
+    .filter((b): b is Block => Boolean(b))
+    .map(convertBlockToSegment);
+
+  return {
+    id: dmKey(threadId),
     messages: segs.flatMap((s) => s.messages),
     choices: Object.assign({}, ...segs.map((s) => s.choices ?? {})),
   };

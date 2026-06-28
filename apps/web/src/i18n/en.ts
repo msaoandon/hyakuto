@@ -10,6 +10,7 @@ export const en = {
   "lobby.history": "History",
   "story.chat": "Chat",
   "story.dms": "DMs",
+  "story.dmsEmpty": "No messages yet.",
   "story.timeline": "Timeline",
   "story.participants": "Participants",
   "play.chooseDay": "Choose a day",

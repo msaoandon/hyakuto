@@ -49,39 +49,41 @@ export function ChatDayView({ day }: { day: string }) {
       />
       <div className="flex-1 flex flex-col items-center gap-4 p-6 overflow-y-auto">
         <LanternBackground />
-        {listThreads(dayNum).map((thread) => {
-          const done = `${dayNum}:${thread.id}` in completed;
-          const unlocked = isThreadUnlocked(dayNum, thread.id, state, now);
+        {listThreads(dayNum)
+          .filter((thread) => thread.kind !== "dm") // DMs live in the Messages inbox
+          .map((thread) => {
+            const done = `${dayNum}:${thread.id}` in completed;
+            const unlocked = isThreadUnlocked(dayNum, thread.id, state, now);
 
-          if (!unlocked) {
+            if (!unlocked) {
+              return (
+                <div
+                  key={thread.id}
+                  aria-disabled="true"
+                  className="w-64 text-center py-2 rounded-lg bg-[#a5cbfd]/30 text-ink-black/50 cursor-not-allowed select-none"
+                >
+                  🔒 {thread.display_name}
+                </div>
+              );
+            }
+
+            const href =
+              thread.kind === "vn"
+                ? `/story/chat/${dayNum}/vn/${thread.id}`
+                : `/story/chat/${dayNum}/${thread.id}`;
+
             return (
-              <div
+              <Link
                 key={thread.id}
-                aria-disabled="true"
-                className="w-64 text-center py-2 rounded-lg bg-[#a5cbfd]/30 text-ink-black/50 cursor-not-allowed select-none"
+                href={href}
+                className={`w-64 text-center py-2 rounded-lg bg-[#a5cbfd] text-ink-black ${done ? "opacity-60" : ""}`}
               >
-                🔒 {thread.display_name}
-              </div>
+                {thread.kind === "vn" ? "📖 " : ""}
+                {thread.display_name}
+                {done ? " ✓" : ""}
+              </Link>
             );
-          }
-
-          const href =
-            thread.kind === "vn"
-              ? `/story/chat/${dayNum}/vn/${thread.id}`
-              : `/story/chat/${dayNum}/${thread.id}`;
-
-          return (
-            <Link
-              key={thread.id}
-              href={href}
-              className={`w-64 text-center py-2 rounded-lg bg-[#a5cbfd] text-ink-black ${done ? "opacity-60" : ""}`}
-            >
-              {thread.kind === "vn" ? "📖 " : ""}
-              {thread.display_name}
-              {done ? " ✓" : ""}
-            </Link>
-          );
-        })}
+          })}
       </div>
       {timelineOpen && <Timeline onClose={() => setTimelineOpen(false)} />}
     </>

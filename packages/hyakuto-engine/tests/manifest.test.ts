@@ -13,6 +13,9 @@ import {
   isDayComplete,
   currentDay,
   dayStatus,
+  listDMs,
+  assembleDM,
+  dmKey,
   type Manifest,
 } from "../src/manifest/manifest";
 import { evaluateCondition } from "../src/conditions/parser";
@@ -230,7 +233,7 @@ describe("navigation", () => {
       segments: { x: { id: "x", type: "dm", day: 1, thread_id: "lonely" } },
       threads: {},
     } satisfies Manifest;
-    expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely", kind: "chat" }]);
+    expect(listThreads(m, 1)).toEqual([{ id: "lonely", display_name: "lonely", kind: "dm" }]);
   });
 });
 
@@ -389,5 +392,60 @@ describe("day progress (derived current day)", () => {
     expect(dayStatus(m, 1, s)).toBe("past");
     expect(dayStatus(m, 2, s)).toBe("current");
     expect(dayStatus(m, 3, s)).toBe("future");
+  });
+});
+
+describe("DM threads (cross-day, relationship-gated)", () => {
+  // dm_ren spans day 1 (gated on a completed chat) and day 2 (always); a chat
+  // thread sits alongside to prove DMs are separated from the day list.
+  const m: Manifest = {
+    days: [
+      { day: 1, route: "common", segments: ["c1", "d1"] },
+      { day: 2, route: "common", segments: ["d2"] },
+    ],
+    segments: {
+      c1: { id: "c1", type: "group_chat", day: 1, thread_id: "chat1" },
+      d1: { id: "d1", type: "dm", day: 1, thread_id: "dm_ren", condition: "completed:1:chat1" },
+      d2: { id: "d2", type: "dm", day: 2, thread_id: "dm_ren" },
+    },
+    threads: {
+      chat1: { display_name: "Chat" },
+      dm_ren: { display_name: "Ren", contact: "Ren" },
+    },
+  };
+  const content = [
+    { block_id: "c1", items: [{ type: "message", character: "Kou", messages: ["hi"] }] },
+    { block_id: "d1", items: [{ type: "message", character: "Ren", messages: ["day1 dm"] }] },
+    { block_id: "d2", items: [{ type: "message", character: "Ren", messages: ["day2 dm"] }] },
+  ] satisfies StoryFile;
+  const done = (key: string): GameState => ({ ...emptyState(), completed: { [key]: 0 } });
+
+  it("listThreads tags a dm segment's unit with kind 'dm'", () => {
+    expect(listThreads(m, 1).find((t) => t.id === "dm_ren")?.kind).toBe("dm");
+  });
+
+  it("listDMs reports availability from the first segment (conversation start)", () => {
+    expect(listDMs(m, emptyState())).toEqual([
+      { id: "dm_ren", display_name: "Ren", contact: "Ren", available: false },
+    ]);
+    expect(listDMs(m, done(threadKey(1, "chat1")))[0]!.available).toBe(true);
+  });
+
+  it("assembleDM concatenates only the unlocked segments across days", () => {
+    // Locked: only the ungated day-2 segment is available.
+    expect(assembleDM(m, content, "dm_ren", emptyState()).messages.map((x) => x.text)).toEqual([
+      "day2 dm",
+    ]);
+    // Unlocked: completing chat1 reveals the day-1 segment too, in day order.
+    const s = done(threadKey(1, "chat1"));
+    expect(assembleDM(m, content, "dm_ren", s).messages.map((x) => x.text)).toEqual([
+      "day1 dm",
+      "day2 dm",
+    ]);
+  });
+
+  it("assembleDM uses a dm: id (cross-day completion key)", () => {
+    expect(assembleDM(m, content, "dm_ren", emptyState()).id).toBe(dmKey("dm_ren"));
+    expect(dmKey("dm_ren")).toBe("dm:dm_ren");
   });
 });

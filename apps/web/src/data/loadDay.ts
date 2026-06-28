@@ -9,7 +9,10 @@ import {
   nextUnlockAt as unlockAt,
   currentDay as curDay,
   dayStatus as dayStat,
+  listDMs as dms,
+  assembleDM as assembleDmThread,
   type DayStatus,
+  type DmEntry,
 } from "@hyakuto/engine";
 import manifestData from "./manifest.json";
 import demoData from "./demo.json";
@@ -36,6 +39,21 @@ export const currentDay = (state: GameState) => curDay(manifest, state);
 
 export const dayStatus = (day: number, state: GameState): DayStatus => dayStat(manifest, day, state);
 
-export type { DayStatus };
+export const listDMs = (state: GameState) => dms(manifest, state);
+
+export const assembleDM = (threadId: string, state: GameState) =>
+  assembleDmThread(manifest, content, threadId, state);
+
+// All DM thread ids (state-independent) — for build-time static params.
+const NO_STATE: GameState = {
+  axes: {},
+  counters: {},
+  flags: new Set(),
+  poolSelections: {},
+  completed: {},
+};
+export const dmThreadIds = () => dms(manifest, NO_STATE).map((d) => d.id);
+
+export type { DayStatus, DmEntry };
 
 export { stripEffects } from "@hyakuto/engine";

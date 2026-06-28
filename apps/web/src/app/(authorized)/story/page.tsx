@@ -56,12 +56,12 @@ export default function StoryHubPage() {
           >
             {t("story.chat")}
           </Link>
-          <div
-            aria-disabled="true"
-            className="text-center py-4 rounded-2xl text-lg font-semibold bg-ink-black/40 text-beige/40 border-2 border-[#2f406d]/40 cursor-not-allowed select-none"
+          <Link
+            href="/story/dms"
+            className="text-center py-4 rounded-2xl text-lg font-semibold bg-ink-black text-beige border-2 border-[#2f406d]"
           >
             {t("story.dms")}
-          </div>
+          </Link>
         </div>
       </div>
     </>
