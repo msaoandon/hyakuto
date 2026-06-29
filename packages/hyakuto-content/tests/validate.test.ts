@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mergeBlocks, validateBlocks, validateManifest, isManifest } from '../src/validate';
+import { mergeBlocks, validateBlocks, validateManifest, validateManifestSource, isManifest } from '../src/validate';
 import type { GameConfig, Manifest } from '@hyakuto/engine';
 
 const config: GameConfig = {
@@ -123,5 +123,26 @@ describe('isManifest', () => {
     expect(isManifest(manifest())).toBe(true);
     expect(isManifest([block('demo_1')])).toBe(false);
     expect(isManifest(null)).toBe(false);
+  });
+});
+
+describe('validateManifestSource — shape boundary', () => {
+  it('cross-checks a well-formed manifest source (parses, then no errors)', () => {
+    expect(validateManifestSource(poolOf('demo_1'), manifest(), 'm.json')).toEqual([]);
+  });
+
+  it('returns a clean error (not a throw) for a malformed shape', () => {
+    // `type` outside the enum: isManifest would pass it through; the schema catches it.
+    const bad = manifest({ segments: { demo_1: { id: 'demo_1', type: 'bogus' } } } as never);
+    const errs = validateManifestSource(poolOf('demo_1'), bad, 'm.json');
+    expect(errs).toHaveLength(1);
+    expect(errs[0]).toMatchObject({ source: 'm.json' });
+    expect(errs[0].message).toMatch(/Invalid manifest/);
+  });
+
+  it('flags a missing required field (thread display_name)', () => {
+    const bad = manifest({ threads: { alpha: {} } } as never);
+    const errs = validateManifestSource(poolOf('demo_1'), bad, 'm.json');
+    expect(errs[0].message).toMatch(/Invalid manifest/);
   });
 });

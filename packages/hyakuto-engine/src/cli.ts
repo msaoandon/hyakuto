@@ -4,7 +4,7 @@ import * as readline from "readline";
 import { StoryFile } from "./schemas/block";
 import { createEngine, type EngineEvent } from "./engine";
 import type { GameConfig } from "./schemas/game-config";
-import { assembleThread, listDays, listThreads, type Manifest } from "./manifest/manifest";
+import { assembleThread, listDays, listThreads, parseManifest } from "./manifest/manifest";
 
 // ─── CONFIG ──────────────────────────────────────────────
 // NOTE: duplicated from @hyakuto/game on purpose — the CLI lives inside
@@ -93,9 +93,9 @@ async function main() {
     process.exit(1);
   }
   const content = parsed.data;
-  const manifest = JSON.parse(
-    fs.readFileSync(path.resolve(manifestPath), "utf-8"),
-  ) as Manifest;
+  const manifest = parseManifest(
+    JSON.parse(fs.readFileSync(path.resolve(manifestPath), "utf-8")),
+  );
 
   // ONE engine for the whole playthrough — state persists across chats.
   const engine = createEngine({

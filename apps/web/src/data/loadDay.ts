@@ -1,7 +1,9 @@
 // Data wiring only: bind the app-bundled content + manifest to the engine's
 // headless navigation/assembly logic. All game logic lives in @hyakuto/engine.
-import type { StoryFile, GameState, Manifest } from "@hyakuto/engine";
+import type { GameState } from "@hyakuto/engine";
 import {
+  StoryFile,
+  parseManifest,
   assembleThread as assemble,
   listDays as days,
   listThreads as threads,
@@ -20,8 +22,11 @@ import demoData from "./demo.json";
 
 export type { Manifest } from "@hyakuto/engine";
 
-export const manifest = manifestData as Manifest;
-export const content = demoData as StoryFile;
+// Validate the bundled JSON at the load boundary — fail fast and loudly rather
+// than blind-cast. This runs at module load, so during `next build` a malformed
+// manifest/content file fails the static export instead of misbehaving mid-play.
+export const manifest = parseManifest(manifestData);
+export const content = StoryFile.parse(demoData);
 
 export const assembleThread = (day: number, threadId: string, state: GameState) =>
   assemble(manifest, content, day, threadId, state);

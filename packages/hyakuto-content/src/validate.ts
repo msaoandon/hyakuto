@@ -1,4 +1,4 @@
-import { StoryFile, collectConditionRefs, RESERVED_CHARACTERS } from '@hyakuto/engine';
+import { StoryFile, collectConditionRefs, RESERVED_CHARACTERS, parseManifest } from '@hyakuto/engine';
 import type { Block, GameConfig, Manifest } from '@hyakuto/engine';
 
 export type ValidationError = { source: string; segmentId?: string; message: string };
@@ -103,10 +103,32 @@ export function validateBlocks(
 }
 
 /**
+ * Validate a manifest *source* (untrusted JSON) before cross-checking it: first
+ * parse its shape with the engine's `Manifest` schema, then run the cross-refs.
+ * A malformed shape returns a clean error instead of crashing the cross-ref pass
+ * — `isManifest` is only a file-type discriminator (manifest vs block file), not
+ * a correctness claim. This is the CI gate's entry point for manifest files.
+ */
+export function validateManifestSource(
+  pool: Map<string, { block: Block; source: string }>,
+  data: unknown,
+  source = 'manifest',
+): ValidationError[] {
+  let manifest: Manifest;
+  try {
+    manifest = parseManifest(data);
+  } catch (e) {
+    return [{ source, message: (e as Error).message }];
+  }
+  return validateManifest(pool, manifest, source);
+}
+
+/**
  * Cross-check the manifest against the merged block pool. Catches the silent
  * content bugs that schema validation alone can't see: a segment that points at
  * no block, a block no segment references (orphan — it never plays), a day or
- * segment that references something undeclared.
+ * segment that references something undeclared. Operates on an already-parsed
+ * Manifest; use validateManifestSource at the untrusted boundary.
  */
 export function validateManifest(
   pool: Map<string, { block: Block; source: string }>,

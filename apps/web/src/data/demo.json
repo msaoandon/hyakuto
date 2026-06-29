@@ -478,11 +478,6 @@
         "character": "Kou"
       },
       {
-        "type": "image",
-        "character": "Ren",
-        "file": ""
-      },
-      {
         "type": "choice",
         "options": [
           {
@@ -526,11 +521,6 @@
         "character": "Tatsumi"
       },
       {
-        "type": "image",
-        "character": "Kou",
-        "file": ""
-      },
-      {
         "type": "choice",
         "options": [
           {
@@ -568,17 +558,6 @@
         "character": "Ren"
       },
       {
-        "type": "image",
-        "character": "Haruki",
-        "file": "",
-        "effects": [
-          {
-            "axis": "candles",
-            "delta": -5
-          }
-        ]
-      },
-      {
         "type": "choice",
         "options": [
           {
@@ -613,11 +592,6 @@
       {
         "type": "typing",
         "character": "Ren"
-      },
-      {
-        "type": "image",
-        "character": "Suzune",
-        "file": ""
       },
       {
         "type": "choice",

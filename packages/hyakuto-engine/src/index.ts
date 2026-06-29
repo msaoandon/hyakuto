@@ -60,6 +60,7 @@ export {
   assembleDM,
   availableDmSegments,
   dmKey,
+  parseManifest,
   type SegmentMeta,
   type ThreadMeta,
   type ThreadKind,

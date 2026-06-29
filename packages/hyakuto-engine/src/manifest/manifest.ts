@@ -5,37 +5,14 @@ import type { GameState } from "../state/game-state";
 import { evaluateCondition } from "../conditions/parser";
 
 // ─── MANIFEST CONTRACT ───────────────────────────────────
-// Shapes emitted by the Apps Script exporter (see .claude/AppsScript.md).
+// The manifest shapes the Apps Script exporter emits (see .claude/AppsScript.md)
+// are defined as Zod schemas in ../schemas/manifest — the single source of truth,
+// validated at the load boundary by parseManifest. Re-exported here so callers
+// keep importing manifest types/parse from one place.
+export type { SegmentMeta, ThreadMeta, Manifest } from "../schemas/manifest";
+export { parseManifest } from "../schemas/manifest";
 
-/** Per-segment envelope from the `_manifest` tab. */
-export type SegmentMeta = {
-  id: string;
-  type: "group_chat" | "dm" | "vn" | "system";
-  route?: string;
-  day?: number;
-  thread_id?: string;
-  scene?: string;
-  condition?: string;
-};
-
-/** Per-thread (chat) envelope from the `_threads` tab. */
-export type ThreadMeta = {
-  display_name: string;
-  condition?: string;
-  ost?: string;
-  /** Wall-clock time-of-day ("HH:MM") before which the chat stays locked. */
-  unlock_after?: string;
-  /** Explicit prerequisite chat; defaults to the previous chat in day order. */
-  requires?: string;
-  /** For a DM thread: the contact's character ID (drives the inbox avatar). */
-  contact?: string;
-};
-
-export type Manifest = {
-  days: DayConfig[];
-  segments: Record<string, SegmentMeta>;
-  threads: Record<string, ThreadMeta>;
-};
+import type { SegmentMeta, Manifest } from "../schemas/manifest";
 
 export type LoadedDay = {
   day: DayConfig;

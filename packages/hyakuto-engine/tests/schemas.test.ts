@@ -6,6 +6,7 @@ import { SeasonConfig } from "../src/schemas/season";
 import { RouteConfig } from "../src/schemas/route";
 import { DayConfig } from "../src/schemas/day";
 import { Block } from "../src/schemas/block";
+import { Manifest, parseManifest } from "../src/schemas/manifest";
 
 describe("MessageDef", () => {
   it("parses a standard message", () => {
@@ -239,5 +240,40 @@ describe("Block schema", () => {
       ],
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("Manifest / parseManifest", () => {
+  const valid = {
+    days: [{ day: 1, route: "common", segments: ["demo_1"] }],
+    segments: { demo_1: { id: "demo_1", type: "group_chat", day: 1, thread_id: "alpha" } },
+    threads: { alpha: { display_name: "Alpha", ost: "chat_day" } },
+  };
+
+  it("parses a well-formed manifest", () => {
+    expect(parseManifest(valid)).toEqual(valid);
+  });
+
+  it("rejects an unknown segment type", () => {
+    expect(() => parseManifest({ ...valid, segments: { demo_1: { id: "demo_1", type: "bogus" } } }))
+      .toThrow(/Invalid manifest/);
+  });
+
+  it("rejects a thread missing display_name", () => {
+    expect(() => parseManifest({ ...valid, threads: { alpha: { ost: "x" } } }))
+      .toThrow(/Invalid manifest/);
+  });
+
+  it("rejects days that aren't an array", () => {
+    expect(() => parseManifest({ ...valid, days: {} })).toThrow(/Invalid manifest/);
+  });
+
+  it("rejects an empty days list (a manifest with no days plays nothing)", () => {
+    expect(Manifest.safeParse({ ...valid, days: [] }).success).toBe(false);
+  });
+
+  it("names the failing path in the thrown message", () => {
+    expect(() => parseManifest({ ...valid, threads: { alpha: {} } }))
+      .toThrow(/display_name/);
   });
 });
