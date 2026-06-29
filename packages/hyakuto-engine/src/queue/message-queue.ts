@@ -1,7 +1,7 @@
 import type { GameState } from "../state/game-state";
 import type { CharacterConfig } from "../schemas/character";
 import { calculateTypingMs, calculateDelayMs, type PaceLevel } from "./timing";
-import { evaluateCondition } from "../conditions/parser";
+import { evaluateCondition, type RuntimeContext } from "../conditions/parser";
 import { selectFromPool } from "../pools/selector";
 
 export interface QueuedMessage {
@@ -37,6 +37,7 @@ export function resolveQueue(
   state: GameState,
   characters: CharacterConfig[],
   pace: PaceLevel,
+  ctx?: RuntimeContext,
 ): QueuedMessage[] {
   const queue: QueuedMessage[] = [];
   let prevCharacter: string | null = null;
@@ -44,13 +45,13 @@ export function resolveQueue(
   for (const msg of messages) {
     // Evaluate condition — skip if false
     if (msg.condition) {
-      if (!evaluateCondition(msg.condition, state)) {
+      if (!evaluateCondition(msg.condition, state, ctx)) {
         continue;
       }
     }
 
     if (msg.kind === "cue") {
-      if (msg.condition && !evaluateCondition(msg.condition, state)) continue;
+      if (msg.condition && !evaluateCondition(msg.condition, state, ctx)) continue;
       queue.push({
         id: msg.id,
         character: "",

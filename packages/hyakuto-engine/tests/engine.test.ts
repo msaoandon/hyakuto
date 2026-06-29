@@ -48,6 +48,48 @@ describe("createEngine", () => {
     expect(state.flags.has("some_flag")).toBe(true);
     expect(state.poolSelections.msg_001).toBe(2);
   });
+
+  it("defaults gender to unset when the save predates it", () => {
+    const engine = createEngine({
+      config,
+      onEvent: () => {},
+      savedState: { axes: {}, counters: {}, flags: [], poolSelections: {} },
+    });
+    expect(engine.getState().gender).toBe("unset");
+  });
+
+  it("round-trips gender through serialize/restore", () => {
+    const saved = { axes: {}, counters: {}, flags: [], poolSelections: {}, gender: "female" as const };
+    const engine = createEngine({ config, onEvent: () => {}, savedState: saved });
+    expect(engine.getState().gender).toBe("female");
+    expect(engine.serialize().gender).toBe("female");
+  });
+});
+
+describe("context predicates in play", () => {
+  // A segment whose second line is gated to the evening band.
+  const timedSegment: SegmentInput = {
+    id: "seg_timed",
+    messages: [
+      { id: "m1", character: "ao", text: "Always." },
+      { id: "m2", character: "ao", text: "Evening only.", condition: "time:evening" },
+    ],
+  };
+
+  const playAt = async (hour: number) => {
+    const events: EngineEvent[] = [];
+    const now = () => new Date(2026, 0, 1, hour, 30, 0).getTime();
+    const engine = createEngine({ config, onEvent: (e) => events.push(e), now });
+    engine.setPace(0);
+    engine.loadSegment(timedSegment);
+    await engine.play();
+    return shownTexts(events);
+  };
+
+  it("shows a time-gated message only in its band (injected clock)", async () => {
+    expect(await playAt(19)).toEqual(["Always.", "Evening only."]); // evening
+    expect(await playAt(9)).toEqual(["Always."]); // morning — gated out
+  });
 });
 
 describe("play", () => {

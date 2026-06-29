@@ -141,7 +141,9 @@ Story content is authored in a Google Sheet and exported to JSON via Apps Script
 | `do_affinity_1`, `do_affinity_2` | no | An affinity change, `axis±n` (e.g. `tatsumi+1`, `ren-1`). **Max 2 per row** — so one row can raise one character and lower another |
 | `do_counter` | no | A counter change, `counter±n` (e.g. `candles-1`) |
 
-> Deferred (not yet active): `do_flag` (needs a flags manifest), `if_time` / `if_gender` (context predicates), `do_ending` (Phase 5).
+> Context predicates `if_time` / `if_gender` are **active** — see *Context predicates* below.
+>
+> Deferred (not yet active): `do_flag` (needs a flags manifest), `do_ending` (Phase 5).
 
 ### Authoring grammar: `if_` and `do_`
 
@@ -260,6 +262,30 @@ Each `if_` cell holds one boolean predicate, evaluated against the current game 
 | `(story > 3 OR trust > 5)` | Parenthesised group within a cell |
 
 Spaces around operators are optional (`story>4` works the same as `story > 4`). Don't write `AND` across a cell — use separate `if_` columns for that; `AND` is the cross-column behaviour.
+
+### Context predicates (`if_time`, `if_gender`)
+
+Two predicates gate a row against **runtime context** rather than saved state. They use dedicated `if_time` and `if_gender` columns (they still AND with any other `if_` cells on the row).
+
+- **`if_time`** — show the row only in a time-of-day band, evaluated against the player's clock *when the message resolves* (not when the chat opens — that's the thread-level `unlock_after`). One band, or a comma-separated set; the exporter compiles a set to an OR group. The six bands:
+
+  | Band | Local hours |
+  |------|-------------|
+  | `late_night` | 00:00–04:59 |
+  | `morning` | 05:00–10:59 |
+  | `midday` | 11:00–12:59 |
+  | `afternoon` | 13:00–16:59 |
+  | `evening` | 17:00–20:59 |
+  | `night` | 21:00–23:59 |
+
+  | `if_time` cell | Compiles to | Plays when |
+  |----------------|-------------|------------|
+  | `evening` | `time:evening` | it's evening |
+  | `morning,evening` | `(time:morning OR time:evening)` | morning **or** evening |
+
+- **`if_gender`** — vary a line by the MC's gender-for-address: `male`, `female`, or `unset`. `unset` is the default, inclusive baseline — author the canonical line with no `if_gender`, and add `male`/`female` rows only where the wording genuinely changes. Compiles `female` → `gender:female`. (The customisation picker ships in Phase 3; until then every player is `unset`, so gendered rows are dead paths — useful for testing.)
+
+An unknown band or gender **fails at parse/CI** — the vocabularies are closed.
 
 ### Effect Format (inside `do_` cells)
 

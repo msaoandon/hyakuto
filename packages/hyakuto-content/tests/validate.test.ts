@@ -92,6 +92,22 @@ describe('validateBlocks — VN scene cues, empty text, narrator', () => {
     const errs = validateBlocks(pool, config);
     expect(errs.some((e) => e.message.includes('empty text'))).toBe(true);
   });
+
+  it('accepts valid context predicates (if_time / if_gender)', () => {
+    const pool = poolWith([
+      { type: 'message', character: 'Kou', messages: ['Evening, you.'],
+        condition: '(time:evening OR time:night) AND gender:female' },
+    ]);
+    expect(validateBlocks(pool, config)).toEqual([]);
+  });
+
+  it('flags an unknown time band as a bad condition', () => {
+    const pool = poolWith([
+      { type: 'message', character: 'Kou', messages: ['hi'], condition: 'time:lunchtime' },
+    ]);
+    const errs = validateBlocks(pool, config);
+    expect(errs.some((e) => e.message.includes('Bad condition'))).toBe(true);
+  });
 });
 
 describe('validateManifest — homogeneous thread type', () => {

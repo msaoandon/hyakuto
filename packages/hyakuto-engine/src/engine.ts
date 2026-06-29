@@ -8,6 +8,7 @@ import {
   updateCounter,
   type GameState,
 } from "./state/game-state";
+import { type MCGender, DEFAULT_GENDER } from "./state/mc";
 import { resolveQueue, type QueuedMessage, type RawMessage } from "./queue/message-queue";
 import type { PaceLevel } from "./queue/timing";
 import { evaluateCondition } from "./conditions/parser";
@@ -71,6 +72,9 @@ export interface SaveState {
   counters: Record<string, number>;
   flags: string[];
   poolSelections: Record<string, number>;
+  /** MC gender-for-address (durable customisation). Optional for back-compat:
+   *  a legacy save without it restores as `unset`. */
+  gender?: MCGender;
 }
 
 export interface CreateEngineOptions {
@@ -78,10 +82,14 @@ export interface CreateEngineOptions {
   flagsManifest?: string[];
   onEvent: EventHandler;
   savedState?: SaveState;
+  /** Clock for context predicates (`if_time`). Injectable so play is
+   *  deterministic in tests and a trusted-time source can replace it later;
+   *  defaults to the real local clock. */
+  now?: () => number;
 }
 
 export function createEngine(options: CreateEngineOptions): Engine {
-  const { config, flagsManifest = [], onEvent } = options;
+  const { config, flagsManifest = [], onEvent, now = Date.now } = options;
 
   // Restore or create fresh state
   let state: GameState;
@@ -94,6 +102,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
       // Completion is app-managed save state (used for thread-unlock gating, not
       // the play loop); the engine's per-play SaveState doesn't carry it.
       completed: {},
+      gender: options.savedState.gender ?? DEFAULT_GENDER,
     };
   } else {
     state = createGameState(config);
@@ -151,7 +160,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
   const engine: Engine = {
     loadSegment(segment: SegmentInput): void {
       currentSegment = segment;
-      queue = resolveQueue(segment.messages, state, config.characters, pace);
+      queue = resolveQueue(segment.messages, state, config.characters, pace, { now: now() });
     },
 
     loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void {
@@ -206,7 +215,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
           // Filter options by condition
           const availableOptions = allOptions.filter((opt) => {
             if (!opt.condition) return true;
-            return evaluateCondition(opt.condition, state);
+            return evaluateCondition(opt.condition, state, { now: now() });
           });
 
           if (availableOptions.length === 0) {
@@ -287,7 +296,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
         if (!segment) throw new Error(`Day references unknown segment: "${segId}"`);
 
         // ── GATING ── evaluate against *current* state, in order
-        if (segment.condition && !evaluateCondition(segment.condition, state)) {
+        if (segment.condition && !evaluateCondition(segment.condition, state, { now: now() })) {
           onEvent({ type: "segment_skipped", segmentId: segId });
           continue; // skip; loop advances automatically
         }
@@ -334,6 +343,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
         counters: { ...state.counters },
         flags: Array.from(state.flags),
         poolSelections: { ...state.poolSelections },
+        gender: state.gender,
       };
     },
   };

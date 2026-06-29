@@ -14,12 +14,18 @@ export { Block, BlockItem, StoryFile } from "./schemas/block";
 export { createGameState, applyEffect, setFlag, updateCounter } from "./state/game-state";
 export type { GameState } from "./state/game-state";
 
+// MC customisation (gender-for-address drives the `if_gender` predicate)
+export { MC_GENDERS, DEFAULT_GENDER, isMCGender, type MCGender } from "./state/mc";
+
 // Reserved characters (registered automatically — no game-config entry needed)
 export { NARRATOR, RESERVED_CHARACTERS } from "./reserved";
 
 // Parsers
-export { parseCondition, evaluateCondition } from "./conditions/parser";
+export { parseCondition, evaluateCondition, type RuntimeContext } from "./conditions/parser";
 export { collectConditionRefs } from "./conditions/refs";
+
+// Time-of-day bands (drive the `if_time` predicate)
+export { TIME_BANDS, bandOf, isTimeBand, type TimeBand } from "./conditions/time";
 
 // Pool message selector
 export { selectFromPool, type PoolVariant } from "./pools/selector";

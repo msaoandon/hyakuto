@@ -1,4 +1,5 @@
 import type { GameConfig } from '../schemas/game-config';
+import { type MCGender, DEFAULT_GENDER } from './mc';
 
 export type GameState = {
   axes: Record<string, number>;
@@ -8,6 +9,9 @@ export type GameState = {
   /** Completed thread key (`day:thread_id`) -> completion time (epoch ms). The
    *  timestamp anchors time-gated unlocks, so it must record *when*, not just *whether*. */
   completed: Record<string, number>;
+  /** MC gender-for-address, driving the `if_gender` predicate. Defaults to
+   *  `unset` (the inclusive baseline) until the Phase 3 customisation picker. */
+  gender: MCGender;
 };
 
 export function createGameState(config: GameConfig): GameState {
@@ -27,6 +31,7 @@ export function createGameState(config: GameConfig): GameState {
     flags: new Set(),
     poolSelections: {},
     completed: {},
+    gender: DEFAULT_GENDER,
   };
 }
 

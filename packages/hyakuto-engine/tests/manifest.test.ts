@@ -30,6 +30,7 @@ const emptyState = (): GameState => ({
   flags: new Set(),
   poolSelections: {},
   completed: {},
+  gender: "unset",
 });
 
 describe("convertBlockToSegment", () => {

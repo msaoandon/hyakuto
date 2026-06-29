@@ -60,6 +60,7 @@ const NO_STATE: GameState = {
   flags: new Set(),
   poolSelections: {},
   completed: {},
+  gender: "unset",
 };
 export const dmThreadIds = () => dms(manifest, NO_STATE).map((d) => d.id);
 

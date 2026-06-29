@@ -1,4 +1,11 @@
 import type { GameState } from '../state/game-state';
+import { type TimeBand, isTimeBand, bandOf } from './time';
+import { type MCGender, isMCGender } from '../state/mc';
+
+/** Non-GameState inputs to condition evaluation. Carries the clock so a `time:`
+ *  predicate is deterministic and a trusted-time source can be injected later;
+ *  when absent, time resolves against the real local clock. */
+export type RuntimeContext = { now?: number };
 
 type Comparison = '>' | '>=' | '<' | '<=' | '==' | '!=';
 
@@ -19,6 +26,16 @@ interface CompletedExpr {
   key: string;
 }
 
+interface TimeExpr {
+  kind: 'time';
+  band: TimeBand;
+}
+
+interface GenderExpr {
+  kind: 'gender';
+  value: MCGender;
+}
+
 interface NotExpr {
   kind: 'not';
   expr: Expr;
@@ -36,7 +53,15 @@ interface OrExpr {
   right: Expr;
 }
 
-type Expr = ComparisonExpr | FlagExpr | CompletedExpr | NotExpr | AndExpr | OrExpr;
+type Expr =
+  | ComparisonExpr
+  | FlagExpr
+  | CompletedExpr
+  | TimeExpr
+  | GenderExpr
+  | NotExpr
+  | AndExpr
+  | OrExpr;
 
 // ─── TOKENIZER ───────────────────────────────────────────
 
@@ -49,6 +74,8 @@ type Token =
   | { type: 'not' }
   | { type: 'flag'; value: string }
   | { type: 'completed'; value: string }
+  | { type: 'time'; band: TimeBand }
+  | { type: 'gender'; value: MCGender }
   | { type: 'lparen' }
   | { type: 'rparen' };
 
@@ -106,6 +133,22 @@ function tokenize(input: string): Token[] {
       }
       if (word.startsWith('completed:')) {
         tokens.push({ type: 'completed', value: word.slice(10) });
+        continue;
+      }
+      if (word.startsWith('time:')) {
+        const band = word.slice(5);
+        if (!isTimeBand(band)) {
+          throw new Error(`Unknown time band "${band}" in condition: "${input}"`);
+        }
+        tokens.push({ type: 'time', band });
+        continue;
+      }
+      if (word.startsWith('gender:')) {
+        const value = word.slice(7);
+        if (!isMCGender(value)) {
+          throw new Error(`Unknown gender "${value}" in condition: "${input}"`);
+        }
+        tokens.push({ type: 'gender', value });
         continue;
       }
       tokens.push({ type: 'ident', value: word });
@@ -193,6 +236,18 @@ class Parser {
       return { kind: 'completed', key: token.value };
     }
 
+    // Time-of-day predicate (context, not GameState)
+    if (token.type === 'time') {
+      this.advance();
+      return { kind: 'time', band: token.band };
+    }
+
+    // MC gender-for-address predicate
+    if (token.type === 'gender') {
+      this.advance();
+      return { kind: 'gender', value: token.value };
+    }
+
     // Comparison: identifier op number
     if (token.type === 'ident') {
       this.advance();
@@ -223,7 +278,7 @@ class Parser {
 
 // ─── EVALUATOR ───────────────────────────────────────────
 
-function evaluate(expr: Expr, state: GameState): boolean {
+function evaluate(expr: Expr, state: GameState, ctx?: RuntimeContext): boolean {
   switch (expr.kind) {
     case 'comparison': {
       // Look up value in axes first, then counters
@@ -251,12 +306,18 @@ function evaluate(expr: Expr, state: GameState): boolean {
       return state.flags.has(expr.flag);
     case 'completed':
       return expr.key in state.completed;
+    case 'time':
+      // Resolve the band at evaluation time against the injected clock (or the
+      // real local clock when none is supplied) — never at parse/load time.
+      return bandOf(ctx?.now ?? Date.now()) === expr.band;
+    case 'gender':
+      return (state.gender ?? 'unset') === expr.value;
     case 'not':
-      return !evaluate(expr.expr, state);
+      return !evaluate(expr.expr, state, ctx);
     case 'and':
-      return evaluate(expr.left, state) && evaluate(expr.right, state);
+      return evaluate(expr.left, state, ctx) && evaluate(expr.right, state, ctx);
     case 'or':
-      return evaluate(expr.left, state) || evaluate(expr.right, state);
+      return evaluate(expr.left, state, ctx) || evaluate(expr.right, state, ctx);
   }
 }
 
@@ -268,7 +329,11 @@ export function parseCondition(condition: string): Expr {
   return parser.parse();
 }
 
-export function evaluateCondition(condition: string, state: GameState): boolean {
+export function evaluateCondition(
+  condition: string,
+  state: GameState,
+  ctx?: RuntimeContext,
+): boolean {
   const expr = parseCondition(condition);
-  return evaluate(expr, state);
+  return evaluate(expr, state, ctx);
 }

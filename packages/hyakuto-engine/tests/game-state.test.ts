@@ -35,6 +35,11 @@ describe('createGameState', () => {
     const state = createGameState(testConfig);
     expect(Object.keys(state.poolSelections)).toHaveLength(0);
   });
+
+  it('defaults MC gender to unset', () => {
+    const state = createGameState(testConfig);
+    expect(state.gender).toBe('unset');
+  });
 });
 
 describe('applyEffect', () => {

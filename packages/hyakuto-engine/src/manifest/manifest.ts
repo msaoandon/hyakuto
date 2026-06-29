@@ -2,7 +2,7 @@ import type { Block, StoryFile } from "../schemas/block";
 import type { DayConfig } from "../schemas/day";
 import type { SegmentInput } from "../engine";
 import type { GameState } from "../state/game-state";
-import { evaluateCondition } from "../conditions/parser";
+import { evaluateCondition, type RuntimeContext } from "../conditions/parser";
 
 // ─── MANIFEST CONTRACT ───────────────────────────────────
 // The manifest shapes the Apps Script exporter emits (see .claude/AppsScript.md)
@@ -69,9 +69,13 @@ export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
 // ─── GATING ──────────────────────────────────────────────
 
 /** A segment plays when it has no gate, or its gate passes against the current state. */
-export function isSegmentAvailable(meta: SegmentMeta | undefined, state: GameState): boolean {
+export function isSegmentAvailable(
+  meta: SegmentMeta | undefined,
+  state: GameState,
+  ctx?: RuntimeContext,
+): boolean {
   if (!meta?.condition) return true;
-  return evaluateCondition(meta.condition, state);
+  return evaluateCondition(meta.condition, state, ctx);
 }
 
 // ─── THREAD UNLOCK ───────────────────────────────────────

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { createGameState, type SaveState, type GameState } from "@hyakuto/engine";
+import { createGameState, DEFAULT_GENDER, type SaveState, type GameState } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
@@ -12,6 +12,7 @@ function freshSave(): SaveState {
     counters: s.counters,
     flags: [...s.flags],
     poolSelections: s.poolSelections,
+    gender: s.gender,
   };
 }
 
@@ -86,5 +87,8 @@ export function saveToState(
     flags: new Set(save.flags),
     poolSelections: { ...save.poolSelections },
     completed: { ...completed },
+    // A legacy save (persisted before gender existed) restores as unset — the
+    // inclusive baseline — so no destructive migration is needed.
+    gender: save.gender ?? DEFAULT_GENDER,
   };
 }
