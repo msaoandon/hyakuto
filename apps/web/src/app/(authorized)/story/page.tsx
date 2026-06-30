@@ -20,7 +20,6 @@ export default function StoryHubPage() {
   const dmRead = useGameStore((s) => s.dmRead);
 
   const day = useMemo(() => currentDay(saveToState(save, completed)), [save, completed]);
-  const candles = save.counters.candles ?? 0;
 
   // Total unread across started DMs — surfaced on the DMs door.
   const dmUnread = useMemo(() => {
@@ -37,11 +36,7 @@ export default function StoryHubPage() {
       <StoryHeader
         back="/lobby"
         backGlyph="☰"
-        title={
-          <span>
-            {t("play.day", { n: day })} · 🕯 {candles}
-          </span>
-        }
+        title={t("play.day", { n: day })}
       />
       <div className="flex-1 flex flex-col items-center gap-10 p-6">
         <LanternBackground />

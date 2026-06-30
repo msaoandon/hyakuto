@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { CandleMeter } from "./CandleMeter";
 
 /**
- * Shared top bar for Story screens: a back/home affordance, a title, and an
- * optional right-side slot (e.g. the Timeline button). Players and lists own
- * their header so each route can vary it (the old per-group layout couldn't).
+ * Shared top bar for Story (ongoing-game) screens: a back/home affordance, a
+ * title, the persistent candle count, and an optional right-side slot (e.g. the
+ * Timeline button). Every Story route renders through this, so the candle shows
+ * on all of them — hub, chat list, chat, VN, DMs, profiles — without per-page
+ * wiring. Players and lists own their header so each route can vary the rest.
  */
 export function StoryHeader({
   back,
@@ -25,6 +28,7 @@ export function StoryHeader({
         {backGlyph}
       </Link>
       <span className="flex-1 truncate">{title}</span>
+      <CandleMeter />
       {right}
     </header>
   );
