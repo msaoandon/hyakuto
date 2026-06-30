@@ -67,10 +67,14 @@ export function AudioProvider() {
   // "base" is the revert token: it means "back to the chat's base playlist", i.e. no override.
   const rawCue = useGameStore((s) => s.cues.music);
   const musicCue = rawCue && rawCue !== "base" ? rawCue : null;
+  const musicEnabled = useGameStore((s) => s.musicEnabled);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const deck = useRef<Deck | null>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Read inside switchTo (which runs off refs, not reactively) so a deck created
+  // while music is off starts silent and paused.
+  const enabledRef = useRef(musicEnabled);
 
   function getCtx(): AudioContext {
     if (!ctxRef.current) {
@@ -176,9 +180,29 @@ export function AudioProvider() {
     );
 
     audio.src = urls[0]!;
-    void audio.play().catch(() => {});
-    ramp(gain, 1);
+    // Honour the music preference: a deck built while music is off stays paused
+    // and silent until the player turns it on (the effect below resumes it).
+    if (enabledRef.current) void audio.play().catch(() => {});
+    ramp(gain, enabledRef.current ? 1 : 0);
   }
+
+  // Music on/off preference. Fade the live deck (and pause/resume the element)
+  // without tearing down the playlist, so toggling is instant and the right
+  // track resumes. Survives restart (persisted in the store).
+  useEffect(() => {
+    enabledRef.current = musicEnabled;
+    const d = deck.current;
+    if (!d || !unlocked) return;
+    if (musicEnabled) {
+      void d.audio.play().catch(() => {});
+      ramp(d.gain, 1);
+    } else {
+      ramp(d.gain, 0);
+      setTimeout(() => {
+        if (!musicEnabled && deck.current === d) d.audio.pause();
+      }, CROSSFADE_MS);
+    }
+  }, [musicEnabled, unlocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () => () => {

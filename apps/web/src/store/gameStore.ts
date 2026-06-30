@@ -19,6 +19,8 @@ function freshSave(): SaveState {
 type GameStore = {
   save: SaveState;
   locale: Locale;
+  /** Player preference: background music on/off. Persisted; honoured by AudioProvider. */
+  musicEnabled: boolean;
   /** Completed thread key (`day:thread_id`) -> completion time (epoch ms). The
    *  timestamp anchors time-gated unlocks, so completion records *when*, not just *whether*. */
   completed: Record<string, number>;
@@ -31,6 +33,7 @@ type GameStore = {
   markDmRead: (threadId: string, segmentIds: string[]) => void;
   reset: () => void;
   setLocale: (locale: Locale) => void;
+  setMusicEnabled: (on: boolean) => void;
   setCue: (channel: string, value: string) => void;
   clearCues: () => void;
 };
@@ -40,6 +43,7 @@ export const useGameStore = create<GameStore>()(
     (set) => ({
       save: freshSave(),
       locale: DEFAULT_LOCALE,
+      musicEnabled: true,
       completed: {},
       cues: {},
       dmRead: {},
@@ -54,6 +58,7 @@ export const useGameStore = create<GameStore>()(
         }),
       reset: () => set({ save: freshSave(), completed: {}, dmRead: {} }),
       setLocale: (locale) => set({ locale }),
+      setMusicEnabled: (on) => set({ musicEnabled: on }),
       setCue: (channel, value) => set((s) => ({ cues: { ...s.cues, [channel]: value } })),
       clearCues: () => set({ cues: {} }),
     }),
@@ -61,7 +66,13 @@ export const useGameStore = create<GameStore>()(
       name: "hyakuto-save",
       version: 1,
       storage: createJSONStorage(() => idbStorage),
-      partialize: (s) => ({ save: s.save, locale: s.locale, completed: s.completed, dmRead: s.dmRead }),
+      partialize: (s) => ({
+        save: s.save,
+        locale: s.locale,
+        musicEnabled: s.musicEnabled,
+        completed: s.completed,
+        dmRead: s.dmRead,
+      }),
       // v0 stored `completed` as a string[] (membership only). v1 needs timestamps to
       // anchor time-gated unlocks; legacy entries get 0 ("completed long ago"), which
       // leaves any successor's time gate already satisfied — the safe direction.
