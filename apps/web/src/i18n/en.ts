@@ -26,4 +26,7 @@ export const en = {
   "play.next": "Next",
   "play.skip": "Skip",
   "play.auto": "Auto",
+  "play.speed": "Speed",
+  "play.slower": "Slower",
+  "play.faster": "Faster",
 } as const;

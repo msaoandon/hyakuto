@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
-import { useGameStore } from "@/store/gameStore";
+import { useGameStore, paceMultiplier } from "@/store/gameStore";
 import { messageToItem } from "../helpers/eventToItem";
 import { substituteMC } from "../helpers/mc";
 import type { VisibleItem, PendingChoice, EngineSnapshot } from "../types";
@@ -47,6 +47,13 @@ export function useChatEngine(
   const engineRef = useRef<Engine | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
   const pendingCharacterRef = useRef<string | undefined>(undefined);
+
+  // Live chat-speed preference — applied immediately so a mid-chat change speeds
+  // up / slows down the remaining drip (the engine reads pace at playback time).
+  const chatPaceLevel = useGameStore((s) => s.chatPaceLevel);
+  useEffect(() => {
+    engineRef.current?.setPace(paceMultiplier(chatPaceLevel));
+  }, [chatPaceLevel]);
 
   // Render the player's chosen reply, then advance the engine past the choice.
   useEffect(() => {
@@ -120,7 +127,7 @@ export function useChatEngine(
     });
 
     engineRef.current = engine;
-    engine.setPace(1.0);
+    engine.setPace(paceMultiplier(useGameStore.getState().chatPaceLevel));
     engine.loadSegment(segment);
     onStateChange?.(snapshot(engine));
     engine.play();

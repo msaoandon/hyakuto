@@ -26,4 +26,7 @@ export const uk = {
   "play.next": "Далі",
   "play.skip": "Пропустити",
   "play.auto": "Авто",
+  "play.speed": "Швидкість",
+  "play.slower": "Повільніше",
+  "play.faster": "Швидше",
 };

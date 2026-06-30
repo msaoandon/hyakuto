@@ -160,7 +160,10 @@ export function createEngine(options: CreateEngineOptions): Engine {
   const engine: Engine = {
     loadSegment(segment: SegmentInput): void {
       currentSegment = segment;
-      queue = resolveQueue(segment.messages, state, config.characters, pace, { now: now() });
+      // Resolve at base timing (pace 1.0); the pace multiplier is applied live at
+      // playback (see play()), so a mid-segment setPace speeds up / slows down the
+      // remaining drip instead of being frozen at load time.
+      queue = resolveQueue(segment.messages, state, config.characters, 1.0, { now: now() });
     },
 
     loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void {
@@ -193,12 +196,16 @@ export function createEngine(options: CreateEngineOptions): Engine {
 
         if (!stepped) {
           // Timed playback: delay, then a typing indicator before the message.
-          if (item.delay_ms > 0) {
-            await sleep(item.delay_ms);
+          // Pace is read live here (not baked at load) so a pace change applies to
+          // the very next message. Pace 0 (skip) collapses both to no wait.
+          const delay = item.delay_ms * pace;
+          if (delay > 0) {
+            await sleep(delay);
           }
-          if (item.typing_ms > 0) {
-            onEvent({ type: "typing_start", character: item.character, duration: item.typing_ms });
-            await sleep(item.typing_ms);
+          const typing = item.typing_ms * pace;
+          if (typing > 0) {
+            onEvent({ type: "typing_start", character: item.character, duration: typing });
+            await sleep(typing);
             onEvent({ type: "typing_end", character: item.character });
           }
         }

@@ -4,7 +4,10 @@ const CHAR_RATE_MS = 30; // ms per character
 const MAX_TYPING_MS = 4000;
 const BASE_DELAY_MS = 1200;
 
-export type PaceLevel = 1.5 | 1.0 | 0.5 | 0;
+/** A delay multiplier applied to all timing. 0 skips every wait, 1 plays the
+ *  authored/auto timing as-is, >1 slows down, <1 speeds up. The app maps its
+ *  player-facing speed scale onto this; the engine just multiplies. */
+export type PaceLevel = number;
 
 export function calculateTypingMs(
   text: string,
