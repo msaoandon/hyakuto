@@ -3,6 +3,7 @@ import type { DayConfig } from "../schemas/day";
 import type { SegmentInput } from "../engine";
 import type { GameState } from "../state/game-state";
 import { evaluateCondition, type RuntimeContext } from "../conditions/parser";
+import { resolveLocale, DEFAULT_LOCALE } from "../i18n/localized";
 
 // ─── MANIFEST CONTRACT ───────────────────────────────────
 // The manifest shapes the Apps Script exporter emits (see .claude/AppsScript.md)
@@ -48,7 +49,11 @@ function kindOf(type: SegmentMeta["type"] | undefined): ThreadKind {
  * type. DM units appear here too (so the day knows about them), but the day's
  * chat list filters them out — DMs live in the Messages inbox.
  */
-export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
+export function listThreads(
+  manifest: Manifest,
+  day: number,
+  locale: string = DEFAULT_LOCALE,
+): ThreadEntry[] {
   const dayCfg = manifest.days.find((d) => d.day === day);
   const seen = new Set<string>();
   const threads: ThreadEntry[] = [];
@@ -59,11 +64,22 @@ export function listThreads(manifest: Manifest, day: number): ThreadEntry[] {
     seen.add(tid);
     threads.push({
       id: tid,
-      display_name: manifest.threads[tid]?.display_name ?? tid,
+      display_name: threadDisplayName(manifest, tid, locale),
       kind: kindOf(meta?.type),
     });
   }
   return threads;
+}
+
+/** A thread's display name resolved to the active locale, falling back to the
+ *  thread id when the thread has no manifest entry. */
+export function threadDisplayName(
+  manifest: Manifest,
+  threadId: string,
+  locale: string = DEFAULT_LOCALE,
+): string {
+  const dn = manifest.threads[threadId]?.display_name;
+  return dn === undefined ? threadId : resolveLocale(dn, locale) || threadId;
 }
 
 // ─── GATING ──────────────────────────────────────────────
@@ -203,8 +219,13 @@ export function dayStatus(manifest: Manifest, day: number, state: GameState): Da
 
 // ─── BLOCK → SEGMENT ─────────────────────────────────────
 
-/** Convert an authored content block into a runtime segment the engine can play. */
-export function convertBlockToSegment(block: Block): SegmentInput {
+/**
+ * Convert an authored content block into a runtime segment the engine can play.
+ * This is the localization seam: every translatable field (message/status/choice/
+ * pool text) is flattened to `locale` here, so the engine plays plain strings and
+ * never sees a locale map. Defaults to the canonical language.
+ */
+export function convertBlockToSegment(block: Block, locale: string = DEFAULT_LOCALE): SegmentInput {
   const messages: SegmentInput["messages"] = [];
   const choices: Record<
     string,
@@ -234,7 +255,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
             messages.push({
               id,
               character: item.character,
-              text,
+              text: resolveLocale(text, locale),
               condition: item.condition,
               effects: item.effects,
             });
@@ -271,7 +292,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
           choices[lastMsgId] = {
             character: "character" in item ? item.character : undefined,
             options: item.options.map((opt) => ({
-              text: opt.text,
+              text: resolveLocale(opt.text, locale),
               effects: opt.effects,
             })),
           };
@@ -286,7 +307,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
             character: item.character,
             pool: item.variants.map((v, i) => ({
               idx: i,
-              text: v.text,
+              text: resolveLocale(v.text, locale),
               weight: v.weight ?? 1,
             })),
             condition: item.condition,
@@ -299,7 +320,7 @@ export function convertBlockToSegment(block: Block): SegmentInput {
         messages.push({
           id: `${block.block_id}_status_${msgIndex++}`,
           character: "",
-          text: `__status__:${item.text}`,
+          text: `__status__:${resolveLocale(item.text, locale)}`,
           delay_ms: 0,
           typing_ms: 0, // ← no typing indicator (engine skips when <= 0)
           condition: item.condition,
@@ -359,6 +380,7 @@ export function assembleThread(
   day: number,
   threadId: string,
   state: GameState,
+  locale: string = DEFAULT_LOCALE,
 ): SegmentInput {
   const dayCfg = manifest.days.find((d) => d.day === day);
   const segmentIds = (dayCfg?.segments ?? []).filter(
@@ -373,7 +395,7 @@ export function assembleThread(
   const segs = segmentIds
     .map((id) => blockById[id])
     .filter((b): b is Block => Boolean(b))
-    .map(convertBlockToSegment);
+    .map((b) => convertBlockToSegment(b, locale));
 
   return {
     id: `${day}:${threadId}`,
@@ -431,11 +453,15 @@ export function availableDmSegments(manifest: Manifest, threadId: string, state:
 }
 
 /** All DM threads, with their contact, surfaced state, and unlocked segments. */
-export function listDMs(manifest: Manifest, state: GameState): DmEntry[] {
+export function listDMs(
+  manifest: Manifest,
+  state: GameState,
+  locale: string = DEFAULT_LOCALE,
+): DmEntry[] {
   const { order, byThread } = dmSegmentsByThread(manifest);
   return order.map((tid) => ({
     id: tid,
-    display_name: manifest.threads[tid]?.display_name ?? tid,
+    display_name: threadDisplayName(manifest, tid, locale),
     contact: manifest.threads[tid]?.contact,
     // The first segment in day order is the conversation's opener.
     available: isSegmentAvailable(manifest.segments[byThread[tid]![0]!], state),
@@ -461,6 +487,7 @@ export function assembleDM(
   threadId: string,
   state: GameState,
   segmentIds?: string[],
+  locale: string = DEFAULT_LOCALE,
 ): SegmentInput {
   const available = availableDmSegments(manifest, threadId, state);
   const ids = (segmentIds ?? available).filter((id) => available.includes(id));
@@ -471,7 +498,7 @@ export function assembleDM(
   const segs = ids
     .map((id) => blockById[id])
     .filter((b): b is Block => Boolean(b))
-    .map(convertBlockToSegment);
+    .map((b) => convertBlockToSegment(b, locale));
 
   return {
     id: dmKey(threadId),

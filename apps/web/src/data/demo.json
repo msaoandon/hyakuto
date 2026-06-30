@@ -737,21 +737,21 @@
         "type": "message",
         "character": "Ren",
         "messages": [
-          "hey. that Oiwa story — you went quiet."
+          { "en": "hey. that Oiwa story — you went quiet.", "uk": "агов. та історія про Оіву — ти затих." }
         ]
       },
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "you good?"
+          { "en": "you good?", "uk": "ти як, нормально?" }
         ]
       },
       {
         "type": "choice",
         "options": [
           {
-            "text": "Just thinking.",
+            "text": { "en": "Just thinking.", "uk": "Просто думаю." },
             "effects": [
               {
                 "axis": "patience",
@@ -760,7 +760,7 @@
             ]
           },
           {
-            "text": "That comb part got me."
+            "text": { "en": "That comb part got me.", "uk": "Той момент з гребінцем мене зачепив." }
           }
         ]
       },
@@ -768,7 +768,7 @@
         "type": "message",
         "character": "Ren",
         "messages": [
-          "yeah. it stays with you."
+          { "en": "yeah. it stays with you.", "uk": "так. воно лишається з тобою." }
         ]
       }
     ]

@@ -1,16 +1,17 @@
 import { z } from 'zod';
 import { EffectDef } from './effect';
+import { Localized } from '../i18n/localized';
 
 const StatusItem = z.object({
   type: z.literal('status'),
-  text: z.string(),
+  text: Localized,
   condition: z.string().optional(),
 });
 
 const MessageItem = z.object({
   type: z.literal('message'),
   character: z.string(),
-  messages: z.array(z.string()).min(1),
+  messages: z.array(Localized).min(1),
   condition: z.string().optional(),
   effects: z.array(EffectDef).optional(),
 });
@@ -35,7 +36,7 @@ const PoolItem = z.object({
   type: z.literal('pool'),
   character: z.string(),
   variants: z.array(z.object({
-    text: z.string().min(1),
+    text: Localized,
     weight: z.number().positive().default(1),
   })).min(1),
   condition: z.string().optional(),
@@ -46,7 +47,7 @@ const ChoiceItem = z.object({
   type: z.literal('choice'),
   character: z.string().optional(), // undefined = MC
   options: z.array(z.object({
-    text: z.string(),
+    text: Localized,
     condition: z.string().optional(),
     effects: z.array(EffectDef).optional(),
   })).min(1),

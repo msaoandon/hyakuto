@@ -136,6 +136,7 @@ Story content is authored in a Google Sheet and exported to JSON via Apps Script
 | `channel` | for cues | Cue channel: `music`, `glitch`, `scene` |
 | `value` | for cues | Target state for the channel (e.g. `suspense`, `on`, `bookshop.jpg`) |
 | `text` | for messages/status | Message content. Supports `{MC}` and `{@MC}` placeholders, and inline `<b>`, `<i>`, `<u>` formatting tags. For `sticker`/`image` rows, the filename |
+| `text_<locale>` | no | A translation of `text` (e.g. `text_uk`). See *Content localization* below |
 | `weight` | for pools | Relative selection weight of a pool variant (default 1) |
 | `if_*` | no | A condition column. One predicate per cell (e.g. `candles<60`, `flag:path_unlocked`). All non-empty `if_` cells on a row are AND-ed together — see *Authoring grammar* below |
 | `do_affinity_1`, `do_affinity_2` | no | An affinity change, `axis±n` (e.g. `tatsumi+1`, `ren-1`). **Max 2 per row** — so one row can raise one character and lower another |
@@ -341,11 +342,23 @@ Per-thread display and presentation metadata — one row per `thread_id`. A thre
 |--------|----------|-------------|
 | `thread_id` | yes | Joins to the `thread_id` used in `_manifest` |
 | `display_name` | yes | Name shown in the day's chat list (or, for a DM, the inbox) |
+| `display_name_<locale>` | no | A translation of `display_name` (e.g. `display_name_uk`). See *Content localization* |
 | `contact` | DM only | The DM contact's character ID (drives the inbox avatar). Blank for group chats — see *DM Segments* |
 | `condition` | no | Gate for the whole thread (same syntax as message conditions) |
 | `ost` | no | Music **theme** for this chat — a theme name (e.g. `chat_night`). Blank → the default chat theme. Use a **dropdown** (Data → Data validation → list of theme names) for consistency |
 
 Exported into `threads: { [thread_id]: { display_name, condition?, ost?, contact? } }`. A theme is a set of folders under `public/music/`; the app's AudioProvider pools their tracks into one playlist (one file loops, many rotate). A blank `ost` falls back to the default chat theme.
+
+### Content localization
+
+Player-facing **text** is translatable; structure, ids, and conditions stay language-neutral. To translate a value, add a parallel **`<column>_<locale>`** column next to it — any locale code works (`_uk`, `_ja`, …):
+
+- **Messages / status / choices / pool variants:** `text` + `text_uk`, `text_ja`, …
+- **Thread / DM names:** `display_name` + `display_name_uk`, … (in `_threads`)
+
+The exporter emits a translatable value as a **locale map** (`{ "en": "Ren", "uk": "Рен" }`) when any translation is filled, or a plain string when only the base column is. `en` is the canonical baseline. The engine flattens the map to the active language **at the assemble seam** (`convertBlockToSegment(block, locale)` / `assembleThread(…, locale)`), so it plays plain strings and stays locale-agnostic. A missing translation falls back to `en`, then to any present value — never blank. The active locale is the player's UI language (the `ENG`/`UKR` toggle); switching it re-renders names and chat text live.
+
+> Only player-facing **text** is localized — never `character`, `block_id`, `condition`, cue `value`, or filenames.
 
 ### Apps Script Export
 

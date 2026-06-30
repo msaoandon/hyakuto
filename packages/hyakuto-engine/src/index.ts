@@ -17,6 +17,9 @@ export type { GameState } from "./state/game-state";
 // MC customisation (gender-for-address drives the `if_gender` predicate)
 export { MC_GENDERS, DEFAULT_GENDER, isMCGender, type MCGender } from "./state/mc";
 
+// Content localization (resolve translatable text/display_name at the seam)
+export { Localized, resolveLocale, localizedValues, DEFAULT_LOCALE } from "./i18n/localized";
+
 // Reserved characters (registered automatically — no game-config entry needed)
 export { NARRATOR, RESERVED_CHARACTERS } from "./reserved";
 
@@ -53,6 +56,7 @@ export {
   buildDay,
   listDays,
   listThreads,
+  threadDisplayName,
   stripEffects,
   stripChoices,
   threadKey,

@@ -17,6 +17,7 @@ import {
   assembleDM,
   availableDmSegments,
   dmKey,
+  threadDisplayName,
   type Manifest,
 } from "../src/manifest/manifest";
 import { evaluateCondition } from "../src/conditions/parser";
@@ -479,5 +480,56 @@ describe("DM threads (cross-day, relationship-gated)", () => {
   it("assembleDM never forces in a locked segment", () => {
     // d2 isn't unlocked yet (only chat1 done) — asking for it yields nothing.
     expect(assembleDM(m, content, "dm_ren", done(opened), ["d2"]).messages).toEqual([]);
+  });
+});
+
+describe("localization seam", () => {
+  // Content authored with locale maps on message, choice, and pool text.
+  const block: Block = {
+    block_id: "loc_1",
+    items: [
+      { type: "message", character: "Ren", messages: [{ en: "hey", uk: "агов" }] },
+      {
+        type: "choice",
+        options: [{ text: { en: "Sure", uk: "Звісно" } }, { text: "Neutral" }],
+      },
+      {
+        type: "pool",
+        character: "Ren",
+        variants: [{ text: { en: "one", uk: "один" }, weight: 1 }],
+      },
+      { type: "status", text: { en: "Ren left", uk: "Рен вийшов" } },
+    ],
+  };
+
+  it("convertBlockToSegment resolves message/pool/status/choice text to the locale", () => {
+    const uk = convertBlockToSegment(block, "uk");
+    expect(uk.messages[0]!.text).toBe("агов");
+    expect(uk.messages.find((m) => m.pool)!.pool![0]!.text).toBe("один");
+    expect(uk.messages.find((m) => m.text?.startsWith("__status__"))!.text).toBe("__status__:Рен вийшов");
+    const choice = Object.values(uk.choices!)[0]!;
+    expect(choice.options.map((o) => o.text)).toEqual(["Звісно", "Neutral"]);
+  });
+
+  it("defaults to the canonical (en) language", () => {
+    const def = convertBlockToSegment(block);
+    expect(def.messages[0]!.text).toBe("hey");
+  });
+
+  it("a plain-string field is locale-agnostic (back-compat)", () => {
+    const choice = Object.values(convertBlockToSegment(block, "uk").choices!)[0]!;
+    expect(choice.options[1]!.text).toBe("Neutral"); // no map → same in every locale
+  });
+
+  it("threadDisplayName resolves a localized display_name, falling back across locales", () => {
+    const m: Manifest = {
+      days: [{ day: 1, route: "common", segments: ["a"] }],
+      segments: { a: { id: "a", type: "group_chat", day: 1, thread_id: "t1" } },
+      threads: { t1: { display_name: { en: "Ren", uk: "Рен" } } },
+    };
+    expect(threadDisplayName(m, "t1", "uk")).toBe("Рен");
+    expect(threadDisplayName(m, "t1", "ja")).toBe("Ren"); // missing → default locale
+    expect(threadDisplayName(m, "missing", "uk")).toBe("missing"); // no thread → id
+    expect(listThreads(m, 1, "uk")[0]!.display_name).toBe("Рен");
   });
 });

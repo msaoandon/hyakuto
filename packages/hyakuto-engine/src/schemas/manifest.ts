@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DayConfig } from './day';
+import { Localized } from '../i18n/localized';
 
 // ─── MANIFEST CONTRACT ───────────────────────────────────
 // Zod schemas for the shapes emitted by the Apps Script exporter
@@ -23,7 +24,7 @@ export const SegmentMeta = z.object({
 
 /** Per-thread (chat) envelope from the `_threads` tab. */
 export const ThreadMeta = z.object({
-  display_name: z.string().min(1),
+  display_name: Localized,
   condition: z.string().optional(),
   ost: z.string().optional(),
   /** Wall-clock time-of-day ("HH:MM") before which the chat stays locked. */

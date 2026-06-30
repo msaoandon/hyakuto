@@ -93,6 +93,21 @@ describe('validateBlocks — VN scene cues, empty text, narrator', () => {
     expect(errs.some((e) => e.message.includes('empty text'))).toBe(true);
   });
 
+  it('accepts localized text (locale maps) on message/choice/pool', () => {
+    const pool = poolWith([
+      { type: 'message', character: 'Kou', messages: [{ en: 'hi', uk: 'привіт' }] },
+      { type: 'choice', options: [{ text: { en: 'Sure', uk: 'Звісно' } }] },
+      { type: 'pool', character: 'Kou', variants: [{ text: { en: 'one', uk: 'один' } }] },
+    ]);
+    expect(validateBlocks(pool, config)).toEqual([]);
+  });
+
+  it('flags a locale map with a blank translation', () => {
+    const pool = poolWith([{ type: 'message', character: 'Kou', messages: [{ en: 'hi', uk: '  ' }] }]);
+    const errs = validateBlocks(pool, config);
+    expect(errs.some((e) => e.message.includes('empty text'))).toBe(true);
+  });
+
   it('accepts valid context predicates (if_time / if_gender)', () => {
     const pool = poolWith([
       { type: 'message', character: 'Kou', messages: ['Evening, you.'],

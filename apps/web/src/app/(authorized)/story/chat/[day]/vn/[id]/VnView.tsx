@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { gameConfig } from "@hyakuto/game";
-import { assembleThread, stripEffects, manifest } from "@/data/loadDay";
+import { assembleThread, stripEffects, threadDisplayName, manifest } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
-import { useT } from "@/i18n";
+import { useT, useLocale } from "@/i18n";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { VnStage } from "@/components/vn/VnStage";
 import { VnNarration } from "@/components/vn/VnNarration";
@@ -27,6 +27,7 @@ const CHOOSER_SKIP_DELAY_MS = 150;
 export function VnView({ day, id }: { day: string; id: string }) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
   const dayNum = Number(day);
 
   const [candleProgress, setCandleProgress] = useState(1);
@@ -46,10 +47,10 @@ export function VnView({ day, id }: { day: string; id: string }) {
   const completed = useGameStore((s) => s.completed);
 
   const segment = useMemo(() => {
-    const seg = assembleThread(dayNum, id, saveToState(save, completed));
+    const seg = assembleThread(dayNum, id, saveToState(save, completed), locale);
     const isReplay = `${dayNum}:${id}` in completed;
     return isReplay ? stripEffects(seg) : seg;
-  }, [dayNum, id, save, completed]);
+  }, [dayNum, id, save, completed, locale]);
 
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;
 
@@ -121,7 +122,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
   return (
     <>
       <VnStage scene={scene} />
-      <StoryHeader back={`/story/chat/${dayNum}`} title={manifest.threads[id]?.display_name ?? ""} />
+      <StoryHeader back={`/story/chat/${dayNum}`} title={manifest.threads[id] ? threadDisplayName(id, locale) : ""} />
 
       {/* Dialogue area — tapping it also advances (classic VN). */}
       <div className="flex-1 flex flex-col justify-end p-4" onClick={handleNext}>

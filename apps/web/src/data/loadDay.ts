@@ -7,6 +7,7 @@ import {
   assembleThread as assemble,
   listDays as days,
   listThreads as threads,
+  threadDisplayName as threadName,
   isThreadUnlocked as unlocked,
   nextUnlockAt as unlockAt,
   currentDay as curDay,
@@ -14,6 +15,7 @@ import {
   listDMs as dms,
   assembleDM as assembleDmThread,
   availableDmSegments as availDmSegs,
+  DEFAULT_LOCALE,
   type DayStatus,
   type DmEntry,
 } from "@hyakuto/engine";
@@ -28,12 +30,21 @@ export type { Manifest } from "@hyakuto/engine";
 export const manifest = parseManifest(manifestData);
 export const content = StoryFile.parse(demoData);
 
-export const assembleThread = (day: number, threadId: string, state: GameState) =>
-  assemble(manifest, content, day, threadId, state);
+export const assembleThread = (
+  day: number,
+  threadId: string,
+  state: GameState,
+  locale: string = DEFAULT_LOCALE,
+) => assemble(manifest, content, day, threadId, state, locale);
 
 export const listDays = () => days(manifest);
 
-export const listThreads = (day: number) => threads(manifest, day);
+export const listThreads = (day: number, locale: string = DEFAULT_LOCALE) =>
+  threads(manifest, day, locale);
+
+/** A thread's display name in the active locale (chat/VN/DM headers). */
+export const threadDisplayName = (threadId: string, locale: string = DEFAULT_LOCALE) =>
+  threadName(manifest, threadId, locale);
 
 export const isThreadUnlocked = (day: number, threadId: string, state: GameState, now: number) =>
   unlocked(manifest, day, threadId, state, now);
@@ -45,10 +56,15 @@ export const currentDay = (state: GameState) => curDay(manifest, state);
 
 export const dayStatus = (day: number, state: GameState): DayStatus => dayStat(manifest, day, state);
 
-export const listDMs = (state: GameState) => dms(manifest, state);
+export const listDMs = (state: GameState, locale: string = DEFAULT_LOCALE) =>
+  dms(manifest, state, locale);
 
-export const assembleDM = (threadId: string, state: GameState, segmentIds?: string[]) =>
-  assembleDmThread(manifest, content, threadId, state, segmentIds);
+export const assembleDM = (
+  threadId: string,
+  state: GameState,
+  segmentIds?: string[],
+  locale: string = DEFAULT_LOCALE,
+) => assembleDmThread(manifest, content, threadId, state, segmentIds, locale);
 
 export const availableDmSegments = (threadId: string, state: GameState) =>
   availDmSegs(manifest, threadId, state);

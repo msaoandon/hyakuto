@@ -1,5 +1,13 @@
-import { StoryFile, collectConditionRefs, RESERVED_CHARACTERS, parseManifest } from '@hyakuto/engine';
-import type { Block, GameConfig, Manifest } from '@hyakuto/engine';
+import { StoryFile, collectConditionRefs, RESERVED_CHARACTERS, parseManifest, localizedValues } from '@hyakuto/engine';
+import type { Block, GameConfig, Manifest, Localized } from '@hyakuto/engine';
+
+/** A translatable value is "empty" if it carries no locale, or any of its
+ *  per-locale texts is blank. Replaces the schema-level `.min(1)` lost when the
+ *  fields became locale maps. */
+function emptyLocalized(value: Localized): boolean {
+  const vals = localizedValues(value);
+  return vals.length === 0 || vals.some((s) => !s.trim());
+}
 
 export type ValidationError = { source: string; segmentId?: string; message: string };
 export type ContentSource = { path: string; data: unknown };
@@ -84,12 +92,23 @@ export function validateBlocks(
 
       if (item.type === 'message')
         for (const m of item.messages)
-          if (!m.trim()) errors.push({ ...ctx, message: 'Message has empty text' });
+          if (emptyLocalized(m)) errors.push({ ...ctx, message: 'Message has empty text' });
+
+      if (item.type === 'pool')
+        for (const v of item.variants)
+          if (emptyLocalized(v.text)) errors.push({ ...ctx, message: 'Pool variant has empty text' });
+
+      if (item.type === 'status' && emptyLocalized(item.text))
+        errors.push({ ...ctx, message: 'Status has empty text' });
 
       if (item.type === 'choice') {
         if (item.character && !chars.has(item.character))
           errors.push({ ...ctx, message: `Unknown choice character "${item.character}"` });
-        for (const opt of item.options) { condCheck(opt.condition); fxCheck(opt.effects); }
+        for (const opt of item.options) {
+          if (emptyLocalized(opt.text)) errors.push({ ...ctx, message: 'Choice option has empty text' });
+          condCheck(opt.condition);
+          fxCheck(opt.effects);
+        }
       }
       if (item.type === 'cue') {
         if (!CUE_CHANNELS.includes(item.channel))

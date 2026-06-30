@@ -6,13 +6,14 @@ import { listThreads, isThreadUnlocked } from "@/data/loadDay";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { LanternBackground } from "@/components/LanternBackground";
 import { Timeline } from "./Timeline";
-import { useT } from "@/i18n";
+import { useT, useLocale } from "@/i18n";
 import { useGameStore, saveToState } from "@/store/gameStore";
 
 // The current day's chat list (chats + VN units). Past/future days are reached
 // only through the Timeline modal — this screen always shows one day.
 export function ChatDayView({ day }: { day: string }) {
   const t = useT();
+  const locale = useLocale();
   const dayNum = Number(day);
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
@@ -49,7 +50,7 @@ export function ChatDayView({ day }: { day: string }) {
       />
       <div className="flex-1 flex flex-col items-center gap-4 p-6 overflow-y-auto">
         <LanternBackground />
-        {listThreads(dayNum)
+        {listThreads(dayNum, locale)
           .filter((thread) => thread.kind !== "dm") // DMs live in the Messages inbox
           .map((thread) => {
             const done = `${dayNum}:${thread.id}` in completed;

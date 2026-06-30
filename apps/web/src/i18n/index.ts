@@ -9,7 +9,9 @@ export type MessageKey = keyof typeof en;
 type Messages = Record<MessageKey, string>;
 const dictionaries: Record<Locale, Messages> = { en, uk };
 
-function useLocale(): Locale {
+/** The active locale, reactive — for both UI dictionaries and content resolution
+ *  (display names, message text) at the engine assemble seam. */
+export function useLocale(): Locale {
   return useGameStore((s) => s.locale);   // reactive — UI re-renders when locale changes
 }
 

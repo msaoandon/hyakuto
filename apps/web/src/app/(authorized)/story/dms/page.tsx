@@ -7,20 +7,21 @@ import { Avatar } from "@/components/chat/Avatar";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { LanternBackground } from "@/components/LanternBackground";
 import { useGameStore, saveToState } from "@/store/gameStore";
-import { useT } from "@/i18n";
+import { useT, useLocale } from "@/i18n";
 
 // The Messages inbox: ongoing 1:1 DMs that have started. A DM appears once its
 // first segment unlocks (the contact "messages" you) — relationship-gated, never
 // in the day chat list.
 export default function DmInboxPage() {
   const t = useT();
+  const locale = useLocale();
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
   const dmRead = useGameStore((s) => s.dmRead);
 
   const dms = useMemo(
-    () => listDMs(saveToState(save, completed)).filter((d) => d.available),
-    [save, completed],
+    () => listDMs(saveToState(save, completed), locale).filter((d) => d.available),
+    [save, completed, locale],
   );
 
   return (

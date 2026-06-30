@@ -6,10 +6,11 @@ import {
   availableDmSegments,
   stripEffects,
   stripChoices,
-  manifest,
+  threadDisplayName,
 } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { ThreadPlayer } from "@/components/chat/ThreadPlayer";
+import { useLocale } from "@/i18n";
 
 // A DM conversation. On (re)entry it plays only the *unread* segments — the new
 // messages — so an already-read segment is never replayed (which would re-prompt
@@ -17,6 +18,7 @@ import { ThreadPlayer } from "@/components/chat/ThreadPlayer";
 // caught up, it shows a non-interactive read-back of the whole conversation
 // (choices + effects stripped). Reaching the end marks the unlocked segments read.
 export function DmView({ thread }: { thread: string }) {
+  const locale = useLocale();
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
   const markDmRead = useGameStore((s) => s.markDmRead);
@@ -28,10 +30,10 @@ export function DmView({ thread }: { thread: string }) {
     const state = saveToState(save, completed);
     const available = availableDmSegments(thread, state);
     const unread = available.filter((id) => !readAtOpen.has(id));
-    if (unread.length > 0) return assembleDM(thread, state, unread); // new messages, interactive
+    if (unread.length > 0) return assembleDM(thread, state, unread, locale); // new messages, interactive
     // Caught up → read-back the full conversation without prompts or effects.
-    return stripChoices(stripEffects(assembleDM(thread, state, available)));
-  }, [thread, save, completed, readAtOpen]);
+    return stripChoices(stripEffects(assembleDM(thread, state, available, locale)));
+  }, [thread, save, completed, readAtOpen, locale]);
 
   const handleComplete = () => {
     markDmRead(thread, availableDmSegments(thread, saveToState(save, completed)));
@@ -40,7 +42,7 @@ export function DmView({ thread }: { thread: string }) {
   return (
     <ThreadPlayer
       segment={segment}
-      title={manifest.threads[thread]?.display_name ?? thread}
+      title={threadDisplayName(thread, locale)}
       back="/story/dms"
       onComplete={handleComplete}
     />

@@ -86,7 +86,7 @@
       "display_name": "Test VN"
     },
     "dm_1": {
-      "display_name": "Ren",
+      "display_name": { "en": "Ren", "uk": "Рен" },
       "contact": "ren",
       "ost": "chat_night"
     },
