@@ -7,9 +7,10 @@ import { CandleMeter } from "./CandleMeter";
 /**
  * Shared top bar for Story (ongoing-game) screens: a back/home affordance, a
  * title, the persistent candle count, and an optional right-side slot (e.g. the
- * Timeline button). Every Story route renders through this, so the candle shows
- * on all of them — hub, chat list, chat, VN, DMs, profiles — without per-page
- * wiring. Players and lists own their header so each route can vary the rest.
+ * chat pace/pause controls). Every Story route renders through this, so the
+ * candle shows on all of them — hub, chat list, chat, VN, DMs, profiles —
+ * without per-page wiring. Players and lists own their header so each route can
+ * vary the rest.
  */
 export function StoryHeader({
   back,

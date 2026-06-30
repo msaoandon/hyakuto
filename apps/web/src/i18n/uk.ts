@@ -11,7 +11,7 @@ export const uk = {
   "story.chat": "Чат",
   "story.dms": "Повідомлення",
   "story.dmsEmpty": "Поки що немає повідомлень.",
-  "story.timeline": "Хронологія",
+  "story.days": "Дні",
   "story.participants": "Учасники",
   "settings.title": "Налаштування",
   "settings.language": "Мова",

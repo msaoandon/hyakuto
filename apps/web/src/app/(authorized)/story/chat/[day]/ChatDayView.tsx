@@ -5,12 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { listThreads, isThreadUnlocked } from "@/data/loadDay";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { LanternBackground } from "@/components/LanternBackground";
-import { Timeline } from "./Timeline";
+import { DayRail } from "./DayRail";
 import { useT, useLocale } from "@/i18n";
 import { useGameStore, saveToState } from "@/store/gameStore";
 
-// The current day's chat list (chats + VN units). Past/future days are reached
-// only through the Timeline modal — this screen always shows one day.
+// A day's chat list (chats + VN units), with a day rail on top to switch days:
+// completed days are rereadable, the viewed day is highlighted, future days lock.
 export function ChatDayView({ day }: { day: string }) {
   const t = useT();
   const locale = useLocale();
@@ -20,7 +20,6 @@ export function ChatDayView({ day }: { day: string }) {
 
   // Time-gated chats reveal as the wall-clock passes; poll + re-check on focus.
   const [now, setNow] = useState(() => Date.now());
-  const [timelineOpen, setTimelineOpen] = useState(false);
   useEffect(() => {
     const tick = () => setNow(Date.now());
     const id = setInterval(tick, 30_000);
@@ -35,21 +34,10 @@ export function ChatDayView({ day }: { day: string }) {
 
   return (
     <>
-      <StoryHeader
-        back="/story"
-        title={t("play.day", { n: dayNum })}
-        right={
-          <button
-            onClick={() => setTimelineOpen(true)}
-            aria-label={t("story.timeline")}
-            className="text-xl leading-none"
-          >
-            ▦
-          </button>
-        }
-      />
+      <StoryHeader back="/story" title={t("play.day", { n: dayNum })} />
       <div className="flex-1 flex flex-col items-center gap-4 p-6 overflow-y-auto">
         <LanternBackground />
+        <DayRail viewedDay={dayNum} />
         {listThreads(dayNum, locale)
           .filter((thread) => thread.kind !== "dm") // DMs live in the Messages inbox
           .map((thread) => {
@@ -86,7 +74,6 @@ export function ChatDayView({ day }: { day: string }) {
             );
           })}
       </div>
-      {timelineOpen && <Timeline onClose={() => setTimelineOpen(false)} />}
     </>
   );
 }

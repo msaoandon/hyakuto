@@ -11,7 +11,7 @@ export const en = {
   "story.chat": "Chat",
   "story.dms": "DMs",
   "story.dmsEmpty": "No messages yet.",
-  "story.timeline": "Timeline",
+  "story.days": "Days",
   "story.participants": "Participants",
   "settings.title": "Settings",
   "settings.language": "Language",
