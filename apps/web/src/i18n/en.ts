@@ -29,4 +29,6 @@ export const en = {
   "play.speed": "Speed",
   "play.slower": "Slower",
   "play.faster": "Faster",
+  "play.pause": "Pause",
+  "play.resume": "Resume",
 } as const;

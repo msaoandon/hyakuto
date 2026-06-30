@@ -10,6 +10,7 @@ import { ImageModal } from "./ImageModal";
 import { DevConsole } from "@/components/debug/DevConsole";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { PaceControl } from "./PaceControl";
+import { PauseButton } from "./PauseButton";
 import { useT } from "@/i18n";
 import type { PendingChoice } from "./types";
 
@@ -84,7 +85,16 @@ export function ThreadPlayer({
   return (
     <>
       <div className="fixed inset-0 -z-10 chat-bg" aria-hidden="true" />
-      <StoryHeader back={back} title={title} right={<PaceControl />} />
+      <StoryHeader
+        back={back}
+        title={title}
+        right={
+          <div className="flex items-center gap-2">
+            <PauseButton />
+            <PaceControl />
+          </div>
+        }
+      />
       <ChatFeed
         segment={segment}
         onStateChange={handleStateChange}

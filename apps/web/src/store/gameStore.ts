@@ -49,6 +49,9 @@ type GameStore = {
   completed: Record<string, number>;
   /** Active cue value per channel during chat playback (transient — not persisted). */
   cues: Record<string, string>;
+  /** Whether the chat drip is paused (transient — not persisted). The header
+   *  pause button toggles it; useChatEngine pauses/resumes the engine. */
+  chatPaused: boolean;
   /** Read cursor per DM thread: the segment ids the player has seen. Drives the
    *  inbox "new message" badge and per-segment effect application on re-entry. */
   dmRead: Record<string, string[]>;
@@ -58,6 +61,7 @@ type GameStore = {
   setLocale: (locale: Locale) => void;
   setMusicEnabled: (on: boolean) => void;
   setChatPaceLevel: (level: number) => void;
+  setChatPaused: (paused: boolean) => void;
   setCue: (channel: string, value: string) => void;
   clearCues: () => void;
 };
@@ -71,6 +75,7 @@ export const useGameStore = create<GameStore>()(
       chatPaceLevel: DEFAULT_PACE_LEVEL,
       completed: {},
       cues: {},
+      chatPaused: false,
       dmRead: {},
       completeThread: (key, save) =>
         set((s) =>
@@ -85,6 +90,7 @@ export const useGameStore = create<GameStore>()(
       setLocale: (locale) => set({ locale }),
       setMusicEnabled: (on) => set({ musicEnabled: on }),
       setChatPaceLevel: (level) => set({ chatPaceLevel: clampPaceLevel(level) }),
+      setChatPaused: (paused) => set({ chatPaused: paused }),
       setCue: (channel, value) => set((s) => ({ cues: { ...s.cues, [channel]: value } })),
       clearCues: () => set({ cues: {} }),
     }),

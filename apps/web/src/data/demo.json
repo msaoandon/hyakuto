@@ -1,6 +1,462 @@
 [
   {
-    "block_id": "demo_1",
+    "block_id": "demo_d1_s1",
+    "items": [
+      {
+        "type": "status",
+        "text": {
+          "en": "{MC} joined the chatroom.",
+          "uk": "{MC} приєдналася до кімнати."
+        }
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "ok genuine question for the room",
+            "uk": "окей щире питання до всіх"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "Tatsumi. how old are you",
+            "uk": "Тацумі. скільки тобі років"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "and don't say \"old\"",
+            "uk": "і не кажи «багато»"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Old.",
+            "uk": "Багато."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "I KNEW he'd do that",
+            "uk": "Я ЗНАВ що він так скаже"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "A ryūjin predates the reckoning of years. Asking is somewhat impolite.",
+            "uk": "Рюджін передує літочисленню років. Запитувати про таке дещо нечемно."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "It's fine. I simply don't have a number. I am older than the calendar that would name the number.",
+            "uk": "Усе гаразд. Просто я не маю віку. Я старший за календар, який назвав би мій вік."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "So you're a dragon god of the sea?",
+              "uk": "То ти дракон-бог моря?"
+            }
+          },
+          {
+            "text": {
+              "en": "Where do you even live?",
+              "uk": "А де ти взагалі живеш?"
+            },
+            "effects": [
+              {
+                "axis": "tatsumi",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": {
+              "en": "Do you have a palace down there?",
+              "uk": "У тебе там, унизу, палац?"
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Now. A bookshop in Kamakura.",
+            "uk": "Зараз — у книгарні в Камакурі."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Before — the old stories place the dragon's house at the bottom of the sea. Ryūgū-jō. The palace where each wall faces a different season, and one day spent there is a hundred years on the shore.",
+            "uk": "Раніше — старі оповіді розміщують дім дракона на дні моря. Рюґу-джьо. Палац, де кожна стіна звернена до іншої пори року, а один день, проведений там, дорівнює сотні років на березі."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "the Urashima Tarō thing!!",
+            "uk": "історія Урашіма Таро!!"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "the fisherman who comes back and everyone he knew is dust",
+            "uk": "рибалка, що повертається, а всі, кого він знав — порох"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "That story is essentially accurate. The fisherman was a guest of the dragon's daughter, Otohime. He stayed what felt like three days. He returned to find three hundred years had passed.",
+            "uk": "Ця історія доволі точна. Рибалка був гостем доньки дракона, Отохіме. Йому здавалося, що він пробув там три дні. Він повернувся й виявив, що минуло триста років."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "That's horrifying.",
+            "uk": "Це жахливо."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "It is a question of scale. To us, three days and three hundred years are not so different.",
+            "uk": "Це питання масштабу. Для нас три дні й триста років не дуже різняться."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "he says, ominously, while drinking what I assume is the tea of a man who has watched empires sink",
+            "uk": "каже він зловісно, попиваючи, як я гадаю, чай людини, що бачила, як тонуть імперії"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Green tea. It's cold now. Thank you for that.",
+            "uk": "Зелений чай. Уже холодний. Дякую тобі за це."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_d1_s2",
+    "items": [
+      {
+        "type": "image",
+        "character": "Kou",
+        "file": "kou_dinner.jpg"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "dinner",
+            "uk": "вечеря"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          {
+            "en": "It's 3am.",
+            "uk": "Зараз 3 ночі."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "which is dinner. for me",
+            "uk": "що і є вечерею. для мене."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "I have known you for four years and I still don't understand your relationship with time.",
+            "uk": "Я знаю тебе чотири роки й досі не розумію твоїх стосунків із часом."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "time is a human invention and I refuse to participate",
+            "uk": "час — це людський винахід і я відмовляюся в ньому брати участь"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "And yet you are awake at this hour, posting a photograph of a sandwich.",
+            "uk": "І все ж ти не спиш о цій годині й постиш фото сендвіча."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "REN. king. you're up too. don't act like you're above this",
+            "uk": "РЕН. королю. ти теж не спиш. не вдавай, ніби ти вищий за це"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "I rise before dawn. That is the opposite of being awake late.",
+            "uk": "Я встаю до світанку. Це протилежність тому, щоб не спати допізна."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "same clock different vibe",
+            "uk": "той самий годинник інший вайб"
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "Kō, please sleep.",
+              "uk": "Ко, прошу, поспи."
+            }
+          },
+          {
+            "text": {
+              "en": "Is the sandwich at least good?",
+              "uk": "Сендвіч хоч смачний?"
+            },
+            "effects": [
+              {
+                "axis": "ko",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": {
+              "en": "Why is Ren awake at 3am though",
+              "uk": "А чому Рен не спить о 3-й ночі взагалі"
+            },
+            "effects": [
+              {
+                "axis": "ren",
+                "delta": 1
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "no.",
+            "uk": "ні."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "it's a tragedy between two slices of bread.",
+            "uk": "це трагедія між двома шматками хліба."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "I'm eating it out of spite",
+            "uk": "я їм його на зло"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "Out of spite toward whom",
+            "uk": "На зло кому?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "the sandwich. obviously. it knows what it did",
+            "uk": "на зло сендвічу. очевидно. він знає, що накоїв"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "I am also awake.",
+            "uk": "Я теж не сплю."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "THE DRAGON STIRS",
+            "uk": "ДРАКОН ПРОБУДЖУЄТЬСЯ"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "I was enjoying the quiet. Briefly.",
+            "uk": "Я насолоджувався тишею. Недовго."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "☑️ ruined it",
+            "uk": "☑️ зіпсував"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "anyway haruki go to sleep you have your little software meetings",
+            "uk": "словом харукі йди спати в тебе ж твої дрібні робочі наради"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "I was asleep. You added me to a sandwich emergency.",
+            "uk": "Я спав. Ти додав мене до сендвіч-екстреної ситуації."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "every sandwich is an emergency if you respect it enough",
+            "uk": "кожен сендвіч — це екстрена ситуація якщо поважати його достатньо"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_d1_s3",
     "items": [
       {
         "type": "cue",
@@ -11,12 +467,9 @@
         "type": "message",
         "character": "Kou",
         "messages": [
-          "ok you wanted a scary one - lights off"
-        ],
-        "effects": [
           {
-            "axis": "candles",
-            "delta": -10
+            "en": "ok ok everyone settle",
+            "uk": "так так усі вгамуйтеся"
           }
         ]
       },
@@ -24,19 +477,112 @@
         "type": "message",
         "character": "Kou",
         "messages": [
-          "most cursed ghost story in Japan — people still won't say her name on a film set without visiting her grave first"
+          {
+            "en": "it's storytime",
+            "uk": "час історій"
+          }
         ]
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "her name is <b>Oiwa</b>"
-        ],
-        "effects": [
           {
-            "axis": "candles",
-            "delta": -5
+            "en": "gather round the digital fire",
+            "uk": "збирайтеся навколо цифрового вогнища"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "you know Kuchisake-onna right",
+            "uk": "ви ж знаєте Кучісаке-онну, так"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "the slit-mouthed woman",
+            "uk": "жінку з розрізаним ротом"
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "I've heard of her.",
+              "uk": "Я про неї чула."
+            }
+          },
+          {
+            "text": {
+              "en": "No, tell me.",
+              "uk": "Ні, розкажи."
+            }
+          },
+          {
+            "text": {
+              "en": "Please don't, I have to walk home.",
+              "uk": "Будь ласка, не треба, мені ще додому йти."
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "ok so. you're walking home at night. fog's in. and a woman stops you. she's wearing a mask, surgical type, super normal, nobody thinks twice anymore",
+            "uk": "отже. ти йдеш додому вночі. туман спустився. і тебе зупиняє жінка. на ній маска, медична, цілком звичайна, ніхто вже й не задумується"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "and she asks you \"watashi, kirei?\" — am I pretty?",
+            "uk": "і вона питає тебе «ваташі, кірей?» — я гарна?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "you say yes. obviously. you're polite",
+            "uk": "ти кажеш так. очевидно. ти ж ввічлива людина"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "then she takes off the mask. and her mouth is cut ear to ear. big red slit. and she asks again. \"kirei?\"",
+            "uk": "тоді вона знімає маску. і її рот розрізаний від вуха до вуха. великий червоний розріз. і вона питає знову. «кірей?»"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "say no — she kills you. say yes — she asks \"even like this?\" and if you mess up the answer she makes you match. gives you the same smile. permanently",
+            "uk": "скажеш ні — вона вб'є тебе. скажеш так — вона спитає «навіть отака?» і якщо схибиш із відповіддю, вона зробить тебе такою ж. подарує тобі таку саму усмішку. назавжди"
           }
         ]
       },
@@ -44,101 +590,60 @@
         "type": "message",
         "character": "Haruki",
         "messages": [
-          "💀 it's midnight why did i ask"
+          {
+            "en": "This is a famous one. There was a panic about her in the late 70s, kids were escorted home from school.",
+            "uk": "Це відома історія. Наприкінці 70-х була справжня паніка через неї, дітей проводжали зі школи додому."
+          }
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -1
+          }
         ]
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "Edo period. Oiwa's married to a rōnin named <b>Iemon.</b>"
+          {
+            "en": "SEE haruki gets it. real fear. mass hysteria. beautiful",
+            "uk": "ОСЬ харукі розуміє. справжній страх. масова істерія. краса"
+          }
         ]
       },
       {
         "type": "message",
         "character": "Kou",
         "messages": [
-          "broke, mean, she just had his baby, still weak from the birth"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "and he wants out — for a richer wife"
+          {
+            "en": "the trick btw — you give her a confusing answer. \"you're average.\" \"so-so.\" she gets stuck thinking about it and you walk away. she hates ambiguity",
+            "uk": "до речі хитрість — дай їй заплутану відповідь. «ти так собі». «середня». вона зависне, обмірковуючи це, і ти втечеш. вона ненавидить двозначність"
+          }
         ]
       },
       {
         "type": "message",
         "character": "Suzune",
         "messages": [
-          "I don't like where this is going."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "so they send Oiwa \"medicine\", told her it'll help her recover"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "it's poison"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "and it doesn't kill her - it disfigures her"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "half her face collapses, her hair starts coming out in fistfuls"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "[sigh]"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "here's the image that haunts every version"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "she's at her mirror, combing her hair to look nice. and it just keeps coming"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "a whole pile of it, and underneath, the comb is wet"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
           {
-            "text": "Not me reading this in the bath -_-"
-          },
+            "en": "That's such a bureaucratic way to escape a horror.",
+            "uk": "Який бюрократичний спосіб утекти від жаху."
+          }
+        ]
+      },
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "base"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
           {
-            "text": "I'm under a blanket now"
+            "en": "ambiguity has saved me for FIVE HUNDRED",
+            "uk": "двозначність рятувала мене ПʼЯТСОТ"
           }
         ]
       },
@@ -146,621 +651,43 @@
         "type": "message",
         "character": "Kou",
         "messages": [
-          "she sees her reflection"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "sees what they did"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "and with her dying breath <b>she curses Iemon's name</b>"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "And a curse spoken in the moment of dying is the kind that holds. Those are the ones that don't loosen."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "right"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "Iemon's solution:"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "he nails her body to a door"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "nails a dead servant to the other side"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "frames them as lovers"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "dumps the whole thing in the river 👍"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "the casual 👍 is killing me"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "laugh now - doors come back"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "wedding night with the rich girl"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "he lifts her veil - and it's Oiwa's ruined face"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "he panics, grabs his sword, cuts the demon down"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "lights up. not Oiwa."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "his new bride. he just killed her!"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
           {
-            "text": "NO"
-          },
-          {
-            "text": "Oh. My. God."
+            "en": "anyway sleep tight 🦊",
+            "uk": "словом солодких снів 🦊"
           }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "that's the whole trick"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "she never chases him, she just makes him do it to himself"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "he goes to confess, sees Oiwa, swings — kills her father too"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "he goes fishing to clear his head"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "pulls something out of the water"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "it's the door"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "her face on one side, still wet"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "take the door back i don't want the door"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "it follows him everywhere"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "nets turn into her hair"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "lanterns into her eyes"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "his own baby looks up with her face"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "and the curse takes the whole household down with him"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "one by one, till the bloodline's just gone"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "most ghosts haunt and fade"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "Oiwa stays until there's nothing left of him to ruin"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "The play premiered in 1825. People watched it once, then began to insist the role itself was cursed — accidents, injuries, deaths, all laid at her feet."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "So even now, before any troupe stages or films it, they make the trip to her actual grave at Myōgyō-ji in Tokyo. They kneel. They ask Oiwa for her permission first."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "You can call that superstition if it comforts you. The custom has outlasted everyone who first dismissed it."
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "Wait, that's a REAL grave??"
-          },
-          {
-            "text": "..."
-          }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "real grave, real temple, directors still make the trip, the ones who skip it have stories"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "so the curse worked so well it started haunting the people TELLING it"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "she's the only one who got out of the play"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "sleep well 🙂"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Haruki",
-        "messages": [
-          "<b>absolutely not</b>, not after the wet comb"
         ]
       }
     ]
   },
   {
-    "block_id": "demo_2",
+    "block_id": "demo_d2_s1",
     "items": [
-      {
-        "type": "status",
-        "text": "{MC} joined the room."
-      },
-      {
-        "type": "message",
-        "character": "Suzune",
-        "messages": [
-          "demo_2"
-        ],
-        "effects": [
-          {
-            "axis": "candles",
-            "delta": -10
-          }
-        ]
-      },
-      {
-        "type": "typing",
-        "character": "Kou"
-      },
       {
         "type": "choice",
         "options": [
           {
-            "text": "helo.",
+            "text": {
+              "en": "Ren, can I ask what you actually are?",
+              "uk": "Рене, можна спитати, що ти насправді таке?"
+            },
             "effects": [
               {
-                "axis": "candles",
-                "delta": -5
-              }
-            ]
-          },
-          {
-            "text": "Hi!!"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "demo_3",
-    "items": [
-      {
-        "type": "status",
-        "text": "{MC} joined the room."
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "demo_3"
-        ],
-        "effects": [
-          {
-            "axis": "candles",
-            "delta": -10
-          }
-        ]
-      },
-      {
-        "type": "typing",
-        "character": "Tatsumi"
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "helo.",
-            "effects": [
-              {
-                "axis": "candles",
-                "delta": -5
-              }
-            ]
-          },
-          {
-            "text": "Hi!!"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "demo_4",
-    "items": [
-      {
-        "type": "status",
-        "text": "{MC} joined the room."
-      },
-      {
-        "type": "message",
-        "character": "Tatsumi",
-        "messages": [
-          "demo_4"
-        ]
-      },
-      {
-        "type": "typing",
-        "character": "Ren"
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "helo."
-          },
-          {
-            "text": "Hi!!"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "demo_5",
-    "items": [
-      {
-        "type": "cue",
-        "channel": "music",
-        "value": "suspense"
-      },
-      {
-        "type": "status",
-        "text": "{MC} joined the room."
-      },
-      {
-        "type": "message",
-        "character": "dev",
-        "messages": [
-          "demo_5"
-        ]
-      },
-      {
-        "type": "typing",
-        "character": "Ren"
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "helo."
-          },
-          {
-            "text": "Hi!!"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "vn_1",
-    "items": [
-      {
-        "type": "cue",
-        "channel": "music",
-        "value": "suspense"
-      },
-      {
-        "type": "cue",
-        "channel": "scene",
-        "value": "bookshop"
-      },
-      {
-        "type": "message",
-        "character": "narrator",
-        "messages": [
-          "most cursed ghost story in Japan — people still won't say her name on a film set without visiting her grave first"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "narrator",
-        "messages": [
-          "her name is <b>Oiwa</b>"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Kou",
-        "messages": [
-          "Edo period. Oiwa's married to a rōnin named <b>Iemon.</b>"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "narrator",
-        "messages": [
-          "broke, mean, she just had his baby, still weak from the birth"
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "💀 it's midnight why did i ask"
-          },
-          {
-            "text": "omg"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "demo_5",
-    "items": [
-      {
-        "type": "cue",
-        "channel": "music",
-        "value": "suspense"
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "Are you ok?"
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "Sweet dreams."
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "You too"
-          },
-          {
-            "text": "I'm good"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "demo_5",
-    "items": [
-      {
-        "type": "cue",
-        "channel": "music",
-        "value": "suspense"
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "Glad to hear that."
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "Tell me if domething feels off."
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": "Got it."
-          },
-          {
-            "text": "Don't worry about me."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "dm_1a",
-    "items": [
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          { "en": "hey. that Oiwa story — you went quiet.", "uk": "агов. та історія про Оіву — ти затих." }
-        ]
-      },
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          { "en": "you good?", "uk": "ти як, нормально?" }
-        ]
-      },
-      {
-        "type": "choice",
-        "options": [
-          {
-            "text": { "en": "Just thinking.", "uk": "Просто думаю." },
-            "effects": [
-              {
-                "axis": "patience",
+                "axis": "ren",
                 "delta": 1
               }
             ]
           },
           {
-            "text": { "en": "That comb part got me.", "uk": "Той момент з гребінцем мене зачепив." }
+            "text": {
+              "en": "You seem like you know a lot about mountains.",
+              "uk": "Ти, здається, багато знаєш про гори."
+            }
+          },
+          {
+            "text": {
+              "en": "You give very... bird energy.",
+              "uk": "Від тебе дуже... пташина енергія."
+            }
           }
         ]
       },
@@ -768,26 +695,794 @@
         "type": "message",
         "character": "Ren",
         "messages": [
-          { "en": "yeah. it stays with you.", "uk": "так. воно лишається з тобою." }
-        ]
-      }
-    ]
-  },
-  {
-    "block_id": "dm_1b",
-    "items": [
-      {
-        "type": "message",
-        "character": "Ren",
-        "messages": [
-          "couldn't sleep. kept hearing the comb."
+          {
+            "en": "You may ask. Whether I answer fully is another matter. But I will tell you of the kind of being I resemble.",
+            "uk": "Спитати можеш. Чи відповім я повністю — то інша річ. Але я розповім тобі про істоту, яку нагадую."
+          }
         ]
       },
       {
         "type": "message",
         "character": "Ren",
         "messages": [
-          "anyway — glad you're around."
+          {
+            "en": "The tengu. Mountain spirits. In the oldest tellings they were calamity — read in the kanji as \"heavenly dog,\" a thing that fell from the sky. Later they became the guardians and tyrants of the deep peaks.",
+            "uk": "Тенґу. Гірські духи. У найдавніших переказах вони були лихом — кандзі читається як «небесний пес», щось, що впало з неба. Згодом вони стали вартовими й тиранами глибоких вершин."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "ren's doing the lecture voice. I love the lecture voice",
+            "uk": "рен увімкнув лекторський голос. обожнюю лекторський голос"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "There are broadly two kinds. The karasu-tengu — crow-faced, winged, the older and wilder form. And the daitengu or konoha-tengu — red-faced, long-nosed, more human in seeming, often depicted as a stern mountain ascetic.",
+            "uk": "Загалом їх є два роди. Карасу-тенґу — з воронячим обличчям, крилаті, давніша й дикіша форма. І дайтенґу або коноха-тенґу — червонолиці, довгоносі, людиноподібніші на вигляд, часто зображувані як суворі гірські аскети."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          {
+            "en": "Which one are you closer to?",
+            "uk": "До якого ти ближчий?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "The crow. The first kind. The kind that remembers being feared.",
+            "uk": "До ворона. До першого роду. До того, що пам'ятає, як його боялися."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "☑️ ominous. 10/10. do the wings thing",
+            "uk": "☑️ зловісно. 10/10. зроби оту штуку з крилами"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "I will not \"do the wings thing.\"",
+            "uk": "Я не «робитиму штуку з крилами»."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Tengu were said to abduct the arrogant, to test monks, to teach swordsmanship to those they deemed worthy. Minamoto no Yoshitsune is said to have learned the blade from the tengu of Mount Kurama as a boy.",
+            "uk": "Кажуть, тенґу викрадали зарозумілих, випробовували ченців, навчали мистецтва меча тих, кого вважали гідними. Кажуть, Мінамото-но Йошіцуне хлопчиком навчився клинка від тенґу гори Курама."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "That one I actually knew. It's in everything.",
+            "uk": "Оце я справді знав. Воно скрізь."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Because it is a good story. A child, exiled to a temple, taught to fight by something inhuman in the dark of the mountain. People keep it because it is true in the way that matters.",
+            "uk": "Бо це добра історія. Дитина, заслана до храму, навчена битися чимось нелюдським у темряві гори. Люди бережуть її, бо вона правдива в той спосіб, що має значення."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "vn_d2_s2",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "kaidan"
+      },
+      {
+        "type": "cue",
+        "channel": "scene",
+        "value": "tengu"
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "They are not one thing, the tengu. The old scrolls disagree, as old scrolls do.\nThe karasu-tengu came first — the crow-tengu. Black-winged, sharp-beaked, a creature of beak and talon and feathered fury. These were the wild ones, closer to bird than man, dwelling where the cedar grows too thick for sunlight. They were not gentle. The earliest Buddhist texts called them demons of pride, the destination of monks who fell to arrogance.",
+            "uk": "Вони не одне, ці тенґу. Старі сувої не згоджуються між собою, як то роблять старі сувої.\nКарасу-тенґу з'явилися першими — ворон-тенґу. Чорнокрилі, гостродзьобі, створіння дзьоба, кігтя й пернатого шалу. То були дикі, ближчі до птаха, ніж до людини, що жили там, де кедр росте надто густо для сонячного світла. Вони не були лагідними. Найдавніші буддійські тексти називали їх демонами гордині, місцем призначення для ченців, що впали в зарозумілість."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Then came the daitengu — the great tengu. Red of face, impossibly long of nose, robed like the yamabushi mountain ascetics they were said to mock and mirror. Sōjōbō, king of the tengu, ruled from Mount Kurama with an army of lesser spirits at his command. To these the people gave a strange respect: tyrants of the high places, yes, but teachers also. Keepers of secret arts.",
+            "uk": "Потім прийшли дайтенґу — великі тенґу. Червонолиці, з неймовірно довгими носами, у шатах, як у ямабусі, гірських аскетів, яких вони ніби висміювали й віддзеркалювали. Соджьобо, цар тенґу, правив із гори Курама, маючи під рукою військо менших духів. Цим люди давали дивну пошану: так, тирани високих місць, але й учителі. Хранителі таємних мистецтв."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "And between them, the small ones — the konoha-tengu, leaf-tengu, half-glimpsed in the canopy. The ones you mistake for a trick of wind.",
+            "uk": "А між ними — малі, коноха-тенґу, листя-тенґу, ледь видні в кронах. Ті, кого приймаєш за гру вітру."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "What unites them is the mountain, and the pride, and the long memory. A tengu does not forgive a forest cut down. A tengu does not forget a discourtesy.",
+            "uk": "Об'єднує їх гора, і гординя, і довга пам'ять. Тенґу не прощає зрубаного лісу. Тенґу не забуває нечемності."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Best, the old folk said, to bow when you enter the deep woods. Just in case someone is watching from the branches.",
+            "uk": "Найкраще, казали старі люди, вклонитися, входячи в глибокий ліс. Про всяк випадок, якщо хтось спостерігає з гілок."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_5",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "kaidan"
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Since storytelling is the custom here, I will offer one. It is old. I dislike the modern ones.",
+            "uk": "Оскільки оповідь історій тут є звичаєм, я запропоную одну. Вона давня. Сучасні мені не до вподоби."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "Please do.",
+              "uk": "Прошу, розкажи."
+            },
+            "effects": [
+              {
+                "axis": "ren",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": {
+              "en": "Is it scary?",
+              "uk": "Вона страшна?"
+            }
+          },
+          {
+            "text": {
+              "en": "Will it give me bird nightmares?",
+              "uk": "Вона подарує мені пташині кошмари?"
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "There is a kind of place the old people feared more than graveyards. The pass. The mountain road. The tunnel cut through stone where the road has no business going.",
+            "uk": "Є місце, якого старі люди боялися більше за цвинтарі. Перевал. Гірська дорога. Тунель, прорубаний крізь камінь там, де дорозі нічого робити."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "In the tellings, a traveler crosses such a pass at dusk — the hour the boundary thins — and meets another walking the opposite way. They exchange a greeting. Only later does the traveler realize the other cast no shadow. Or left no footprints in the snow. Or did not breathe the cold into white.",
+            "uk": "У переказах подорожній переходить такий перевал у сутінках — у годину, коли межа тоншає — і зустрічає іншого, що йде назустріч. Вони обмінюються вітанням. Лише згодом подорожній розуміє, що той не відкидав тіні. Чи не лишав слідів на снігу. Чи не видихав білого в холод."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "ren no offense but this is the slowest burn I've ever experienced and I respect it enormously",
+            "uk": "рен без образ але це найповільніше тління, яке я колись переживав, і я безмежно це поважаю"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Fear is not a thing to be rushed.",
+            "uk": "Страх — не та річ, яку слід квапити."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "The danger of the pass is not violence. It is that you may be invited. The figure asks you to come a little further, to see something just off the path. And the mountain road is very long, and very quiet, and the boundary at dusk is thin enough that a polite person might simply... follow.",
+            "uk": "Небезпека перевалу — не насильство. А те, що тебе можуть запросити. Постать просить пройти ще трохи далі, побачити щось одразу за стежкою. А гірська дорога дуже довга, і дуже тиха, а межа в сутінках тонка настільки, що ввічлива людина може просто... піти слідом."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "And then the road closes behind them.",
+            "uk": "І тоді дорога зачиняється позаду неї."
+          }
+        ],
+        "effects": [
+          {
+            "axis": "candles",
+            "delta": -1
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          {
+            "en": "...I don't love how much you seem to relate to that.",
+            "uk": "...Мені дуже не подобається, наскільки ти, схоже, із цим себе ототожнюєш."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "I am simply a careful narrator.",
+            "uk": "Я просто уважний оповідач."
+          }
+        ]
+      },
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "base"
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "That's the third time tonight someone's deleted a message immediately after a folklore detail and I want everyone to know I've noticed.",
+            "uk": "Це вже втретє за сьогодні хтось видаляє повідомлення одразу після фольклорної деталі, і я хочу, щоб усі знали, що я це помітив."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Goodnight, Haruki.",
+            "uk": "На добраніч, Харукі."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_d3_s1",
+    "items": [
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "Okay Kō, your turn. What are you?",
+              "uk": "Гаразд, Ко, твоя черга. Що ти таке?"
+            },
+            "effects": [
+              {
+                "axis": "ko",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": {
+              "en": "You dodge this every time.",
+              "uk": "Ти щоразу від цього ухиляєшся."
+            }
+          },
+          {
+            "text": {
+              "en": "Let me guess — fox?",
+              "uk": "Дай угадаю — лис?"
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "me? I'm a bartender with commitment issues and a great jawline",
+            "uk": "я? я бармен із проблемами прив'язаності й чудовою лінією щелепи"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "Answer the question.",
+            "uk": "Відповідай на питання."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "UGH fine. hypothetically. if I were folklore. I'd be a kitsune",
+            "uk": "УХ гаразд. гіпотетично. якби я був фольклором. я був би кіцуне"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "foxes. shapeshifters. tricksters. the whole package. you know how every culture has the one animal that's just Too Clever and a little bit of a menace? that's us",
+            "uk": "лиси. перевертні. трикстери. повний набір. знаєте, як у кожної культури є та одна тварина, що просто Надто Розумна й трохи капосна? оце ми"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          {
+            "en": "How does that even work, folklore-wise?",
+            "uk": "А як це взагалі працює, фольклорно?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "ok so the deal is — a fox lives long enough, gets smart enough, and it earns tails. starts with one. older it gets, more it grows. nine tails is the cap. a nine-tailed fox is basically a minor god, golden, glowing, knows everything, deeply done with everyone's nonsense",
+            "uk": "значить так — лис живе достатньо довго, набирається достатньо розуму, і заробляє хвости. починає з одного. що старший, то більше їх росте. дев'ять хвостів — це межа. дев'ятихвостий лис — це по суті дрібне божество, золотий, осяйний, знає все, глибоко стомлений усім чужим безглуздям"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "How many would you have, hypothetically",
+            "uk": "А скільки було б у тебе, гіпотетично"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "hypothetically a respectable amount. not bragging. not NOT bragging",
+            "uk": "гіпотетично поважна кількість. не хвалюся. але й НЕ не хвалюся"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "classic kitsune stuff: we love inarizushi — the fried tofu, that's a fox food, that's why it's at Inari shrines. we're tied to Inari, rice deity, very important, very us. and we do the illusion thing. foxfire. kitsunebi. little floating lights in the dark that lead travelers astray for the bit",
+            "uk": "класична кіцуне-тема: ми любимо інарідзуші — смажений тофу, це лисяча їжа, тому воно й при святилищах Інарі. ми пов'язані з Інарі, божеством рису, дуже важливим, дуже нашим. і ми робимо штуку з ілюзіями. лисячий вогонь. кіцунебі. маленькі плавучі вогники в темряві, що зводять подорожніх зі шляху заради приколу"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "\"For the bit.\"",
+            "uk": "«Заради приколу»."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "EVERYTHING is for the bit. that's the kitsune creed. the trick is the love language. if a fox is messing with you it means the fox likes you",
+            "uk": "УСЕ заради приколу. це кіцуне-кредо. фокус у тому, що прикол — це мова любові. якщо лис із тобою грається, значить ти лису подобаєшся"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "That is a deeply concerning thing to admit aloud.",
+            "uk": "Це вкрай тривожна річ, щоб визнавати вголос."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "you say concerning I say charming 🦊",
+            "uk": "ти кажеш тривожна я кажу чарівна 🦊"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_d3_s2",
+    "items": [
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "OK serious business. I'm rebranding the bar. need a new name. pitch me",
+            "uk": "ОК серйозна справа. я роблю ребрендинг бару. потрібна нова назва. пропонуйте"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "What's wrong with the current name",
+            "uk": "Чим погана теперішня назва"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "nothing it just doesn't slap anymore. I've evolved",
+            "uk": "нічим вона просто більше не качає. я еволюціонував"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "You have owned that establishment for six years.",
+            "uk": "Ти володієш тим закладом шість років."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "and I contain multitudes. NAMES. go",
+            "uk": "і я вміщую безліч. НАЗВИ. вперед"
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "The Three Tails.",
+              "uk": "«Три Хвости»."
+            },
+            "effects": [
+              {
+                "axis": "ko",
+                "delta": 1
+              }
+            ]
+          },
+          {
+            "text": {
+              "en": "Foxhole",
+              "uk": "«Лисяча Нора»."
+            }
+          },
+          {
+            "text": {
+              "en": "Just call it \"Kō's.\"",
+              "uk": "Просто назви його «У Ко»."
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "...",
+            "uk": "..."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "how do you know that",
+            "uk": "звідки ти це знаєш"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Suzune",
+        "messages": [
+          {
+            "en": "Know what? It's just a name?",
+            "uk": "Знає що? Це ж просто назва?"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "RIGHT. yes. cool name. random. unrelated to anything. moving on swiftly",
+            "uk": "ТОЧНО. так. крута назва. випадкова. ні з чим не пов'язана. рухаємося далі стрімко"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "What about \"Last Call.\" It's a bar. People stay too long. It's thematic.",
+            "uk": "Як щодо «Останнє Замовлення». Це бар. Люди засиджуються. Це тематично."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "haruki that's genuinely good which makes me hate it. you can't be funny AND useful pick a lane",
+            "uk": "харукі це справді добре, через що я це ненавиджу. не можна бути смішним І корисним обери щось одне"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Ren",
+        "messages": [
+          {
+            "en": "\"The Quiet Hour.\"",
+            "uk": "«Тиха Година»."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "REN that's beautiful what is wrong with you. that's a place where sad poets drink alone in the rain. I run a chaos den. wrong energy",
+            "uk": "РЕН це прекрасно що з тобою не так. це місце, де сумні поети п'ють наодинці під дощем. я тримаю кубло хаосу. не той вайб"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Call it nothing. A bar with no name. People will assume it's exclusive.",
+            "uk": "Назви його ніяк. Бар без назви. Люди вважатимуть, що він ексклюзивний."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "......",
+            "uk": "......"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "the dragon just out-marketed all of you. I'm naming it nothing. unmarked door. mysterious. you have to KNOW. it's perfect. I'm furious",
+            "uk": "дракон щойно переграв вас усіх у маркетингу. я називаю його ніяк. непозначені двері. загадково. треба ЗНАТИ. це ідеально. я в люті"
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Haruki",
+        "messages": [
+          {
+            "en": "So you've spent twenty minutes to arrive at \"don't put up a sign.\"",
+            "uk": "Тобто ти витратив двадцять хвилин, щоб дійти до «не вішай вивіску»."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "growth, haruki. that's what growth looks like",
+            "uk": "зростання, харукі. ось як виглядає зростання"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "vn_d3_s3",
+    "items": [
+      {
+        "type": "cue",
+        "channel": "music",
+        "value": "kaidan"
+      },
+      {
+        "type": "cue",
+        "channel": "scene",
+        "value": "tamamonomae"
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Of all the foxes in the old stories, one is remembered above the rest. Her name was Tamamo-no-Mae, and she was the most beautiful woman in the imperial court.",
+            "uk": "З усіх лисів у старих оповідях одну пам'ятають понад усіх. Її ім'я було Тамамо-но-Мае, і вона була найвродливішою жінкою імператорського двору."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "She arrived from nowhere — no family, no province, no past anyone could trace. But she was radiant, and she was brilliant. There was no question put to her she could not answer, no poem she could not match, no subject of which she was ignorant. The Emperor Toba loved her above all his court. She was said to glow with a soft light, even in darkness.",
+            "uk": "Вона прийшла нізвідки — без роду, без провінції, без минулого, яке хтось міг би простежити. Та вона була осяйна, і вона була блискуча. Не було питання, поставленого їй, на яке вона не могла б відповісти, ні вірша, який вона не могла б продовжити, ні предмета, у якому була б необізнана. Імператор Тоба любив її понад увесь свій двір. Казали, вона світилася м'яким сяйвом навіть у темряві."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Then the Emperor fell ill. No physician could name the sickness. Only the court astrologer, Abe no Yasunari, looked at the glowing woman and understood: the Emperor was being drained by something that wore a woman's shape. Beneath the beauty was a fox — golden-furred, nine-tailed, ancient beyond the dynasty itself. The same spirit, the legends claim, that had toppled rulers in India and China before crossing the sea to Japan.",
+            "uk": "Тоді імператор занедужав. Жоден лікар не міг назвати хворобу. Лише придворний астролог Абе-но Ясунарі глянув на осяйну жінку й зрозумів: імператора висотує щось, що носить жіночу подобу. Під вродою був лис — золотошерстий, дев'ятихвостий, давніший за саму династію. Той самий дух, як стверджують легенди, що повалив правителів в Індії та Китаї, перш ніж перетнути море до Японії."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Unmasked, she fled. She became a light fleeing across the night, and ran to the moor of Nasu. There the warriors hunted her, and there at last an arrow found her — and where she died, her body became a stone.",
+            "uk": "Викрита, вона втекла. Вона стала світлом, що тікає крізь ніч, і помчала на пустище Насу. Там воїни полювали на неї, і там зрештою її знайшла стріла — і де вона померла, її тіло стало каменем."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "Best, the old folk said, to bow when you enter the deep woods. Just in case someone is watching from the branches.",
+            "uk": "Сешшьосекі. Камінь, що Вбиває. Упродовж століть казали, що будь-яка жива істота, яка торкнеться його, помре, отруєна люттю лиса, запечатаного всередині."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "narrator",
+        "messages": [
+          {
+            "en": "A clever fox, the old people warned, is a delight. But the cleverest fox of all nearly ended an empire — smiling the whole way.",
+            "uk": "Розумний лис, застерігали старі люди, — це втіха. Та найрозумніший лис з усіх ледь не поклав край імперії — усміхаючись усю дорогу."
+          }
+        ],
+        "effects": [
+          {
+            "axis": "ko",
+            "delta": 1
+          }
         ]
       }
     ]

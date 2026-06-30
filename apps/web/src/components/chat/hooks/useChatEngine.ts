@@ -55,6 +55,13 @@ export function useChatEngine(
     engineRef.current?.setPace(paceMultiplier(chatPaceLevel));
   }, [chatPaceLevel]);
 
+  // Pause/resume the drip from the header button (transient store flag).
+  const chatPaused = useGameStore((s) => s.chatPaused);
+  useEffect(() => {
+    if (chatPaused) engineRef.current?.pause();
+    else engineRef.current?.resume();
+  }, [chatPaused]);
+
   // Render the player's chosen reply, then advance the engine past the choice.
   useEffect(() => {
     if (!chosenText || pendingOptionsRef.current.length === 0) return;
@@ -78,6 +85,7 @@ export function useChatEngine(
   useEffect(() => {
     let cancelled = false;
     useGameStore.getState().clearCues(); // fresh thread → no active cues on any channel
+    useGameStore.getState().setChatPaused(false); // a new thread always starts playing
 
     const engine = createEngine({
       config: gameConfig,
@@ -134,6 +142,9 @@ export function useChatEngine(
 
     return () => {
       cancelled = true;
+      // Unblock a paused loop so it can unwind instead of hanging on the gate
+      // (its events are already no-ops via `cancelled`).
+      engine.resume();
     };
   }, [segment.id]); // eslint-disable-line react-hooks/exhaustive-deps
 

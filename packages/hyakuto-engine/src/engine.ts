@@ -57,6 +57,11 @@ export interface Engine {
   play(opts?: { stepped?: boolean }): Promise<void>;
   /** Resolve the pending step in `stepped` mode; no-op if nothing is waiting. */
   advance(): void;
+  /** Halt the timed drip before the next message; held until resume(). No-op in
+   *  `stepped` mode (which gates on advance() instead). */
+  pause(): void;
+  /** Resume a paused drip. */
+  resume(): void;
   loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void;  // ← add
   playDay(): Promise<void>;                                               // ← add
   chooseOption(index: number): void;
@@ -114,6 +119,10 @@ export function createEngine(options: CreateEngineOptions): Engine {
   let segmentsById: Record<string, SegmentInput> = {};
   let queue: QueuedMessage[] = [];
   let waitingForChoice: ((index: number) => void) | null = null;
+  // Pause gate: while `paused`, the play loop awaits a resume before the next
+  // message. resume() flushes the waiters.
+  let paused = false;
+  let resumeWaiters: Array<() => void> = [];
   let waitingForAdvance: (() => void) | null = null;
 
   function applyMessageEffects(msg: QueuedMessage): void {
@@ -157,6 +166,12 @@ export function createEngine(options: CreateEngineOptions): Engine {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  // Resolves immediately unless paused, in which case it waits for resume().
+  function waitWhilePaused(): Promise<void> {
+    if (!paused) return Promise.resolve();
+    return new Promise<void>((resolve) => resumeWaiters.push(resolve));
+  }
+
   const engine: Engine = {
     loadSegment(segment: SegmentInput): void {
       currentSegment = segment;
@@ -186,6 +201,11 @@ export function createEngine(options: CreateEngineOptions): Engine {
       onEvent({ type: "segment_start", segmentId: currentSegment.id });
 
       for (let idx = 0; idx < queue.length; idx++) {
+        // Hold here before each item while paused — stops new messages (and the
+        // cues/typing that precede them) until resume(). The message already on
+        // screen stays; an in-flight one finishes its current iteration first.
+        if (!stepped) await waitWhilePaused();
+
         const item = queue[idx]!;
         if (item.kind === "cue") {
           // Cues (incl. the VN `scene` cue) fire immediately — they precede a
@@ -330,6 +350,17 @@ export function createEngine(options: CreateEngineOptions): Engine {
       const resume = waitingForAdvance;
       waitingForAdvance = null;
       resume();
+    },
+
+    pause(): void {
+      paused = true;
+    },
+
+    resume(): void {
+      paused = false;
+      const waiters = resumeWaiters;
+      resumeWaiters = [];
+      for (const w of waiters) w();
     },
 
     setPace(newPace: PaceLevel): void {

@@ -4,99 +4,149 @@
       "day": 1,
       "route": "common",
       "segments": [
-        "demo_1",
-        "vn_1",
-        "demo_2",
-        "dm_1a"
+        "demo_d1_s1",
+        "demo_d1_s2",
+        "demo_d1_s3"
       ]
     },
     {
       "day": 2,
       "route": "common",
       "segments": [
-        "demo_3",
-        "demo_4",
-        "dm_1b"
+        "demo_d2_s1",
+        "vn_d2_s2",
+        "demo_d2_s3"
+      ]
+    },
+    {
+      "day": 3,
+      "route": "common",
+      "segments": [
+        "demo_d3_s1",
+        "demo_d3_s2",
+        "vn_d3_s3"
       ]
     }
   ],
   "segments": {
-    "demo_1": {
-      "id": "demo_1",
+    "demo_d1_s1": {
+      "id": "demo_d1_s1",
       "type": "group_chat",
       "route": "common",
       "day": 1,
-      "thread_id": "day1_01"
+      "thread_id": "demo_d1_t1"
     },
-    "vn_1": {
-      "id": "vn_1",
+    "demo_d1_s2": {
+      "id": "demo_d1_s2",
+      "type": "group_chat",
+      "route": "common",
+      "day": 1,
+      "thread_id": "demo_d1_t2"
+    },
+    "demo_d1_s3": {
+      "id": "demo_d1_s3",
+      "type": "group_chat",
+      "route": "common",
+      "day": 1,
+      "thread_id": "demo_d1_t3"
+    },
+    "demo_d2_s1": {
+      "id": "demo_d2_s1",
+      "type": "group_chat",
+      "route": "common",
+      "day": 2,
+      "thread_id": "demo_d2_t1"
+    },
+    "vn_d2_s2": {
+      "id": "vn_d2_s2",
       "type": "vn",
       "route": "common",
-      "day": 1,
-      "thread_id": "day1_vn_01"
+      "day": 2,
+      "thread_id": "vn_d2_t2"
     },
-    "demo_2": {
-      "id": "demo_2",
-      "type": "group_chat",
-      "route": "common",
-      "day": 1,
-      "thread_id": "day1_02"
-    },
-    "demo_3": {
-      "id": "demo_3",
+    "demo_d2_s3": {
+      "id": "demo_d2_s3",
       "type": "group_chat",
       "route": "common",
       "day": 2,
-      "thread_id": "day2_01"
+      "thread_id": "demo_d2_t3"
     },
-    "demo_4": {
-      "id": "demo_4",
+    "demo_d3_s1": {
+      "id": "demo_d3_s1",
       "type": "group_chat",
       "route": "common",
-      "day": 2,
-      "thread_id": "day2_02"
+      "day": 3,
+      "thread_id": "demo_d3_t1"
     },
-    "dm_1a": {
-      "id": "dm_1a",
-      "type": "dm",
+    "demo_d3_s2": {
+      "id": "demo_d3_s2",
+      "type": "group_chat",
       "route": "common",
-      "day": 1,
-      "thread_id": "dm_1",
-      "condition": "completed:1:day1_01"
+      "day": 3,
+      "thread_id": "demo_d3_t2"
     },
-    "dm_1b": {
-      "id": "dm_1b",
-      "type": "dm",
+    "vn_d3_s3": {
+      "id": "vn_d3_s3",
+      "type": "vn",
       "route": "common",
-      "day": 2,
-      "thread_id": "dm_1",
-      "condition": "completed:2:day2_01"
+      "day": 3,
+      "thread_id": "vn_d3_t3"
     }
   },
   "threads": {
-    "day1_01": {
-      "display_name": "Oiwa",
-      "ost": "chat_night"
+    "demo_d1_t1": {
+      "display_name": {
+        "en": "How Old Is the Sea, Anyway",
+        "uk": "Скільки ж років морю"
+      }
     },
-    "day1_02": {
-      "display_name": "Otsuyu",
-      "ost": "chat_night"
+    "demo_d1_t2": {
+      "display_name": {
+        "en": "The Group Chat at 3 AM",
+        "uk": "Груповий чат о 3-й ночі"
+      }
     },
-    "day1_vn_01": {
-      "display_name": "Test VN"
+    "demo_d1_t3": {
+      "display_name": {
+        "en": "The Woman at the Crossroads",
+        "uk": "Жінка на роздоріжжі"
+      }
     },
-    "dm_1": {
-      "display_name": { "en": "Ren", "uk": "Рен" },
-      "contact": "ren",
-      "ost": "chat_night"
+    "demo_d2_t1": {
+      "display_name": {
+        "en": "What Lives on the Mountain",
+        "uk": "Що живе на горі"
+      }
     },
-    "day2_01": {
-      "display_name": "Okiku",
-      "ost": "chat_night"
+    "vn_d2_t2": {
+      "display_name": {
+        "en": "On the Kinds of Tengu",
+        "uk": "Про роди тенґу"
+      }
     },
-    "day2_02": {
-      "display_name": "Hanako-san",
-      "ost": "chat_night"
+    "demo_d2_t3": {
+      "display_name": {
+        "en": "The Tunnel",
+        "uk": "Тунель"
+      }
+    },
+    "demo_d3_t1": {
+      "display_name": {
+        "en": "The Fox Question",
+        "uk": "Питання про лиса"
+      }
+    },
+    "demo_d3_t2": {
+      "display_name": {
+        "en": "Naming the Bar",
+        "uk": "Назва для бару"
+      }
+    },
+    "vn_d3_t3": {
+      "display_name": {
+        "en": "Tamamo-no-Mae",
+        "uk": "Тамамо-но-Мае"
+      }
     }
   }
 }

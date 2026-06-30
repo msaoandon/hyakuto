@@ -29,4 +29,6 @@ export const uk = {
   "play.speed": "Швидкість",
   "play.slower": "Повільніше",
   "play.faster": "Швидше",
+  "play.pause": "Пауза",
+  "play.resume": "Продовжити",
 };
