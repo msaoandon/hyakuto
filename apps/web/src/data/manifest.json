@@ -6,7 +6,8 @@
       "segments": [
         "demo_d1_s1",
         "demo_d1_s2",
-        "demo_d1_s3"
+        "demo_d1_s3",
+        "demo_dm1_1"
       ]
     },
     {
@@ -15,6 +16,7 @@
       "segments": [
         "demo_d2_s1",
         "vn_d2_s2",
+        "demo_dm1_2",
         "demo_d2_s3"
       ]
     },
@@ -23,6 +25,7 @@
       "route": "common",
       "segments": [
         "demo_d3_s1",
+        "demo_dm1_3",
         "demo_d3_s2",
         "vn_d3_s3"
       ]
@@ -50,6 +53,13 @@
       "day": 1,
       "thread_id": "demo_d1_t3"
     },
+    "demo_dm1_1": {
+      "id": "demo_dm1_1",
+      "type": "dm",
+      "route": "common",
+      "day": 1,
+      "thread_id": "demo_dm1"
+    },
     "demo_d2_s1": {
       "id": "demo_d2_s1",
       "type": "group_chat",
@@ -64,6 +74,13 @@
       "day": 2,
       "thread_id": "vn_d2_t2"
     },
+    "demo_dm1_2": {
+      "id": "demo_dm1_2",
+      "type": "dm",
+      "route": "common",
+      "day": 2,
+      "thread_id": "demo_dm1"
+    },
     "demo_d2_s3": {
       "id": "demo_d2_s3",
       "type": "group_chat",
@@ -77,6 +94,13 @@
       "route": "common",
       "day": 3,
       "thread_id": "demo_d3_t1"
+    },
+    "demo_dm1_3": {
+      "id": "demo_dm1_3",
+      "type": "dm",
+      "route": "common",
+      "day": 3,
+      "thread_id": "demo_dm1"
     },
     "demo_d3_s2": {
       "id": "demo_d3_s2",
@@ -147,6 +171,13 @@
         "en": "Tamamo-no-Mae",
         "uk": "Тамамо-но-Мае"
       }
+    },
+    "demo_dm1": {
+      "display_name": {
+        "en": "Tatsumi",
+        "uk": "Тацумі"
+      },
+      "contact": "Tatsumi"
     }
   }
 }

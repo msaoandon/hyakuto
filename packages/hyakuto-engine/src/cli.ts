@@ -14,7 +14,7 @@ import { assembleThread, listDays, listThreads, parseManifest } from "./manifest
 const MC_NAME = "You";
 
 const gameConfig: GameConfig = {
-  axes: ["weirdness", "patience", "sanity"],
+  axes: ["tatsumi", "ren", "kou"],
   characters: [
     { id: "Ao", typing_rate: 1.0 },
     { id: "Kou", typing_rate: 0.6 },

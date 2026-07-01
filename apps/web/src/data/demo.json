@@ -179,12 +179,23 @@
         ]
       },
       {
-        "type": "message",
+        "type": "pool",
         "character": "Kou",
-        "messages": [
+        "variants": [
           {
-            "en": "he says, ominously, while drinking what I assume is the tea of a man who has watched empires sink",
-            "uk": "каже він зловісно, попиваючи, як я гадаю, чай людини, що бачила, як тонуть імперії"
+            "text": {
+              "en": "he says, ominously, while drinking what I assume is the tea of a man who has watched empires sink",
+              "uk": "каже він зловісно, попиваючи, як я гадаю, чай людини, що бачила, як тонуть імперії"
+            },
+            "weight": 1
+          },
+          {
+            "text": "he says this SO casually while sipping tea like he didn't just casually confirm he's older than the concept of counting",
+            "weight": 1
+          },
+          {
+            "text": "the way he drops 'a hundred years on the shore' and then reaches for his teacup like it's a normal Tuesday. iconic. terrifying",
+            "weight": 1
           }
         ]
       },
@@ -314,7 +325,7 @@
             },
             "effects": [
               {
-                "axis": "ko",
+                "axis": "kou",
                 "delta": 1
               }
             ]
@@ -401,7 +412,8 @@
             "en": "THE DRAGON STIRS",
             "uk": "ДРАКОН ПРОБУДЖУЄТЬСЯ"
           }
-        ]
+        ],
+        "condition": "(tatsumi>0)"
       },
       {
         "type": "message",
@@ -660,6 +672,44 @@
     ]
   },
   {
+    "block_id": "demo_dm1_1",
+    "items": [
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "You asked about tea yesterday. I've been thinking about it.",
+            "uk": "Ви питали вчора про чай. Я думав про це."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "You thought about it for a whole day?",
+              "uk": "Ти думав про це цілу добу?"
+            }
+          },
+          {
+            "text": {
+              "en": "That's oddly flattering.",
+              "uk": "Це дивно приємно."
+            }
+          },
+          {
+            "text": {
+              "en": "Okay, dragon, tell me.",
+              "uk": "Гаразд, драконе, розказуй."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "block_id": "demo_d2_s1",
     "items": [
       {
@@ -869,7 +919,39 @@
     ]
   },
   {
-    "block_id": "demo_5",
+    "block_id": "demo_dm1_2",
+    "items": [
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "No. I thought about it for a few moments, distributed across a day. Those are different things.",
+            "uk": "Ні. Я думав про це протягом кількох митей, розподілених по добі. Це різні речі."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "Fair. So what did you conclude?",
+              "uk": "Гаразд. То що ти надумав?"
+            }
+          },
+          {
+            "text": {
+              "en": "That's a very you distinction.",
+              "uk": "Це дуже в твоєму стилі розрізнення."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "block_id": "demo_d2_s3",
     "items": [
       {
         "type": "cue",
@@ -1041,7 +1123,7 @@
             },
             "effects": [
               {
-                "axis": "ko",
+                "axis": "kou",
                 "delta": 1
               }
             ]
@@ -1193,6 +1275,58 @@
     ]
   },
   {
+    "block_id": "demo_dm1_3",
+    "items": [
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "That you're doing it wrong. Boiling water kills the leaf. The water should rest after it boils. Long enough that you forget it boiled at all.",
+            "uk": "Що ви робите це неправильно. Окріп убиває листя. Вода має відпочити після кипіння. Достатньо довго, щоб ви забули, що вона кипіла."
+          }
+        ]
+      },
+      {
+        "type": "choice",
+        "options": [
+          {
+            "text": {
+              "en": "That sounds like advice about more than tea.",
+              "uk": "Це звучить як порада не лише про чай."
+            }
+          },
+          {
+            "text": {
+              "en": "Noted. I'll let my water rest.",
+              "uk": "Гаразд. Дам воді відпочити."
+            }
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "Perhaps.",
+            "uk": "Можливо."
+          }
+        ]
+      },
+      {
+        "type": "message",
+        "character": "Tatsumi",
+        "messages": [
+          {
+            "en": "It's also about tea.",
+            "uk": "Це також про чай."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "block_id": "demo_d3_s2",
     "items": [
       {
@@ -1255,7 +1389,7 @@
             },
             "effects": [
               {
-                "axis": "ko",
+                "axis": "kou",
                 "delta": 1
               }
             ]
@@ -1480,7 +1614,7 @@
         ],
         "effects": [
           {
-            "axis": "ko",
+            "axis": "kou",
             "delta": 1
           }
         ]
