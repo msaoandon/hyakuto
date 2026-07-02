@@ -19,6 +19,10 @@
 /blob-report/
 /playwright/.cache/
 
+# storybook
+/storybook-static/
+*storybook.log
+
 # next.js
 /.next/
 /out/

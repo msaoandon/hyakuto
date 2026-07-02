@@ -13,7 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui"
+    "e2e:ui": "playwright test --ui",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.1",
@@ -32,6 +34,9 @@
     "@capacitor/cli": "^8.3.1",
     "@eslint/eslintrc": "^3",
     "@playwright/test": "^1.61.1",
+    "@storybook/addon-a11y": "^10.4.6",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/nextjs-vite": "^10.4.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -41,8 +46,10 @@
     "eslint-config-next": "15.5.15",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
+    "storybook": "^10.4.6",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vite": "^8.0.10",
     "vitest": "^4.1.5"
   }
 }
