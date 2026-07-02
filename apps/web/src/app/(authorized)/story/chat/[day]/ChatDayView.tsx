@@ -65,6 +65,9 @@ export function ChatDayView({ day }: { day: string }) {
               <Link
                 key={thread.id}
                 href={href}
+                data-testid="thread-link"
+                data-kind={thread.kind}
+                data-done={done ? "1" : "0"}
                 className={`w-64 text-center py-2 rounded-lg bg-[#a5cbfd] text-ink-black ${done ? "opacity-60" : ""}`}
               >
                 {thread.kind === "vn" ? "📖 " : ""}

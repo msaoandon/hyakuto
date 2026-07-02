@@ -11,7 +11,9 @@
     "cap:ios": "npx cap open ios",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@capacitor/core": "^8.3.1",
@@ -29,6 +31,7 @@
   "devDependencies": {
     "@capacitor/cli": "^8.3.1",
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
