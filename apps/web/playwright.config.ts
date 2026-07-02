@@ -15,7 +15,17 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Cover both engines the app actually ships on (Android WebView = Chromium/
+  // Blink, iOS WKWebView = WebKit), at desktop and mobile form factors. These
+  // are the desktop builds of each engine — a strong proxy for on-device
+  // behavior, not a substitute for a real-device check of the Capacitor shell.
+  // Run a subset with e.g. `pnpm e2e --project="Mobile Safari"`.
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } }, // fast local default
+    { name: "webkit", use: { ...devices["Desktop Safari"] } }, // iOS engine (WebKit)
+    { name: "Mobile Chrome", use: { ...devices["Pixel 5"] } }, // Android target
+    { name: "Mobile Safari", use: { ...devices["iPhone 13"] } }, // iOS target
+  ],
   webServer: {
     command: "pnpm dev",
     url: "http://localhost:3000",
