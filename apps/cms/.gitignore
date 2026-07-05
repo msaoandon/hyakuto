@@ -1,0 +1,28 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# CMS project data — the game's content lives OUTSIDE the repo (DEV_PLAN_CMS §IV).
+# This is the default gitignored CMS_DATA_DIR; the real story is never committed.
+/.data/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+.pnpm-debug.log*
+
+# env files
+.env*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

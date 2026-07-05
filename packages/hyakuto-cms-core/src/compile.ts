@@ -4,6 +4,7 @@ import {
 } from '@hyakuto/engine';
 import { compileLocalized } from './schema/translatable';
 import type { EffectRef, BranchRef, Line, Project, Segment, Thread } from './schema/project';
+import type { WorldConfig } from './schema/world';
 
 // ─── COMPILER (§VI.1/6) ───────────────────────────────────────────────────────
 // Projects the normalized project onto the engine's *existing* delivery contract:
@@ -104,6 +105,23 @@ function segmentType(segment: Segment, threadsById: Map<string, Thread>): Manife
   return thread.kind;
 }
 
+/**
+ * Generate the engine's `gameConfig` from the world config. The single projection
+ * shared by compile() and the CMS world-editor's live preview — so what the editor
+ * shows and what ships can never diverge. Fails fast via `GameConfig.parse`.
+ */
+export function compileGameConfig(world: WorldConfig): GameConfigT {
+  const gameConfig: unknown = {
+    axes: world.axes.map((a) => a.id),
+    characters: world.characters.map((c) => ({ id: c.id, typing_rate: c.typing_rate })),
+    counters: world.counters.map((c) => {
+      const out = put({ id: c.id, start: c.start, end: c.end, direction: c.direction }, 'tiers', c.tiers);
+      return put(out, 'on_complete', c.on_complete);
+    }),
+  };
+  return GameConfig.parse(gameConfig);
+}
+
 export function compile(project: Project): CompiledContent {
   const { defaultLocale } = project.workspace;
   const threadsById = new Map(project.threads.map((t) => [t.id, t]));
@@ -112,16 +130,6 @@ export function compile(project: Project): CompiledContent {
   const dayOf = new Map<string, { day: number; route: string }>();
   for (const day of project.days)
     for (const segId of day.segmentIds) dayOf.set(segId, { day: day.index, route: day.route });
-
-  // ── gameConfig ── generated from the world config; drift is impossible.
-  const gameConfig: unknown = {
-    axes: project.world.axes.map((a) => a.id),
-    characters: project.world.characters.map((c) => ({ id: c.id, typing_rate: c.typing_rate })),
-    counters: project.world.counters.map((c) => put(
-      { id: c.id, start: c.start, end: c.end, direction: c.direction },
-      'tiers', c.tiers,
-    )).map((c, i) => put(c, 'on_complete', project.world.counters[i].on_complete)),
-  };
 
   // ── manifest ──
   const days = project.days.map((d) => ({ day: d.index, route: d.route, segments: [...d.segmentIds] }));
@@ -161,6 +169,6 @@ export function compile(project: Project): CompiledContent {
   return {
     blocks: StoryFile.parse(blocks),
     manifest: parseManifest(manifest),
-    gameConfig: GameConfig.parse(gameConfig),
+    gameConfig: compileGameConfig(project.world),
   };
 }

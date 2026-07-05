@@ -23,7 +23,7 @@ export { TranslatableUnit, LocaleCode, compileLocalized, unitFromLocalized } fro
 export type { TranslatableUnit as TranslatableUnitT } from './schema/translatable';
 
 // ── Compile (project → engine delivery contract) ──
-export { compile, branchPredicate, combineGate, type CompiledContent } from './compile';
+export { compile, compileGameConfig, branchPredicate, combineGate, type CompiledContent } from './compile';
 
 // ── Store (the file/DB seam) ──
 export { FileProjectStore, type ProjectStore } from './store';
