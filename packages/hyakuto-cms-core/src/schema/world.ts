@@ -33,7 +33,13 @@ export const CounterDef = z.object({
 export const FlagDef = z.object({ id: z.string().min(1) });
 export const CueChannelDef = z.object({ id: z.string().min(1) });
 export const SceneDef = z.object({ id: z.string().min(1), file: z.string().optional() });
-export const MusicThemeDef = z.object({ id: z.string().min(1) });
+export const MusicThemeDef = z.object({
+  id: z.string().min(1),
+  /** Author-facing track name; distinct from the id used in content refs (ost / music cue). */
+  name: z.string().optional(),
+  /** Uploaded audio file (relative to the assets dir). Populated by the upload step. */
+  file: z.string().optional(),
+});
 
 // The cue channels the engine/content layer understands today (see
 // @hyakuto/content CUE_CHANNELS). Declared as the schema default so the model is
@@ -59,4 +65,5 @@ export type AxisDef = z.infer<typeof AxisDef>;
 export type CounterDef = z.infer<typeof CounterDef>;
 export type FlagDef = z.infer<typeof FlagDef>;
 export type SceneDef = z.infer<typeof SceneDef>;
+export type MusicThemeDef = z.infer<typeof MusicThemeDef>;
 export type WorldConfig = z.infer<typeof WorldConfig>;

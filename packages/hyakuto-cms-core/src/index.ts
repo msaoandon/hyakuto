@@ -15,9 +15,9 @@ export type {
 } from './schema/project';
 
 export {
-  WorldConfig, CharacterDef, AxisDef, CounterDef, FlagDef, SceneDef, DEFAULT_CUE_CHANNELS,
+  WorldConfig, CharacterDef, AxisDef, CounterDef, FlagDef, SceneDef, MusicThemeDef, DEFAULT_CUE_CHANNELS,
 } from './schema/world';
-export type { WorldConfig as WorldConfigT } from './schema/world';
+export type { WorldConfig as WorldConfigT, MusicThemeDef as MusicThemeDefT } from './schema/world';
 
 export { TranslatableUnit, LocaleCode, compileLocalized, unitFromLocalized } from './schema/translatable';
 export type { TranslatableUnit as TranslatableUnitT } from './schema/translatable';
@@ -26,7 +26,10 @@ export type { TranslatableUnit as TranslatableUnitT } from './schema/translatabl
 export { compile, compileGameConfig, branchPredicate, combineGate, type CompiledContent } from './compile';
 
 // ── Store (the file/DB seam) ──
-export { FileProjectStore, type ProjectStore } from './store';
+export {
+  FileProjectStore, type ProjectStore,
+  FileWorkspaceCatalog, type WorkspaceCatalog, type WorkspaceSummary,
+} from './store';
 
 // ── Import (one-time migration from today's delivery artifacts) ──
 export { importProject, type ImportInput } from './import';

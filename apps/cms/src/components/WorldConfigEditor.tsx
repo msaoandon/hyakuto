@@ -56,7 +56,7 @@ function Row({ onRemove, children }: { onRemove: () => void; children: React.Rea
   );
 }
 
-export function WorldConfigEditor({ workspace, world: initial }: { workspace: WorkspaceT; world: WorldConfigT }) {
+export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameId: string; workspace: WorkspaceT; world: WorldConfigT }) {
   const [world, setWorld] = useState<WorldConfigT>(initial);
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -74,7 +74,7 @@ export function WorldConfigEditor({ workspace, world: initial }: { workspace: Wo
 
   const save = () =>
     startTransition(async () => {
-      const result = await saveWorld(world);
+      const result = await saveWorld(gameId, world);
       setStatus(result.ok ? { ok: true, msg: "Saved." } : { ok: false, msg: result.error });
     });
 
@@ -200,39 +200,10 @@ export function WorldConfigEditor({ workspace, world: initial }: { workspace: Wo
           ))}
         </Section>
 
-        <Section
-          title="Scenes"
-          hint="VN background scenes, referenced by a segment's scene and scene cues."
-          onAdd={() => set("scenes", [...world.scenes, { id: "" }])}
-        >
-          {world.scenes.map((s, i) => (
-            <Row key={i} onRemove={() => set("scenes", removeAt(world.scenes, i))}>
-              <input
-                className={input} placeholder="id" value={s.id}
-                onChange={(e) => set("scenes", editAt(world.scenes, i, { id: e.target.value }))}
-              />
-              <input
-                className={input} placeholder="file (optional)" value={s.file ?? ""}
-                onChange={(e) => set("scenes", editAt(world.scenes, i, { file: e.target.value || undefined }))}
-              />
-            </Row>
-          ))}
-        </Section>
-
-        <Section
-          title="Music themes"
-          hint="OST themes a thread's ost / music cue can reference."
-          onAdd={() => set("musicThemes", [...world.musicThemes, { id: "" }])}
-        >
-          {world.musicThemes.map((m, i) => (
-            <Row key={i} onRemove={() => set("musicThemes", removeAt(world.musicThemes, i))}>
-              <input
-                className={input} placeholder="id" value={m.id}
-                onChange={(e) => set("musicThemes", editAt(world.musicThemes, i, { id: e.target.value }))}
-              />
-            </Row>
-          ))}
-        </Section>
+        <p className="text-xs text-muted/70">
+          VN scenes are authored with their segments (step 3); OST tracks live in the{" "}
+          <a href="/ost" className="text-gold hover:underline">OST</a> section.
+        </p>
       </div>
 
       <aside className="space-y-2 lg:sticky lg:top-6 lg:self-start">

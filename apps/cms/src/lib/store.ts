@@ -1,18 +1,17 @@
 import "server-only";
 import { join, isAbsolute } from "node:path";
-import { FileProjectStore, type ProjectStore } from "@hyakuto/cms-core";
+import { FileWorkspaceCatalog, type WorkspaceCatalog } from "@hyakuto/cms-core";
 
-// Resolve the project store for the running CMS instance. The location is the
-// configurable, gitignored `CMS_DATA_DIR` (DEV_PLAN_CMS §IV) — "local now",
-// "on an author's machine", and "hosted backend" are the same seam at a different
-// path. Default: `<apps/cms>/.data` (gitignored). `server-only` guarantees this
-// module — and the node:fs it pulls in — never leaks into a client bundle.
-export function getStore(): ProjectStore {
+// Resolve the workspace catalog for the running CMS instance. The location is the
+// configurable, gitignored `CMS_DATA_DIR` (DEV_PLAN_CMS §IV); each game lives in
+// its own folder underneath. Default: `<apps/cms>/.data`. `server-only` keeps this
+// module — and the node:fs it pulls in — out of any client bundle.
+function dataRoot(): string {
   const configured = process.env.CMS_DATA_DIR;
-  const root = configured
-    ? isAbsolute(configured)
-      ? configured
-      : join(process.cwd(), configured)
-    : join(process.cwd(), ".data");
-  return new FileProjectStore(root);
+  if (!configured) return join(process.cwd(), ".data");
+  return isAbsolute(configured) ? configured : join(process.cwd(), configured);
+}
+
+export function getCatalog(): WorkspaceCatalog {
+  return new FileWorkspaceCatalog(dataRoot());
 }

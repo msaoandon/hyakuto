@@ -2,8 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FileProjectStore, Project } from '../src/index';
+import { FileProjectStore, FileWorkspaceCatalog, Project } from '../src/index';
 import type { Project as ProjectT } from '../src/index';
+
+const game = (id: string, name: string): ProjectT =>
+  Project.parse({ schemaVersion: 1, workspace: { id, name }, world: {} });
 
 const sample: ProjectT = Project.parse({
   schemaVersion: 1,
@@ -51,5 +54,47 @@ describe('FileProjectStore', () => {
   it('fails loudly when the stored project violates the schema', async () => {
     await writeFile(join(dir, 'project.json'), JSON.stringify({ schemaVersion: 1 }), 'utf8');
     await expect(new FileProjectStore(dir).load()).rejects.toThrow(/Invalid project/);
+  });
+});
+
+describe('FileWorkspaceCatalog', () => {
+  let dir: string;
+  beforeEach(async () => { dir = await mkdtemp(join(tmpdir(), 'cms-cat-')); });
+  afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
+
+  it('lists nothing when the data dir is empty or absent', async () => {
+    expect(await new FileWorkspaceCatalog(join(dir, 'nope')).list()).toEqual([]);
+    expect(await new FileWorkspaceCatalog(dir).list()).toEqual([]);
+  });
+
+  it('creates games in per-id folders and lists them by summary', async () => {
+    const cat = new FileWorkspaceCatalog(dir);
+    await cat.create(game('umi', 'Umi no Uta'));
+    await cat.create(game('yoru', 'Yoru'));
+    expect(await cat.list()).toEqual([
+      { id: 'umi', name: 'Umi no Uta' }, // sorted by name: "U" < "Y"
+      { id: 'yoru', name: 'Yoru' },
+    ]);
+    expect(await cat.has('umi')).toBe(true);
+    expect(await cat.store('umi').load()).toEqual(game('umi', 'Umi no Uta'));
+  });
+
+  it('refuses to create a game whose id is already taken', async () => {
+    const cat = new FileWorkspaceCatalog(dir);
+    await cat.create(game('umi', 'A'));
+    await expect(cat.create(game('umi', 'B'))).rejects.toThrow(/already exists/);
+  });
+
+  it('removes a game and everything under it', async () => {
+    const cat = new FileWorkspaceCatalog(dir);
+    await cat.create(game('umi', 'Umi'));
+    await cat.remove('umi');
+    expect(await cat.has('umi')).toBe(false);
+    expect(await cat.list()).toEqual([]);
+  });
+
+  it('rejects an unsafe workspace id rather than escaping the data dir', () => {
+    const cat = new FileWorkspaceCatalog(dir);
+    expect(() => cat.store('../evil')).toThrow(/Invalid workspace id/);
   });
 });
