@@ -41,6 +41,22 @@ export async function createGame(name: string, mode: "demo" | "empty"): Promise<
   }
 }
 
+/** Import the current demo *into* an existing game, keeping its id + name. This is
+ *  the "start empty, fill in later" path — it replaces the game's content (world +
+ *  threads + days + segments), so the UI confirms first when the game isn't empty. */
+export async function importDemo(gameId: string): Promise<ActionResult> {
+  try {
+    const store = getCatalog().store(gameId);
+    const existing = await store.load();
+    const project = await seedFromDemo(existing.workspace.id, existing.workspace.name);
+    await store.save(project);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
 /** Delete a game and all its content. */
 export async function deleteGame(id: string): Promise<ActionResult> {
   try {
