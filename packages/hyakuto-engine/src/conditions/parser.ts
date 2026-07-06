@@ -36,6 +36,15 @@ interface GenderExpr {
   value: MCGender;
 }
 
+/** `choice:<choiceId>==<optionId>` — true iff MC picked exactly that option.
+ *  Unanswered is simply false (a normal runtime state, not an error); dangling
+ *  ids are a *content* bug and are caught by @hyakuto/content validation. */
+interface ChoiceExpr {
+  kind: 'choice';
+  choiceId: string;
+  optionId: string;
+}
+
 interface NotExpr {
   kind: 'not';
   expr: Expr;
@@ -59,6 +68,7 @@ type Expr =
   | CompletedExpr
   | TimeExpr
   | GenderExpr
+  | ChoiceExpr
   | NotExpr
   | AndExpr
   | OrExpr;
@@ -76,6 +86,7 @@ type Token =
   | { type: 'completed'; value: string }
   | { type: 'time'; band: TimeBand }
   | { type: 'gender'; value: MCGender }
+  | { type: 'choice'; choiceId: string; optionId: string }
   | { type: 'lparen' }
   | { type: 'rparen' };
 
@@ -149,6 +160,22 @@ function tokenize(input: string): Token[] {
           throw new Error(`Unknown gender "${value}" in condition: "${input}"`);
         }
         tokens.push({ type: 'gender', value });
+        continue;
+      }
+      if (word.startsWith('choice:')) {
+        // The whole predicate is one token: `choice:<choiceId>==<optionId>`.
+        // Consumed here (not via the generic comparison) because the right-hand
+        // side is an id, and the comparison path only accepts numbers.
+        const choiceId = word.slice(7);
+        if (!choiceId) throw new Error(`Missing choice id after "choice:" in condition: "${input}"`);
+        if (!(s[i] === '=' && s[i + 1] === '=')) {
+          throw new Error(`Expected "==" after "choice:${choiceId}" in condition: "${input}"`);
+        }
+        i += 2;
+        let optionId = '';
+        while (i < s.length && /[a-zA-Z0-9_]/.test(s[i]!)) { optionId += s[i]; i++; }
+        if (!optionId) throw new Error(`Missing option id after "choice:${choiceId}==" in condition: "${input}"`);
+        tokens.push({ type: 'choice', choiceId, optionId });
         continue;
       }
       tokens.push({ type: 'ident', value: word });
@@ -248,6 +275,12 @@ class Parser {
       return { kind: 'gender', value: token.value };
     }
 
+    // Recorded-choice predicate
+    if (token.type === 'choice') {
+      this.advance();
+      return { kind: 'choice', choiceId: token.choiceId, optionId: token.optionId };
+    }
+
     // Comparison: identifier op number
     if (token.type === 'ident') {
       this.advance();
@@ -312,6 +345,10 @@ function evaluate(expr: Expr, state: GameState, ctx?: RuntimeContext): boolean {
       return bandOf(ctx?.now ?? Date.now()) === expr.band;
     case 'gender':
       return (state.gender ?? 'unset') === expr.value;
+    case 'choice':
+      // Unanswered (or unrecorded legacy) choices evaluate false — gating waits
+      // for the pick. Dangling ids are content bugs caught by validation.
+      return state.choices[expr.choiceId] === expr.optionId;
     case 'not':
       return !evaluate(expr.expr, state, ctx);
     case 'and':

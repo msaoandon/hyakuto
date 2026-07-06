@@ -19,12 +19,25 @@ export default async function SegmentPage({ params }: { params: Promise<{ game: 
   const thread = segment.threadId ? p.threads.find((t) => t.id === segment.threadId) : undefined;
   const day = p.days.find((d) => d.segmentIds.includes(segmentId));
 
+  // Every choice in the project, for the branch builder's dropdowns ("show when
+  // option X of choice Y was picked"). Refs are by stable id, labels by text.
+  const choices = p.segments.flatMap((s) =>
+    s.lines
+      .filter((l) => l.type === "choice")
+      .map((l) => ({
+        id: l.id,
+        segmentId: s.id,
+        options: l.options.map((o) => ({ id: o.id, label: o.text.text[dl] ?? o.id })),
+      })),
+  );
+
   return (
     <SegmentEditor
       gameId={game}
       segment={segment}
       defaultLocale={dl}
       world={p.world}
+      choices={choices}
       context={{
         kind: thread?.kind ?? "system",
         threadName: thread ? (thread.display_name.text[dl] ?? thread.id) : null,

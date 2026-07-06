@@ -264,3 +264,16 @@ export async function addScene(gameId: string, sceneId: string): Promise<ActionR
     return { ...p, world: { ...p.world, scenes: [...p.world.scenes, { id }] } };
   });
 }
+
+/** Declare a story flag (minted from the option "remember as" picker — flags are
+ *  world data, but they're born at the option that sets them). */
+export async function addFlag(gameId: string, flagId: string): Promise<ActionResult> {
+  return withGame(gameId, (p) => {
+    const id = flagId.trim();
+    if (!id) throw new Error("Flag id can't be empty.");
+    if (!/^[a-z0-9][a-z0-9_]*$/.test(id))
+      throw new Error(`Flag id "${id}" must be a lowercase slug (a-z 0-9 _) — it appears in conditions.`);
+    if (p.world.flags.some((f) => f.id === id)) return p;
+    return { ...p, world: { ...p.world, flags: [...p.world.flags, { id }] } };
+  });
+}

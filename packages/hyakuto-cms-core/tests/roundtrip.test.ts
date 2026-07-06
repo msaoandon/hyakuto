@@ -18,6 +18,7 @@ const gameConfig: GameConfig = {
     { id: 'Ren', typing_rate: 1.2 },
   ],
   counters: [{ id: 'candles', start: 100, end: 0, direction: 'down' }],
+  flags: ['asked_where'],
 };
 
 // blocks are declared in the same order as manifest.segments keys, because compile
@@ -31,9 +32,10 @@ const blocks: Block[] = [
       { type: 'message', character: 'Tatsumi', messages: [{ en: 'Old.', uk: 'Багато.' }], effects: [{ axis: 'tatsumi', delta: 1 }] },
       {
         type: 'choice',
+        id: 'g1_age', // authored (CMS) ids must survive the round-trip verbatim
         options: [
-          { text: { en: 'A dragon god?', uk: 'Дракон-бог?' } },
-          { text: { en: 'Where do you live?', uk: 'Де ти живеш?' }, effects: [{ axis: 'kou', delta: 1 }] },
+          { id: 'g1_age__o0', text: { en: 'A dragon god?', uk: 'Дракон-бог?' } },
+          { id: 'g1_age__o1', text: { en: 'Where do you live?', uk: 'Де ти живеш?' }, effects: [{ axis: 'kou', delta: 1 }], set_flag: 'asked_where' },
         ],
       },
       {
@@ -53,7 +55,8 @@ const blocks: Block[] = [
   {
     block_id: 'dm1',
     items: [
-      { type: 'message', character: 'Tatsumi', messages: [{ en: 'I am also awake.', uk: 'Я теж не сплю.' }] },
+      // A cross-segment branch: gated on the recorded g1 choice by stable id.
+      { type: 'message', character: 'Tatsumi', messages: [{ en: 'I am also awake.', uk: 'Я теж не сплю.' }], condition: 'choice:g1_age==g1_age__o1' },
       { type: 'sticker', character: 'Tatsumi', file: 'wave.png' },
     ],
   },
@@ -61,8 +64,8 @@ const blocks: Block[] = [
     block_id: 'v1',
     items: [
       { type: 'cue', channel: 'scene', value: 'mountain' },
-      { type: 'message', character: 'Ren', messages: [{ en: 'What lives on the mountain?', uk: 'Що живе на горі?' }] },
-      { type: 'choice', character: 'Ren', options: [{ text: { en: 'A tengu.', uk: 'Тенґу.' } }] },
+      { type: 'message', character: 'Ren', messages: [{ en: 'What lives on the mountain?', uk: 'Що живе на горі?' }], condition: 'flag:asked_where' },
+      { type: 'choice', id: 'v1_tengu', character: 'Ren', options: [{ id: 'v1_tengu__o0', text: { en: 'A tengu.', uk: 'Тенґу.' } }] },
     ],
   },
 ];

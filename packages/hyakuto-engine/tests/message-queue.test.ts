@@ -28,7 +28,7 @@ describe("resolveQueue", () => {
     expect(queue[1]!.text).toBe("hi!");
   });
 
-  it("filters by condition", () => {
+  it("carries conditions through unevaluated (gating happens at show time in play)", () => {
     const messages: RawMessage[] = [
       { id: "msg_001", character: "ao", text: "Always shown." },
       { id: "msg_002", character: "ao", text: "Only when story > 4.", condition: "story > 4" },
@@ -38,9 +38,10 @@ describe("resolveQueue", () => {
     state.axes.story = 5;
     const queue = resolveQueue(messages, state, config.characters, 1.0);
 
-    expect(queue).toHaveLength(2);
-    expect(queue[0]!.text).toBe("Always shown.");
-    expect(queue[1]!.text).toBe("Only when story > 4.");
+    // Nothing dropped at load — a same-segment choice/effect may still flip a
+    // gate before the line is reached. play() skips false gates at show time.
+    expect(queue).toHaveLength(3);
+    expect(queue.map((m) => m.condition)).toEqual([undefined, "story > 4", "story <= 4"]);
   });
 
   it("resolves pool messages", () => {
@@ -92,14 +93,15 @@ describe("resolveQueue", () => {
     expect(fast[0]!.delay_ms).toBe(3000);
   });
 
-  it("returns empty queue when all messages fail conditions", () => {
+  it("keeps failing-condition messages queued (play() decides at show time)", () => {
     const messages: RawMessage[] = [
       { id: "msg_001", character: "ao", text: "Nope.", condition: "story > 100" },
     ];
     const state = createGameState(config);
     const queue = resolveQueue(messages, state, config.characters, 1.0);
 
-    expect(queue).toHaveLength(0);
+    expect(queue).toHaveLength(1);
+    expect(queue[0]!.condition).toBe("story > 100");
   });
 
   it("strips all timing at skip pace", () => {

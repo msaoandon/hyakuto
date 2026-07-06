@@ -44,18 +44,24 @@ function itemToLine(item: BlockItem, segId: string, index: number, dl: string): 
         variants: item.variants.map((v, i) => ({ id: `${id}__v${i}`, text: unitFromLocalized(v.text, `${id}__v${i}`, dl), weight: v.weight })),
         ...cond(item.condition), ...fx(item.effects),
       };
-    case 'choice':
+    case 'choice': {
+      // Authored ids (CMS-compiled content) are preserved verbatim — they're the
+      // identity `choice:` refs and recorded picks hang off. Only legacy
+      // (Sheets-era) items without ids get synthesized ones.
+      const cid = item.id ?? id;
       return {
-        type: 'choice', id,
+        type: 'choice', id: cid,
         ...(item.character ? { character: item.character } : {}),
         options: item.options.map((o, i) => {
-          const oid = `${id}__o${i}`;
+          const oid = o.id ?? `${cid}__o${i}`;
           return {
             id: oid, text: unitFromLocalized(o.text, oid, dl),
             ...cond(o.condition), ...fx(o.effects),
+            ...(o.set_flag ? { set_flag: o.set_flag } : {}),
           };
         }),
       };
+    }
     case 'cue':
       return { type: 'cue', id, channel: item.channel, value: item.value, ...cond(item.condition) };
     case 'typing':
@@ -151,7 +157,7 @@ export function importProject(input: ImportInput): Project {
       characters: input.gameConfig.characters.map((c) => ({ id: c.id, typing_rate: c.typing_rate })),
       axes: input.gameConfig.axes.map((id) => ({ id })),
       counters: input.gameConfig.counters.map((c) => ({ ...c })),
-      flags: [],
+      flags: (input.gameConfig.flags ?? []).map((id) => ({ id })),
       cueChannels: DEFAULT_CUE_CHANNELS,
       scenes: [...scenes].map((id) => ({ id })),
       musicThemes: [...musicThemes].map((id) => ({ id })),

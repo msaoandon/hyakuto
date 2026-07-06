@@ -43,13 +43,22 @@ const PoolItem = z.object({
   effects: z.array(EffectDef).optional(),
 });
 
+// Choice/option ids are stable, CMS-assigned identities: `choice:<id>==<optId>`
+// references them and the engine records the pick under them. Optional for
+// back-compat — legacy (Sheets-era) content has none and simply can't be
+// branched on; the content validator enforces uniqueness when present.
 const ChoiceItem = z.object({
   type: z.literal('choice'),
+  id: z.string().min(1).optional(),
   character: z.string().optional(), // undefined = MC
   options: z.array(z.object({
+    id: z.string().min(1).optional(),
     text: Localized,
     condition: z.string().optional(),
     effects: z.array(EffectDef).optional(),
+    /** Writer-named consequence: picking this option sets the flag (must be
+     *  declared in gameConfig.flags); later content gates via `flag:`. */
+    set_flag: z.string().min(1).optional(),
   })).min(1),
 });
 

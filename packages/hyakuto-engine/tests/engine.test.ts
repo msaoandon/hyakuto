@@ -782,3 +782,146 @@ describe("empty message text", () => {
     ).toThrow("empty text");
   });
 });
+
+describe("recorded choices (drives the choice: predicate)", () => {
+  const segment = {
+    id: "seg_rec",
+    messages: [
+      { id: "m1", character: "ao", text: "What do you say?" },
+      { id: "m2", character: "ao", text: "The dragon stirs.", condition: "choice:c1==o_ask" },
+      { id: "m3", character: "ao", text: "Silence.", condition: "choice:c1==o_quiet" },
+    ],
+    choices: {
+      m1: { id: "c1", options: [{ id: "o_quiet", text: "Stay quiet" }, { id: "o_ask", text: "Ask why" }] },
+    },
+  };
+
+  async function playChoosing(index: number) {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => {
+        events.push(e);
+        if (e.type === "choice_required") setTimeout(() => engine.chooseOption(index), 0);
+      },
+    });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+    return { engine, events };
+  }
+
+  it("records the picked option by stable id, before later lines gate on it", async () => {
+    const { engine, events } = await playChoosing(1);
+    expect(engine.getState().choices).toEqual({ c1: "o_ask" });
+    const texts = events.filter((e) => e.type === "message_shown").map((e) => (e as any).message.text);
+    expect(texts).toContain("The dragon stirs.");
+    expect(texts).not.toContain("Silence.");
+  });
+
+  it("the other branch plays under the other pick", async () => {
+    const { engine, events } = await playChoosing(0);
+    expect(engine.getState().choices).toEqual({ c1: "o_quiet" });
+    const texts = events.filter((e) => e.type === "message_shown").map((e) => (e as any).message.text);
+    expect(texts).toContain("Silence.");
+    expect(texts).not.toContain("The dragon stirs.");
+  });
+
+  it("legacy choices without ids record nothing", async () => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config,
+      onEvent: (e) => {
+        events.push(e);
+        if (e.type === "choice_required") setTimeout(() => engine.chooseOption(0), 0);
+      },
+    });
+    engine.setPace(0);
+    engine.loadSegment({
+      id: "seg_legacy",
+      messages: [{ id: "m1", character: "ao", text: "hey" }],
+      choices: { m1: { options: [{ text: "hi" }] } },
+    });
+    await engine.play();
+    expect(engine.getState().choices).toEqual({});
+  });
+
+  it("a restored save starts with no recorded choices (runtime-only until Phase 3)", () => {
+    const engine = createEngine({
+      config,
+      onEvent: () => {},
+      savedState: { axes: { story: 3 }, counters: {}, flags: [], poolSelections: {} },
+    });
+    expect(engine.getState().choices).toEqual({});
+    expect(engine.getState().axes.story).toBe(3);
+  });
+});
+
+describe("option set_flag (writer-named consequence)", () => {
+  const flagged = {
+    ...config,
+    flags: ["asked_lantern"],
+  };
+  const segment = {
+    id: "seg_flag",
+    messages: [
+      { id: "m1", character: "ao", text: "You saw it too, right?" },
+      { id: "m2", character: "ao", text: "Then you are already inside.", condition: "flag:asked_lantern" },
+    ],
+    choices: {
+      m1: {
+        id: "c1",
+        options: [
+          { id: "o0", text: "Saw what?" },
+          { id: "o1", text: "Yes. The lantern.", set_flag: "asked_lantern" },
+        ],
+      },
+    },
+  };
+
+  async function playPicking(index: number) {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({
+      config: flagged,
+      onEvent: (e) => {
+        events.push(e);
+        if (e.type === "choice_required") setTimeout(() => engine.chooseOption(index), 0);
+      },
+    });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+    return { engine, events };
+  }
+
+  it("sets the flag on selection (allowlisted by gameConfig.flags) and gates the follow-up", async () => {
+    const { engine, events } = await playPicking(1);
+    expect(engine.getState().flags.has("asked_lantern")).toBe(true);
+    expect(events).toContainEqual({ type: "flag_set", flag: "asked_lantern" });
+    const texts = events.filter((e) => e.type === "message_shown").map((e) => (e as any).message.text);
+    expect(texts).toContain("Then you are already inside.");
+  });
+
+  it("the other pick sets nothing and the gated line stays hidden", async () => {
+    const { engine, events } = await playPicking(0);
+    expect(engine.getState().flags.size).toBe(0);
+    const texts = events.filter((e) => e.type === "message_shown").map((e) => (e as any).message.text);
+    expect(texts).not.toContain("Then you are already inside.");
+  });
+
+  it("an undeclared flag fails loudly at selection", async () => {
+    const engine = createEngine({
+      config, // no flags declared
+      onEvent: (e) => {
+        if (e.type === "choice_required") setTimeout(() => engine.chooseOption(0), 0);
+      },
+    });
+    engine.setPace(0);
+    engine.loadSegment({
+      id: "seg_bad",
+      messages: [{ id: "m1", character: "ao", text: "hey" }],
+      choices: { m1: { options: [{ text: "hi", set_flag: "ghost" }] } },
+    });
+    await expect(engine.play()).rejects.toThrow(/Unknown flag/);
+  });
+});

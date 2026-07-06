@@ -27,6 +27,58 @@ export function isManifest(data: unknown): data is Manifest {
 const RESERVED = [...RESERVED_CHARACTERS];
 const CUE_CHANNELS = ['music', 'glitch', 'scene'];
 
+/**
+ * Index every id-carrying choice in the pool: choiceId → its option-id set.
+ * Also flags identity errors — duplicate choice ids (a `choice:` ref must be
+ * unambiguous), duplicate option ids within a choice, and options that carry
+ * ids under a choice that has none (unreferenceable half-state).
+ */
+function collectChoiceIndex(pool: Map<string, { block: Block; source: string }>) {
+  const index = new Map<string, Set<string>>();
+  const owner = new Map<string, string>(); // choiceId → first block seen in
+  const errors: ValidationError[] = [];
+
+  for (const { block, source } of pool.values()) {
+    const ctx = { source, segmentId: block.block_id };
+    for (const item of block.items) {
+      if (item.type !== 'choice') continue;
+      if (!item.id) {
+        if (item.options.some((o) => o.id))
+          errors.push({ ...ctx, message: 'Choice options carry ids but the choice has no id — nothing can reference them' });
+        continue;
+      }
+      if (index.has(item.id)) {
+        errors.push({ ...ctx, message: `Duplicate choice id "${item.id}" (also in block "${owner.get(item.id)}")` });
+        continue;
+      }
+      const options = new Set<string>();
+      for (const opt of item.options) {
+        if (!opt.id) continue;
+        if (options.has(opt.id))
+          errors.push({ ...ctx, message: `Duplicate option id "${opt.id}" in choice "${item.id}"` });
+        options.add(opt.id);
+      }
+      index.set(item.id, options);
+      owner.set(item.id, block.block_id);
+    }
+  }
+  return { index, errors };
+}
+
+/** Check every `choice:` ref in a condition against the choice index. */
+function checkChoiceRefs(
+  refs: { choiceId: string; optionId: string }[],
+  index: Map<string, Set<string>>,
+  push: (message: string) => void,
+) {
+  for (const ref of refs) {
+    const options = index.get(ref.choiceId);
+    if (!options) push(`Condition references unknown choice "${ref.choiceId}"`);
+    else if (!options.has(ref.optionId))
+      push(`Condition references unknown option "${ref.optionId}" of choice "${ref.choiceId}"`);
+  }
+}
+
 // Parse each file, merge into one pool, catch cross-file id collisions
 export function mergeBlocks(sources: ContentSource[]) {
   const pool = new Map<string, { block: Block; source: string }>();
@@ -62,9 +114,10 @@ export function validateBlocks(
   pool: Map<string, { block: Block; source: string }>,
   config: GameConfig,
 ): ValidationError[] {
-  const errors: ValidationError[] = [];
   const chars = new Set([...config.characters.map(c => c.id), ...RESERVED]);
   const targets = new Set([...config.axes, ...config.counters.map(c => c.id)]);
+  const flags = new Set(config.flags ?? []);
+  const { index: choiceIndex, errors } = collectChoiceIndex(pool);
 
   for (const { block, source } of pool.values()) {
     const ctx = { source, segmentId: block.block_id };
@@ -72,9 +125,14 @@ export function validateBlocks(
     const condCheck = (cond?: string) => {
       if (!cond) return;
       try {
-        for (const v of collectConditionRefs(cond).vars) {
+        const refs = collectConditionRefs(cond);
+        for (const v of refs.vars) {
           if (!targets.has(v)) errors.push({ ...ctx, message: `Condition uses unknown axis/counter "${v}"` });
         }
+        for (const f of refs.flags) {
+          if (!flags.has(f)) errors.push({ ...ctx, message: `Condition references undeclared flag "${f}"` });
+        }
+        checkChoiceRefs(refs.choices, choiceIndex, (message) => errors.push({ ...ctx, message }));
       } catch (e) {
         errors.push({ ...ctx, message: `Bad condition "${cond}": ${(e as Error).message}` });
       }
@@ -108,6 +166,8 @@ export function validateBlocks(
           if (emptyLocalized(opt.text)) errors.push({ ...ctx, message: 'Choice option has empty text' });
           condCheck(opt.condition);
           fxCheck(opt.effects);
+          if (opt.set_flag && !flags.has(opt.set_flag))
+            errors.push({ ...ctx, message: `Option sets undeclared flag "${opt.set_flag}"` });
         }
       }
       if (item.type === 'cue') {
@@ -203,6 +263,23 @@ export function validateManifest(
         message: `DM thread "${tid}" has unlock_after — DMs gate by condition, not wall-clock`,
       });
   }
+
+  // Segment/thread gates may reference recorded choices — every `choice:` ref
+  // must resolve to a real choice + option in the block pool (a dangling ref is
+  // forever-false gating: the content silently never plays).
+  const { index: choiceIndex } = collectChoiceIndex(pool); // identity errors already reported by validateBlocks
+  const gateCheck = (cond: string | undefined, ctx: ValidationError) => {
+    if (!cond) return;
+    try {
+      checkChoiceRefs(collectConditionRefs(cond).choices, choiceIndex, (message) => errors.push({ ...ctx, message }));
+    } catch (e) {
+      errors.push({ ...ctx, message: `Bad condition "${cond}": ${(e as Error).message}` });
+    }
+  };
+  for (const [id, meta] of Object.entries(manifest.segments))
+    gateCheck(meta.condition, { source, segmentId: id, message: '' });
+  for (const [tid, t] of Object.entries(manifest.threads))
+    gateCheck(t.condition, { source, segmentId: tid, message: '' });
 
   return errors;
 }

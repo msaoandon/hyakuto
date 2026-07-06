@@ -77,12 +77,17 @@ function lineToItem(line: Line, defaultLocale: string): BlockItem {
       return put(item, 'effects', compileEffects(line.effects)) as BlockItem;
     }
     case 'choice': {
+      // The line id IS the choice id, and option ids ship verbatim — the engine
+      // records the pick under them and `choice:` predicates resolve against
+      // them, so delivery must carry the authored identity.
       const item = {
         type: 'choice',
+        id: line.id,
         options: line.options.map((o) => {
-          const opt = { text: compileLocalized(o.text, defaultLocale) };
+          const opt = { id: o.id, text: compileLocalized(o.text, defaultLocale) };
           put(opt, 'condition', combineGate(o.condition, o.branch));
-          return put(opt, 'effects', compileEffects(o.effects));
+          put(opt, 'effects', compileEffects(o.effects));
+          return put(opt, 'set_flag', o.set_flag);
         }),
       };
       return put(item, 'character', line.character) as BlockItem;
@@ -118,6 +123,10 @@ export function compileGameConfig(world: WorldConfig): GameConfigT {
       const out = put({ id: c.id, start: c.start, end: c.end, direction: c.direction }, 'tiers', c.tiers);
       return put(out, 'on_complete', c.on_complete);
     }),
+    // Declared flags ship in gameConfig: the engine's set_flag allowlist and the
+    // validator's flag-typo net both read from here. Omitted when empty (minimal
+    // shape, and configs predating flags stay byte-identical).
+    ...(world.flags.length ? { flags: world.flags.map((f) => f.id) } : {}),
   };
   return GameConfig.parse(gameConfig);
 }
@@ -142,7 +151,7 @@ export function compile(project: Project): CompiledContent {
     put(meta, 'day', loc?.day);
     put(meta, 'thread_id', segment.threadId);
     put(meta, 'scene', segment.scene);
-    put(meta, 'condition', segment.condition);
+    put(meta, 'condition', combineGate(segment.condition, segment.branch));
     segments[segment.id] = meta;
   }
 

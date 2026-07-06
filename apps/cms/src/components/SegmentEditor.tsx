@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   editUnitText, newUnit, nextChildId, nextLineId,
-  type EffectRef, type LineT, type SegmentT, type ThreadKind, type TranslatableUnitT, type WorldConfigT,
+  type BranchRef, type EffectRef, type LineT, type SegmentT, type ThreadKind, type TranslatableUnitT, type WorldConfigT,
 } from "@hyakuto/cms-core";
-import { addScene, saveSegment } from "@/app/actions";
+import { addFlag, addScene, saveSegment } from "@/app/actions";
 
 // The segment authoring grid (DEV_PLAN_CMS §VI.3): a typed, spreadsheet-like view
 // over the normalized model. Everything referential is a dropdown fed by the world
@@ -108,12 +108,142 @@ function EffectsEditor({ effects, targets, onChange }: {
   );
 }
 
-function ConditionInput({ value, onChange }: { value?: string; onChange: (v: string | undefined) => void }) {
+/** Flag dropdown + inline "new flag" (declared into world.flags via addFlag —
+ *  flags are born at the option that sets them, then reused everywhere). */
+function FlagPicker({ gameId, flags, value, placeholder, onChange }: {
+  gameId: string;
+  flags: string[];
+  value: string | undefined;
+  placeholder: string;
+  onChange: (v: string | undefined) => void;
+}) {
+  const [minted, setMinted] = useState<string[]>([]);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const all = [...new Set([...flags, ...minted])];
+
+  const commit = async () => {
+    const id = (draft ?? "").trim();
+    if (!id) return setDraft(null);
+    const result = await addFlag(gameId, id);
+    if (!result.ok) return setError(result.error);
+    setMinted((m) => [...m, id]);
+    onChange(id);
+    setDraft(null);
+    setError(null);
+  };
+
+  if (draft !== null)
+    return (
+      <span className="flex items-center gap-1">
+        <input autoFocus className={`${input} w-40 font-mono text-xs`} placeholder="e.g. d1_asked_lantern" value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void commit(); } if (e.key === "Escape") setDraft(null); }} />
+        <button type="button" className={tinyBtn} onClick={() => void commit()}>ok</button>
+        {error && <span className="text-xs text-danger">{error}</span>}
+      </span>
+    );
+
   return (
-    <input
-      className={`${input} w-36 font-mono text-xs`} placeholder="condition"
-      value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}
-    />
+    <span className="flex items-center gap-1">
+      <select className={`${input} text-xs`} value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}>
+        <option value="">{placeholder}</option>
+        {value && !all.includes(value) && <option value={value}>{value} (unknown!)</option>}
+        {all.map((f) => <option key={f} value={f}>🚩 {f}</option>)}
+      </select>
+      <button type="button" className={tinyBtn} title="declare a new flag" onClick={() => setDraft("")}>+ new</button>
+    </span>
+  );
+}
+
+/** One choice as the branch builder sees it: stable ids + author-facing labels. */
+export interface ChoiceInfo {
+  id: string;
+  segmentId: string;
+  options: { id: string; label: string }[];
+}
+
+const choiceLabel = (c: ChoiceInfo) =>
+  `${c.segmentId} · ${c.options.map((o) => o.label || o.id).join(" / ").slice(0, 48)}`;
+
+/** The gate on a line/option/segment. Flag-first (the writers' language — see
+ *  DEV_PLAN_CMS): the 🚩 dropdown appends a `flag:` requirement to the condition,
+ *  flags being set by choice options ("remember as"). The exact-option branch
+ *  ("⑂", `choice:` under the hood) stays as the advanced form. Callers pass
+ *  `choices` already scoped (an option never sees its own choice; a segment gate
+ *  never sees its own segment's choices). */
+function GateEditor({ condition, branch, choices, flags, onChange }: {
+  condition: string | undefined;
+  branch: BranchRef | undefined;
+  choices: ChoiceInfo[];
+  flags: string[];
+  onChange: (gate: { condition: string | undefined; branch: BranchRef | undefined }) => void;
+}) {
+  const current = choices.find((c) => c.id === branch?.choiceId);
+  const requireFlag = (id: string) => {
+    if (!id) return;
+    const clause = `flag:${id}`;
+    // AND onto whatever is there; parenthesise the old part only if it ORs.
+    const combined = !condition ? clause : condition.includes(" OR ") ? `(${condition}) AND ${clause}` : `${condition} AND ${clause}`;
+    onChange({ condition: combined, branch });
+  };
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      <input
+        className={`${input} w-36 font-mono text-xs`} placeholder="condition"
+        value={condition ?? ""} onChange={(e) => onChange({ condition: e.target.value || undefined, branch })}
+      />
+      <select
+        className={`${input} w-8 text-xs`} value="" title={flags.length ? "require a flag (set by a choice option)" : "no flags declared yet — set one on a choice option"}
+        disabled={flags.length === 0}
+        onChange={(e) => requireFlag(e.target.value)}
+      >
+        <option value="">🚩</option>
+        {flags.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+      {branch ? (
+        <span className="flex items-center gap-1 rounded border border-gold/40 bg-gold/5 px-1 py-0.5">
+          <span className="text-[10px] uppercase tracking-wide text-gold">if</span>
+          <select
+            className="max-w-44 bg-ink text-xs text-silver outline-none" value={branch.choiceId}
+            onChange={(e) => {
+              const next = choices.find((c) => c.id === e.target.value);
+              onChange({ condition, branch: { choiceId: e.target.value, optionId: next?.options[0]?.id ?? "" } });
+            }}
+          >
+            {!current && <option value={branch.choiceId}>{branch.choiceId} (missing!)</option>}
+            {choices.map((c) => <option key={c.id} value={c.id}>{choiceLabel(c)}</option>)}
+          </select>
+          <span className="text-[10px] text-gold">=</span>
+          <select
+            className="max-w-36 bg-ink text-xs text-silver outline-none" value={branch.optionId}
+            onChange={(e) => onChange({ condition, branch: { ...branch, optionId: e.target.value } })}
+          >
+            {current && !current.options.some((o) => o.id === branch.optionId) && (
+              <option value={branch.optionId}>{branch.optionId} (missing!)</option>
+            )}
+            {(current?.options ?? [{ id: branch.optionId, label: branch.optionId }]).map((o) => (
+              <option key={o.id} value={o.id}>{o.label || o.id}</option>
+            ))}
+          </select>
+          <button type="button" className={tinyBtn} title="remove branch"
+            onClick={() => onChange({ condition, branch: undefined })}>✕</button>
+        </span>
+      ) : (
+        <button
+          type="button" disabled={choices.length === 0} className={tinyBtn}
+          title={choices.length
+            ? "advanced: gate on the exact option picked (usually a 🚩 flag reads better)"
+            : "no choices to branch on yet"}
+          onClick={() => {
+            const first = choices[0];
+            onChange({ condition, branch: { choiceId: first.id, optionId: first.options[0]?.id ?? "" } });
+          }}
+        >
+          ⑂
+        </button>
+      )}
+    </span>
   );
 }
 
@@ -194,11 +324,13 @@ function StaleMark({ unit }: { unit: TranslatableUnitT }) {
 
 // ── the editor ────────────────────────────────────────────────────────────────
 
-export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, world, context }: {
+export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, world, choices, context }: {
   gameId: string;
   segment: SegmentT;
   defaultLocale: string;
   world: WorldConfigT;
+  /** Every choice in the project (for the branch builder). */
+  choices: ChoiceInfo[];
   context: { kind: ThreadKind | "system"; threadName: string | null; dayLabel: string };
 }) {
   const [segment, setSegment] = useState<SegmentT>(initial);
@@ -207,6 +339,7 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
   const characters = world.characters.map((c) => c.id);
   const hasCharacters = characters.length > 0;
   const effectTargets = [...world.axes.map((a) => a.id), ...world.counters.map((c) => c.id)];
+  const flagIds = world.flags.map((f) => f.id);
 
   // ── autosave: debounce every state change into one validated saveSegment ──
   const seq = useRef(0);
@@ -344,7 +477,8 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
             <StaleMark unit={line.text} />
             <EffectsEditor effects={line.effects} targets={effectTargets}
               onChange={(effects) => replaceLine({ ...line, effects })} />
-            <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
+            <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
+              onChange={(gate) => replaceLine({ ...line, ...gate })} />
           </>
         );
       case "status":
@@ -354,7 +488,8 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
               value={textOf(line.text)} onKeyDown={rowKeys(line.id)}
               onChange={(text) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) })} />
             <StaleMark unit={line.text} />
-            <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
+            <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
+              onChange={(gate) => replaceLine({ ...line, ...gate })} />
           </>
         );
       case "sticker":
@@ -369,7 +504,8 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
               onChange={(e) => replaceLine({ ...line, file: e.target.value })} />
             <EffectsEditor effects={line.effects} targets={effectTargets}
               onChange={(effects) => replaceLine({ ...line, effects })} />
-            <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
+            <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
+              onChange={(gate) => replaceLine({ ...line, ...gate })} />
           </>
         );
       case "typing":
@@ -388,7 +524,8 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
               {world.cueChannels.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
             </select>
             <CueValue gameId={gameId} line={line} world={world} onChange={(value) => replaceLine({ ...line, value })} />
-            <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
+            <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
+              onChange={(gate) => replaceLine({ ...line, ...gate })} />
           </>
         );
       case "pool":
@@ -429,7 +566,8 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
         </div>
         <EffectsEditor effects={line.effects} targets={effectTargets}
           onChange={(effects) => replaceLine({ ...line, effects })} />
-        <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
+        <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
+              onChange={(gate) => replaceLine({ ...line, ...gate })} />
       </>
     );
   }
@@ -457,7 +595,12 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
               <StaleMark unit={o.text} />
               <EffectsEditor effects={o.effects} targets={effectTargets}
                 onChange={(effects) => editOption(i, { effects })} />
-              <ConditionInput value={o.condition} onChange={(condition) => editOption(i, { condition })} />
+              {/* The writer-named consequence: picking this option sets the flag. */}
+              <FlagPicker gameId={gameId} flags={flagIds} value={o.set_flag} placeholder="remember as…"
+                onChange={(set_flag) => editOption(i, { set_flag })} />
+              <GateEditor condition={o.condition} branch={o.branch}
+                choices={choices.filter((c) => c.id !== line.id)} flags={flagIds}
+                onChange={(gate) => editOption(i, gate)} />
               <button type="button" className={tinyBtn} disabled={line.options.length === 1}
                 onClick={() => replaceLine({ ...line, options: line.options.filter((_, j) => j !== i) })}>✕</button>
             </div>
@@ -498,9 +641,11 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
           </span>
         )}
         <span className="flex items-center gap-2">
-          <label className="text-xs text-muted">segment condition</label>
-          <input className={`${input} w-64 font-mono text-xs`} placeholder="e.g. flag:met_oiwa" value={segment.condition ?? ""}
-            onChange={(e) => setSegment((s) => ({ ...s, condition: e.target.value || undefined }))} />
+          <label className="text-xs text-muted">segment gate</label>
+          {/* A segment's own choices can't gate it (they haven't happened when it starts). */}
+          <GateEditor condition={segment.condition} branch={segment.branch}
+            choices={choices.filter((c) => c.segmentId !== segment.id)} flags={flagIds}
+            onChange={(gate) => setSegment((s) => ({ ...s, ...gate }))} />
         </span>
       </div>
 

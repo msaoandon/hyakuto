@@ -91,6 +91,44 @@ describe('compile', () => {
     expect(msg).toMatchObject({ type: 'message', condition: 'choice:greet==warm' });
   });
 
+  it('ships choice + option ids (the identity the engine records picks under)', () => {
+    const p = project({
+      segments: [{
+        id: 's1', threadId: 't1',
+        lines: [
+          { type: 'message', id: 's1__0', character: 'Kou', text: { id: 's1__0', text: { en: 'pick' } } },
+          {
+            type: 'choice', id: 's1__1',
+            options: [
+              { id: 's1__1__o0', text: { id: 's1__1__o0', text: { en: 'A' } } },
+              { id: 's1__1__o1', text: { id: 's1__1__o1', text: { en: 'B' } }, branch: { choiceId: 'earlier', optionId: 'x' } },
+            ],
+          },
+        ],
+      }],
+    });
+    const { blocks } = compile(Project.parse(p));
+    expect(blocks[0].items[1]).toEqual({
+      type: 'choice',
+      id: 's1__1',
+      options: [
+        { id: 's1__1__o0', text: 'A' },
+        { id: 's1__1__o1', text: 'B', condition: 'choice:earlier==x' },
+      ],
+    });
+  });
+
+  it('compiles a segment-level branch into the manifest gate', () => {
+    const p = project({
+      segments: [{
+        id: 's1', threadId: 't1', condition: 'kou>1',
+        branch: { choiceId: 'greet', optionId: 'warm' }, lines: [],
+      }],
+    });
+    const { manifest } = compile(Project.parse(p));
+    expect(manifest.segments.s1.condition).toBe('(kou>1) AND (choice:greet==warm)');
+  });
+
   it('fails fast when a segment references an unknown thread', () => {
     const p = project({
       segments: [{ id: 's1', threadId: 'ghost', lines: [] }],

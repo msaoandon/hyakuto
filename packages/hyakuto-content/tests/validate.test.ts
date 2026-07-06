@@ -177,3 +177,97 @@ describe('validateManifestSource — shape boundary', () => {
     expect(errs[0].message).toMatch(/Invalid manifest/);
   });
 });
+
+describe('choice identity + choice: refs (the branching contract)', () => {
+  const choiceBlock = (blockId: string, choiceId?: string, optionIds: (string | undefined)[] = ['o1', 'o2']) => ({
+    block_id: blockId,
+    items: [
+      { type: 'message' as const, character: 'Kou', messages: ['pick'] },
+      {
+        type: 'choice' as const,
+        ...(choiceId ? { id: choiceId } : {}),
+        options: optionIds.map((id, i) => ({ ...(id ? { id } : {}), text: `opt ${i}` })),
+      },
+    ],
+  });
+  const gated = (blockId: string, condition: string) => ({
+    block_id: blockId,
+    items: [{ type: 'message' as const, character: 'Kou', messages: ['later'], condition }],
+  });
+  const poolFor = (...blocks: object[]) => mergeBlocks([{ path: 'f.json', data: blocks }]).pool;
+
+  it('accepts a resolving choice: ref (block, segment, and thread gates)', () => {
+    const pool = poolFor(choiceBlock('b1', 'c1'), gated('b2', 'choice:c1==o2'));
+    expect(validateBlocks(pool, config)).toEqual([]);
+    const m = manifest({
+      days: [{ day: 1, route: 'common', segments: ['b1', 'b2'] }],
+      segments: {
+        b1: { id: 'b1', type: 'group_chat', day: 1, thread_id: 'alpha' },
+        b2: { id: 'b2', type: 'group_chat', day: 1, thread_id: 'alpha', condition: 'choice:c1==o1' },
+      },
+      threads: { alpha: { display_name: 'Alpha', condition: 'choice:c1==o1' } },
+    });
+    expect(validateManifest(pool, m)).toEqual([]);
+  });
+
+  it('flags a ref to an unknown choice, and to an unknown option', () => {
+    const pool = poolFor(choiceBlock('b1', 'c1'), gated('b2', 'choice:ghost==o1 AND choice:c1==nope'));
+    const msgs = validateBlocks(pool, config).map((e) => e.message);
+    expect(msgs).toContainEqual(expect.stringContaining('unknown choice "ghost"'));
+    expect(msgs).toContainEqual(expect.stringContaining('unknown option "nope"'));
+  });
+
+  it('flags a dangling choice: ref in a manifest segment gate', () => {
+    const pool = poolFor(choiceBlock('demo_1', 'c1'));
+    const m = manifest({
+      segments: { demo_1: { id: 'demo_1', type: 'group_chat', day: 1, thread_id: 'alpha', condition: 'choice:c1==missing' } },
+    });
+    const msgs = validateManifest(pool, m).map((e) => e.message);
+    expect(msgs).toContainEqual(expect.stringContaining('unknown option "missing"'));
+  });
+
+  it('flags duplicate choice ids across blocks and duplicate option ids within one', () => {
+    const dupes = poolFor(choiceBlock('b1', 'c1'), choiceBlock('b2', 'c1'));
+    expect(validateBlocks(dupes, config).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('Duplicate choice id "c1"'));
+    const dupOpts = poolFor(choiceBlock('b1', 'c1', ['same', 'same']));
+    expect(validateBlocks(dupOpts, config).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('Duplicate option id "same"'));
+  });
+
+  it('flags option ids under an id-less choice (unreferenceable)', () => {
+    const pool = poolFor(choiceBlock('b1', undefined, ['o1']));
+    expect(validateBlocks(pool, config).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('choice has no id'));
+  });
+
+  it('legacy id-less choices stay valid (back-compat)', () => {
+    const pool = poolFor(choiceBlock('b1', undefined, [undefined, undefined]));
+    expect(validateBlocks(pool, config)).toEqual([]);
+  });
+});
+
+describe('flags — declared allowlist (gameConfig.flags)', () => {
+  const flagged = { ...config, flags: ['asked_lantern'] };
+  const withOption = (set_flag?: string, condition?: string) => mergeBlocks([{ path: 'f.json', data: [{
+    block_id: 'b1',
+    items: [
+      { type: 'message' as const, character: 'Kou', messages: ['pick'], ...(condition ? { condition } : {}) },
+      { type: 'choice' as const, id: 'c1', options: [{ id: 'o1', text: 'ok', ...(set_flag ? { set_flag } : {}) }] },
+    ],
+  }] }]).pool;
+
+  it('accepts a declared set_flag and flag: ref', () => {
+    expect(validateBlocks(withOption('asked_lantern', 'flag:asked_lantern'), flagged)).toEqual([]);
+  });
+
+  it('flags an undeclared set_flag on an option', () => {
+    expect(validateBlocks(withOption('ghost'), flagged).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('undeclared flag "ghost"'));
+  });
+
+  it('flags an undeclared flag: condition ref (kills flag typos)', () => {
+    expect(validateBlocks(withOption(undefined, 'flag:asked_lantren'), flagged).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('undeclared flag "asked_lantren"'));
+  });
+});

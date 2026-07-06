@@ -2,12 +2,14 @@ import { z } from 'zod';
 import { MessageDef } from './message';
 
 const ChoiceOption = z.object({
+  id: z.string().min(1).optional(),
   text: z.string().min(1),
   condition: z.string().optional(),
   effects: z.array(z.object({
     axis: z.string().min(1),
     delta: z.number().int(),
   })).optional(),
+  set_flag: z.string().min(1).optional(),
 });
 
 const SegmentType = z.enum(['group_chat', 'dm', 'vn', 'system']);

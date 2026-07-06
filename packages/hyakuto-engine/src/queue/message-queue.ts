@@ -10,11 +10,20 @@ export interface QueuedMessage {
   text: string;
   delay_ms: number;
   typing_ms: number;
+  /** Carried through to playback: gates are evaluated at SHOW time against the
+   *  then-current state (not at load), so a line can react to a choice/effect
+   *  earlier in the same segment — the same "current state, in order" rule
+   *  playDay applies to segment gates. */
+  condition?: string;
   effects?: { axis: string; delta: number }[];
   set_flag?: string;
   kind?: "cue";
   channel?: string;
   value?: string;
+  /** True when this pool line's variant was recorded during THIS resolve — if the
+   *  line is later gated out at show time, the recording is rolled back so a
+   *  never-shown variant doesn't count as seen. */
+  poolJustSelected?: boolean;
 }
 
 export interface RawMessage {
@@ -43,21 +52,17 @@ export function resolveQueue(
   let prevCharacter: string | null = null;
 
   for (const msg of messages) {
-    // Evaluate condition — skip if false
-    if (msg.condition) {
-      if (!evaluateCondition(msg.condition, state, ctx)) {
-        continue;
-      }
-    }
+    // Conditions are NOT evaluated here: they ride along and gate at show time
+    // (see QueuedMessage.condition) so same-segment choices/effects can branch.
 
     if (msg.kind === "cue") {
-      if (msg.condition && !evaluateCondition(msg.condition, state, ctx)) continue;
       queue.push({
         id: msg.id,
         character: "",
         kind: "cue",
         channel: msg.channel,
         value: msg.value,
+        condition: msg.condition,
         text: "",
         delay_ms: 0,
         typing_ms: 0,
@@ -67,7 +72,9 @@ export function resolveQueue(
 
     // Resolve text — pool or direct
     let text: string;
+    let poolJustSelected: boolean | undefined;
     if (msg.pool) {
+      poolJustSelected = !(msg.id in state.poolSelections);
       const variant = selectFromPool(msg.id, msg.pool, state);
       text = variant.text;
     } else if (msg.text === undefined) {
@@ -99,8 +106,10 @@ export function resolveQueue(
       text,
       delay_ms,
       typing_ms,
+      condition: msg.condition,
       effects: msg.effects,
       set_flag: msg.set_flag,
+      ...(poolJustSelected !== undefined ? { poolJustSelected } : {}),
     });
 
     prevCharacter = msg.character;

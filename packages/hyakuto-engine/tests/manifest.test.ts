@@ -533,3 +533,36 @@ describe("localization seam", () => {
     expect(listThreads(m, 1, "uk")[0]!.display_name).toBe("Рен");
   });
 });
+
+describe("convertBlockToSegment — choice identity (the `choice:` data path)", () => {
+  const block = {
+    block_id: "b1",
+    items: [
+      { type: "message" as const, character: "ao", messages: ["pick one"] },
+      {
+        type: "choice" as const,
+        id: "b1__1",
+        options: [
+          { id: "b1__1__o0", text: "Stay quiet" },
+          { id: "b1__1__o1", text: "Ask why", condition: "flag:met_ren", effects: [{ axis: "story", delta: 1 }] },
+        ],
+      },
+    ],
+  };
+
+  it("carries the authored choice id, option ids, and option conditions", () => {
+    const seg = convertBlockToSegment(block);
+    const choice = seg.choices!["b1_msg_0"]!;
+    expect(choice.id).toBe("b1__1");
+    expect(choice.options.map((o) => o.id)).toEqual(["b1__1__o0", "b1__1__o1"]);
+    expect(choice.options[1]!.condition).toBe("flag:met_ren");
+    expect(choice.options[1]!.effects).toEqual([{ axis: "story", delta: 1 }]);
+  });
+
+  it("legacy content without ids converts with them undefined", () => {
+    const legacy = { ...block, items: [block.items[0]!, { type: "choice" as const, options: [{ text: "ok" }] }] };
+    const choice = Object.values(convertBlockToSegment(legacy).choices!)[0]!;
+    expect(choice.id).toBeUndefined();
+    expect(choice.options[0]!.id).toBeUndefined();
+  });
+});

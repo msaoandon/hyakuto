@@ -202,3 +202,32 @@ describe('context predicate: if_gender', () => {
     expect(evaluateCondition('gender:male AND time:evening AND flag:met_ren', s, { now })).toBe(true);
   });
 });
+
+describe('recorded-choice predicate: choice:', () => {
+  it('parses choice:<choiceId>==<optionId>; rejects malformed forms', () => {
+    expect(() => parseCondition('choice:c1==o2')).not.toThrow();
+    expect(() => parseCondition('choice:==o2')).toThrow('Missing choice id');
+    expect(() => parseCondition('choice:c1')).toThrow('Expected "==" after "choice:c1"');
+    expect(() => parseCondition('choice:c1>=o2')).toThrow('Expected "==" after "choice:c1"');
+    expect(() => parseCondition('choice:c1==')).toThrow('Missing option id');
+  });
+
+  it('is true only for the exactly recorded option', () => {
+    const state = stateWith({});
+    state.choices['d1_intro__3'] = 'd1_intro__3__o1';
+    expect(evaluateCondition('choice:d1_intro__3==d1_intro__3__o1', state)).toBe(true);
+    expect(evaluateCondition('choice:d1_intro__3==d1_intro__3__o0', state)).toBe(false);
+  });
+
+  it('an unanswered choice evaluates false, not an error', () => {
+    expect(evaluateCondition('choice:never_asked==o1', stateWith({}))).toBe(false);
+  });
+
+  it('composes with NOT / AND like any predicate', () => {
+    const state = stateWith({ flags: ['met_ren'] });
+    state.choices.c1 = 'o2';
+    expect(evaluateCondition('NOT choice:c1==o1', state)).toBe(true);
+    expect(evaluateCondition('choice:c1==o2 AND flag:met_ren', state)).toBe(true);
+    expect(evaluateCondition('(choice:c1==o1) OR (choice:c1==o2)', state)).toBe(true);
+  });
+});

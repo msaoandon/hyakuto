@@ -30,16 +30,24 @@ export type EngineEvent =
   | { type: "segment_start"; segmentId: string };
 
 export interface ChoiceOption {
+  /** Stable authored id (CMS-assigned) — what a `choice:` predicate references
+   *  and what gets recorded into `state.choices`. Optional for legacy content. */
+  id?: string;
   text: string;
   condition?: string;
   effects?: { axis: string; delta: number }[];
+  /** Writer-named consequence ("remember this pick as…"): set on selection,
+   *  gated later via `flag:`. Must be declared in gameConfig.flags. */
+  set_flag?: string;
 }
 
 export interface SegmentInput {
   id: string;
   condition?: string;
   messages: RawMessage[];
-  choices?: Record<string, { character?: string; options: ChoiceOption[] }>;
+  /** Keyed by the message the choice attaches to; `id` is the *authored* choice
+   *  id (optional for legacy content) that pairs with option ids for recording. */
+  choices?: Record<string, { id?: string; character?: string; options: ChoiceOption[] }>;
 }
 
 type EventHandler = (event: EngineEvent) => void;
@@ -94,7 +102,10 @@ export interface CreateEngineOptions {
 }
 
 export function createEngine(options: CreateEngineOptions): Engine {
-  const { config, flagsManifest = [], onEvent, now = Date.now } = options;
+  // Declared flags come from gameConfig (the CMS generates them from the world
+  // config); the explicit option remains an override for tests/legacy callers.
+  const { config, onEvent, now = Date.now } = options;
+  const flagsManifest = options.flagsManifest ?? config.flags ?? [];
 
   // Restore or create fresh state
   let state: GameState;
@@ -108,6 +119,9 @@ export function createEngine(options: CreateEngineOptions): Engine {
       // the play loop); the engine's per-play SaveState doesn't carry it.
       completed: {},
       gender: options.savedState.gender ?? DEFAULT_GENDER,
+      // Recorded choices are runtime-only until DEV_PLAN Phase 3 adds them to
+      // the save schema — a restored session starts with none recorded.
+      choices: {},
     };
   } else {
     state = createGameState(config);
@@ -207,6 +221,17 @@ export function createEngine(options: CreateEngineOptions): Engine {
         if (!stepped) await waitWhilePaused();
 
         const item = queue[idx]!;
+
+        // ── GATING (show time) ── the gate sees the state as it is NOW, so a
+        // line can branch on a choice or effect from earlier in this same
+        // segment — the same "current state, in order" rule playDay applies.
+        if (item.condition && !evaluateCondition(item.condition, state, { now: now() })) {
+          // A pool variant selected at load for a line that never shows must
+          // not count as seen — roll the recording back.
+          if (item.poolJustSelected) delete state.poolSelections[item.id];
+          continue;
+        }
+
         if (item.kind === "cue") {
           // Cues (incl. the VN `scene` cue) fire immediately — they precede a
           // message and never gate, in either mode.
@@ -261,6 +286,12 @@ export function createEngine(options: CreateEngineOptions): Engine {
           });
 
           const chosen = availableOptions[chosenIndex];
+          // Record the pick by stable id (the `choice:` predicate's data) BEFORE
+          // applying effects, mirroring how effects land pre-continue. Legacy
+          // content without ids simply records nothing.
+          if (choiceBlock.id && chosen?.id) {
+            state.choices[choiceBlock.id] = chosen.id;
+          }
           if (chosen?.effects) {
             for (const effect of chosen.effects) {
               if (config.axes.includes(effect.axis)) {
@@ -285,6 +316,14 @@ export function createEngine(options: CreateEngineOptions): Engine {
                 });
               }
             }
+          }
+
+          // Writer-named consequence, applied after effects (same order as
+          // messages: effects, then flag). Throws on an undeclared flag —
+          // the content validator catches that long before runtime.
+          if (chosen?.set_flag) {
+            setFlag(state, chosen.set_flag, flagsManifest);
+            onEvent({ type: "flag_set", flag: chosen.set_flag });
           }
 
           if (stepped) {

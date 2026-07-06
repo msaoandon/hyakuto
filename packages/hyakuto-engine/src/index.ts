@@ -25,7 +25,7 @@ export { NARRATOR, RESERVED_CHARACTERS } from "./reserved";
 
 // Parsers
 export { parseCondition, evaluateCondition, type RuntimeContext } from "./conditions/parser";
-export { collectConditionRefs } from "./conditions/refs";
+export { collectConditionRefs, type ChoiceRef } from "./conditions/refs";
 
 // Time-of-day bands (drive the `if_time` predicate)
 export { TIME_BANDS, bandOf, isTimeBand, type TimeBand } from "./conditions/time";

@@ -227,10 +227,7 @@ export function dayStatus(manifest: Manifest, day: number, state: GameState): Da
  */
 export function convertBlockToSegment(block: Block, locale: string = DEFAULT_LOCALE): SegmentInput {
   const messages: SegmentInput["messages"] = [];
-  const choices: Record<
-    string,
-    { character?: string; options: { text: string; effects?: { axis: string; delta: number }[] }[] }
-  > = {};
+  const choices: NonNullable<SegmentInput["choices"]> = {};
 
   let msgIndex = 0;
 
@@ -286,14 +283,20 @@ export function convertBlockToSegment(block: Block, locale: string = DEFAULT_LOC
         break;
       }
       case "choice": {
-        // Attach choice to the last message
+        // Attach choice to the last message. The authored choice/option ids ride
+        // along (they key `state.choices` + the `choice:` predicate), and option
+        // conditions too — the engine filters options by them at prompt time.
         if (messages.length > 0 && item.options) {
           const lastMsgId = messages[messages.length - 1]!.id;
           choices[lastMsgId] = {
+            id: item.id,
             character: "character" in item ? item.character : undefined,
             options: item.options.map((opt) => ({
+              id: opt.id,
               text: resolveLocale(opt.text, locale),
+              condition: opt.condition,
               effects: opt.effects,
+              set_flag: opt.set_flag,
             })),
           };
         }
@@ -516,7 +519,7 @@ export function stripEffects(segment: SegmentInput): SegmentInput {
       ? Object.fromEntries(
           Object.entries(segment.choices).map(([id, c]) => [
             id,
-            { ...c, options: c.options.map(({ effects, ...o }) => o) },
+            { ...c, options: c.options.map(({ effects, set_flag, ...o }) => o) },
           ]),
         )
       : undefined,

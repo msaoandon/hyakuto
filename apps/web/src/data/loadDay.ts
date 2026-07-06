@@ -77,6 +77,7 @@ const NO_STATE: GameState = {
   poolSelections: {},
   completed: {},
   gender: "unset",
+  choices: {},
 };
 export const dmThreadIds = () => dms(manifest, NO_STATE).map((d) => d.id);
 

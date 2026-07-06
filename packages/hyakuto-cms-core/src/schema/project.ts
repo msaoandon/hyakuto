@@ -81,12 +81,16 @@ const PoolLine = z.object({
 // A choice option owns a stable id — this is exactly what a `choice:` branch
 // references. Options gate individually (condition/branch) and carry effects; the
 // engine's choice item itself has no condition, so the choice line does not gate.
+// `set_flag` is the writer-named consequence ("remember this pick as…") — the
+// flag-first authoring surface; the recorded choice id remains underneath for
+// replay/backends.
 const ChoiceOption = z.object({
   id: z.string().min(1),
   text: TranslatableUnit,
   effects: z.array(EffectRef).optional(),
   condition: z.string().optional(),
   branch: BranchRef.optional(),
+  set_flag: z.string().min(1).optional(),
 });
 
 const ChoiceLine = z.object({
@@ -137,12 +141,14 @@ export const Thread = z.object({
 /** A playable unit. It has **no** `type` field: its render kind is derived from
  *  its thread's `kind`, and a segment with no thread is a `system` segment. This
  *  is the "illegal states unrepresentable" move — type can never drift from the
- *  thread, and a thread is structurally single-kind. */
+ *  thread, and a thread is structurally single-kind. Gates like a line: freeform
+ *  `condition` AND/or a structured `branch`, compiled into the manifest gate. */
 export const Segment = z.object({
   id: z.string().min(1),
   threadId: z.string().optional(),
   scene: z.string().optional(),
   condition: z.string().optional(),
+  branch: BranchRef.optional(),
   lines: z.array(Line).default([]),
 });
 

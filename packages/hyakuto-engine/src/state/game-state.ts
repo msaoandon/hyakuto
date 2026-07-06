@@ -12,6 +12,11 @@ export type GameState = {
   /** MC gender-for-address, driving the `if_gender` predicate. Defaults to
    *  `unset` (the inclusive baseline) until the Phase 3 customisation picker. */
   gender: MCGender;
+  /** choiceId → picked optionId, recorded when MC resolves an id-carrying choice.
+   *  Drives the `choice:` predicate. Runtime-only for now: persisting it is
+   *  player-state work (DEV_PLAN Phase 3 "record choice history"), so today
+   *  branching holds within a session; cross-session lights up with the save. */
+  choices: Record<string, string>;
 };
 
 export function createGameState(config: GameConfig): GameState {
@@ -32,6 +37,7 @@ export function createGameState(config: GameConfig): GameState {
     poolSelections: {},
     completed: {},
     gender: DEFAULT_GENDER,
+    choices: {},
   };
 }
 
