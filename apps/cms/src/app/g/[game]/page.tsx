@@ -54,6 +54,9 @@ export default async function GameOverview({ params }: { params: Promise<{ game:
         <Link href={`/g/${game}/world`} className="rounded border border-edge px-4 py-2 text-sm text-silver hover:bg-panel">
           World config →
         </Link>
+        <Link href={`/g/${game}/story`} className="rounded border border-edge px-4 py-2 text-sm text-silver hover:bg-panel">
+          Story →
+        </Link>
         <Link href={`/g/${game}/ost`} className="rounded border border-edge px-4 py-2 text-sm text-silver hover:bg-panel">
           OST →
         </Link>

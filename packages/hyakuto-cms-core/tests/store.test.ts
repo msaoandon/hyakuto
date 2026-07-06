@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FileProjectStore, FileWorkspaceCatalog, Project } from '../src/index';
+import { FileProjectStore, FileWorkspaceCatalog } from '../src/store';
+import { Project } from '../src/index';
 import type { Project as ProjectT } from '../src/index';
 
 const game = (id: string, name: string): ProjectT =>

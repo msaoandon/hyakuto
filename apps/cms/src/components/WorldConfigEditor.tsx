@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import type { WorldConfigT, WorkspaceT } from "@hyakuto/cms-core";
+import { compileGameConfig, type WorldConfigT, type WorkspaceT } from "@hyakuto/cms-core";
 import { saveWorld } from "@/app/actions";
 
 // The world config editor (DEV_PLAN_CMS §VI.2). Edits the single source that
@@ -13,19 +13,16 @@ const input =
   "rounded border border-edge bg-ink px-2 py-1 text-sm text-silver outline-none focus:border-gold/60";
 const chip = "rounded border border-edge px-2 py-1 text-xs text-muted hover:bg-panel";
 
-// Advisory client-side mirror of cms-core's compileGameConfig (kept inline so the
-// node-only store never enters the client bundle). The authoritative generation
-// runs server-side at compile.
+// The preview runs the *actual* cms-core projection (the node-only store lives
+// behind the `/store` subpath, so importing it here is client-safe): what the
+// editor shows and what compile() emits are literally the same function. It
+// throws on an invalid world (e.g. a blank id) — surfaced as a preview error.
 function previewGameConfig(world: WorldConfigT) {
-  return {
-    axes: world.axes.map((a) => a.id),
-    characters: world.characters.map((c) => ({ id: c.id, typing_rate: c.typing_rate })),
-    counters: world.counters.map((c) => ({
-      id: c.id, start: c.start, end: c.end, direction: c.direction,
-      ...(c.tiers ? { tiers: c.tiers } : {}),
-      ...(c.on_complete ? { on_complete: c.on_complete } : {}),
-    })),
-  };
+  try {
+    return { ok: true as const, config: compileGameConfig(world) };
+  } catch (e) {
+    return { ok: false as const, error: (e as Error).message };
+  }
 }
 
 function Section({ title, hint, onAdd, children }: {
@@ -201,17 +198,22 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         </Section>
 
         <p className="text-xs text-muted/70">
-          VN scenes are authored with their segments (step 3); OST tracks live in the{" "}
-          <a href="/ost" className="text-gold hover:underline">OST</a> section.
+          VN scenes are authored with their segments in{" "}
+          <a href={`/g/${gameId}/story`} className="text-gold hover:underline">Story</a>; OST tracks live in the{" "}
+          <a href={`/g/${gameId}/ost`} className="text-gold hover:underline">OST</a> section.
         </p>
       </div>
 
       <aside className="space-y-2 lg:sticky lg:top-6 lg:self-start">
         <h3 className="text-sm font-medium text-silver">Generated gameConfig</h3>
         <p className="text-xs text-muted">Live preview of what compile() emits from this world.</p>
-        <pre className="max-h-[70vh] overflow-auto rounded border border-edge bg-ink p-3 text-xs text-muted">
-          {JSON.stringify(preview, null, 2)}
-        </pre>
+        {preview.ok ? (
+          <pre className="max-h-[70vh] overflow-auto rounded border border-edge bg-ink p-3 text-xs text-muted">
+            {JSON.stringify(preview.config, null, 2)}
+          </pre>
+        ) : (
+          <p className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">{preview.error}</p>
+        )}
       </aside>
     </div>
   );

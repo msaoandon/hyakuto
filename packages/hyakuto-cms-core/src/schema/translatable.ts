@@ -48,3 +48,27 @@ export function unitFromLocalized(value: Localized, id: string, defaultLocale: s
   const text = typeof value === 'string' ? { [defaultLocale]: value } : { ...value };
   return { id, text };
 }
+
+/** A fresh unit holding only default-locale text (what the grid mints per line). */
+export function newUnit(id: string, defaultLocale: string, text = ''): TranslatableUnit {
+  return { id, text: { [defaultLocale]: text } };
+}
+
+/**
+ * Author edits the source text (§III.5): write the default locale and mark every
+ * *other* locale carried by the unit stale — a changed source never silently keeps
+ * its old translations. No-op when the text is unchanged, so a focus/blur cycle
+ * doesn't flag anything.
+ */
+export function editUnitText(unit: TranslatableUnit, text: string, defaultLocale: string): TranslatableUnit {
+  if (unit.text[defaultLocale] === text) return unit;
+  const stale = new Set([
+    ...(unit.staleLocales ?? []),
+    ...Object.keys(unit.text).filter((locale) => locale !== defaultLocale),
+  ]);
+  return {
+    ...unit,
+    text: { ...unit.text, [defaultLocale]: text },
+    ...(stale.size ? { staleLocales: [...stale] } : {}),
+  };
+}

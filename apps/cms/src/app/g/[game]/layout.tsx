@@ -23,6 +23,7 @@ export default async function GameLayout({
         <span className="text-edge">/</span>
         <Link href={`/g/${game}`} className="hover:text-silver">Overview</Link>
         <Link href={`/g/${game}/world`} className="hover:text-silver">World config</Link>
+        <Link href={`/g/${game}/story`} className="hover:text-silver">Story</Link>
         <Link href={`/g/${game}/ost`} className="hover:text-silver">OST</Link>
       </nav>
       {children}

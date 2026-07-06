@@ -1,6 +1,6 @@
 import "server-only";
 import { join, isAbsolute } from "node:path";
-import { FileWorkspaceCatalog, type WorkspaceCatalog } from "@hyakuto/cms-core";
+import { FileWorkspaceCatalog, type WorkspaceCatalog } from "@hyakuto/cms-core/store";
 
 // Resolve the workspace catalog for the running CMS instance. The location is the
 // configurable, gitignored `CMS_DATA_DIR` (DEV_PLAN_CMS §IV); each game lives in
