@@ -15,7 +15,8 @@ import { addScene, saveSegment } from "@/app/actions";
 // typed; edits autosave through the saveSegment action (validated server-side).
 //
 // Keyboard: Enter appends a row below (message on main fields; option/variant on
-// sub-rows) · ↑/↓ move between rows · Alt+↑/↓ reorder · ⌘/Ctrl+Backspace deletes.
+// sub-rows) · Shift+Enter = newline inside a text · ↑/↓ move between rows (from a
+// text's first/last edge) · Alt+↑/↓ reorder · ⌘/Ctrl+Backspace deletes.
 
 type Choice = Extract<LineT, { type: "choice" }>;
 type Pool = Extract<LineT, { type: "pool" }>;
@@ -24,6 +25,33 @@ type Cue = Extract<LineT, { type: "cue" }>;
 const input =
   "rounded border border-edge bg-ink px-2 py-1 text-sm text-silver outline-none focus:border-gold/60";
 const tinyBtn = "text-xs text-muted hover:text-silver disabled:opacity-30";
+
+// Auto-growing textarea for prose fields (messages run long). Grows with content,
+// never scrolls internally; height re-syncs on every render via the ref callback.
+function autoGrow(el: HTMLTextAreaElement) {
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+function GrowingText({ inputRef, value, placeholder, onChange, onKeyDown }: {
+  inputRef?: (el: HTMLTextAreaElement | null) => void;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  return (
+    <textarea
+      ref={(el) => { inputRef?.(el); if (el) autoGrow(el); }}
+      rows={1}
+      className={`${input} min-w-40 flex-1 resize-none overflow-hidden`}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
 const chip = "rounded border border-edge px-2 py-1 text-xs text-muted hover:bg-panel disabled:opacity-40";
 
 const KIND_LABEL: Record<ThreadKind | "system", string> = {
@@ -216,14 +244,14 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
   const replaceLine = (next: LineT) => setLines(segment.lines.map((l) => (l.id === next.id ? next : l)));
 
   // Focus follows structural edits: register primary inputs by id, focus after render.
-  const inputs = useRef(new Map<string, HTMLInputElement | HTMLSelectElement>());
+  const inputs = useRef(new Map<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>());
   const pendingFocus = useRef<string | null>(null);
   useEffect(() => {
     if (!pendingFocus.current) return;
     inputs.current.get(pendingFocus.current)?.focus();
     pendingFocus.current = null;
   });
-  const register = (id: string) => (el: HTMLInputElement | HTMLSelectElement | null) => {
+  const register = (id: string) => (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null) => {
     if (el) inputs.current.set(id, el);
     else inputs.current.delete(id);
   };
@@ -285,11 +313,18 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
 
   const rowKeys = (lineId: string) => (e: React.KeyboardEvent) => {
     const i = segment.lines.findIndex((l) => l.id === lineId);
-    if (e.key === "Enter") { e.preventDefault(); addLine(hasCharacters ? "message" : "status", lineId); }
+    // In a multiline textarea, plain ↑/↓ must keep moving the caret; only jump
+    // rows from the text's first/last edge. Inputs/selects always jump.
+    const el = e.target as HTMLTextAreaElement;
+    const isTextarea = el.tagName === "TEXTAREA";
+    const atStart = !isTextarea || (el.selectionStart === 0 && el.selectionEnd === 0);
+    const atEnd = !isTextarea || (el.selectionStart === el.value.length && el.selectionEnd === el.value.length);
+
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addLine(hasCharacters ? "message" : "status", lineId); }
     else if (e.altKey && e.key === "ArrowUp") { e.preventDefault(); moveLine(lineId, -1); }
     else if (e.altKey && e.key === "ArrowDown") { e.preventDefault(); moveLine(lineId, 1); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); focusRow(i - 1, -1); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); focusRow(i + 1, 1); }
+    else if (e.key === "ArrowUp" && atStart) { e.preventDefault(); focusRow(i - 1, -1); }
+    else if (e.key === "ArrowDown" && atEnd) { e.preventDefault(); focusRow(i + 1, 1); }
     else if (e.key === "Backspace" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); removeLine(lineId); }
   };
 
@@ -303,9 +338,9 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
           <>
             <CharacterSelect value={line.character} characters={characters}
               onChange={(v) => replaceLine({ ...line, character: v ?? "" })} />
-            <input ref={register(line.id)} className={`${input} min-w-40 flex-1`} placeholder="message text"
+            <GrowingText inputRef={register(line.id)} placeholder="message text"
               value={textOf(line.text)} onKeyDown={rowKeys(line.id)}
-              onChange={(e) => replaceLine({ ...line, text: editUnitText(line.text, e.target.value, dl) })} />
+              onChange={(text) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) })} />
             <StaleMark unit={line.text} />
             <EffectsEditor effects={line.effects} targets={effectTargets}
               onChange={(effects) => replaceLine({ ...line, effects })} />
@@ -315,9 +350,9 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
       case "status":
         return (
           <>
-            <input ref={register(line.id)} className={`${input} min-w-40 flex-1`} placeholder="status text"
+            <GrowingText inputRef={register(line.id)} placeholder="status text"
               value={textOf(line.text)} onKeyDown={rowKeys(line.id)}
-              onChange={(e) => replaceLine({ ...line, text: editUnitText(line.text, e.target.value, dl) })} />
+              onChange={(text) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) })} />
             <StaleMark unit={line.text} />
             <ConditionInput value={line.condition} onChange={(condition) => replaceLine({ ...line, condition })} />
           </>
@@ -378,10 +413,10 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
         <div className="flex flex-1 flex-col gap-1">
           {line.variants.map((v, i) => (
             <div key={v.id} className="flex items-center gap-2">
-              <input ref={register(v.id)} className={`${input} min-w-40 flex-1`} placeholder={`variant ${i + 1}`}
+              <GrowingText inputRef={register(v.id)} placeholder={`variant ${i + 1}`}
                 value={textOf(v.text)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addVariant(); } }}
-                onChange={(e) => editVariant(i, { text: editUnitText(v.text, e.target.value, dl) })} />
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addVariant(); } }}
+                onChange={(text) => editVariant(i, { text: editUnitText(v.text, text, dl) })} />
               <StaleMark unit={v.text} />
               <label className="text-[10px] text-muted">w</label>
               <input type="number" step={0.5} min={0.5} className={`${input} w-16`} value={v.weight}
