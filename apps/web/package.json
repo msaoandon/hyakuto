@@ -23,6 +23,7 @@
     "@hyakuto/content": "workspace:*",
     "@hyakuto/engine": "workspace:*",
     "@hyakuto/game": "workspace:*",
+    "@tabler/icons-react": "^3.44.0",
     "framer-motion": "^12.42.0",
     "idb-keyval": "^6.2.5",
     "next": "15.5.15",
