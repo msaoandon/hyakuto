@@ -19,6 +19,9 @@ export function NewGame() {
       if (result.ok) router.push(`/g/${result.id}/world`);
       else setError(result.error);
     });
+  const editName = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value);
+  const createDemo = () => create("demo");
+  const createEmpty = () => create("empty");
 
   return (
     <section className="max-w-md space-y-6">
@@ -34,7 +37,7 @@ export function NewGame() {
         <input
           autoFocus
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={editName}
           placeholder="e.g. Hyakutō"
           className="w-full rounded border border-edge bg-ink px-3 py-2 text-sm text-silver outline-none focus:border-gold/60"
         />
@@ -44,7 +47,7 @@ export function NewGame() {
         <button
           type="button"
           disabled={pending || !name.trim()}
-          onClick={() => create("demo")}
+          onClick={createDemo}
           className="rounded border border-gold/60 bg-gold/10 px-4 py-2 text-sm text-gold hover:bg-gold/20 disabled:opacity-50"
         >
           Import current demo
@@ -52,7 +55,7 @@ export function NewGame() {
         <button
           type="button"
           disabled={pending || !name.trim()}
-          onClick={() => create("empty")}
+          onClick={createEmpty}
           className="rounded border border-edge px-4 py-2 text-sm text-silver hover:bg-panel disabled:opacity-50"
         >
           Start empty

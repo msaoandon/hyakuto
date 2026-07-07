@@ -6,11 +6,12 @@ import { SUPPORTED_LOCALES, LOCALE_NAMES, type Locale } from "@/i18n/locales";
 export function LanguageChooser() {
   const locale = useGameStore((s) => s.locale);
   const setLocale = useGameStore((s) => s.setLocale);
+  const pick = (e: React.ChangeEvent<HTMLSelectElement>) => setLocale(e.target.value as Locale);
 
   return (
     <select
       value={locale}
-      onChange={(e) => setLocale(e.target.value as Locale)}
+      onChange={pick}
       aria-label="Language"
       className="rounded bg-[#a5cbfd] text-ink-black px-3 py-1"
     >

@@ -24,6 +24,14 @@ export function OstEditor({ gameId, themes: initial }: { gameId: string; themes:
   const editAt = (i: number, patch: Partial<MusicThemeDefT>) =>
     update(themes.map((t, j) => (j === i ? { ...t, ...patch } : t)));
 
+  // Named per-row handler factories (call expressions in JSX, no inline lambdas).
+  const editIdAt = (i: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    editAt(i, { id: e.target.value });
+  const editNameAt = (i: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    editAt(i, { name: e.target.value || undefined });
+  const removeAt = (i: number) => () => update(themes.filter((_, j) => j !== i));
+  const addTrack = () => update([...themes, { id: "" }]);
+
   const save = () =>
     startTransition(async () => {
       const result = await saveMusicThemes(gameId, themes);
@@ -59,16 +67,16 @@ export function OstEditor({ gameId, themes: initial }: { gameId: string; themes:
           <div key={i} className="flex flex-wrap items-center gap-2 rounded border border-edge bg-panel/40 p-2">
             <input
               className={input} placeholder="id" value={t.id}
-              onChange={(e) => editAt(i, { id: e.target.value })}
+              onChange={editIdAt(i)}
             />
             <input
               className={`${input} flex-1`} placeholder="name (optional)" value={t.name ?? ""}
-              onChange={(e) => editAt(i, { name: e.target.value || undefined })}
+              onChange={editNameAt(i)}
             />
             <span className="text-xs text-muted/70">{t.file ?? "no audio yet"}</span>
             <button
               type="button"
-              onClick={() => update(themes.filter((_, j) => j !== i))}
+              onClick={removeAt(i)}
               className="ml-auto text-xs text-muted hover:text-danger"
             >
               remove
@@ -79,7 +87,7 @@ export function OstEditor({ gameId, themes: initial }: { gameId: string; themes:
 
       <button
         type="button"
-        onClick={() => update([...themes, { id: "" }])}
+        onClick={addTrack}
         className="rounded border border-edge px-3 py-1.5 text-xs text-muted hover:bg-panel"
       >
         + add track

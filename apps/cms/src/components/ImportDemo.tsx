@@ -10,6 +10,9 @@ export function ImportDemo({ gameId, hasContent }: { gameId: string; hasContent:
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const arm = () => setConfirming(true);
+  const disarm = () => setConfirming(false);
+
   const run = () =>
     startTransition(async () => {
       setError(null);
@@ -28,7 +31,7 @@ export function ImportDemo({ gameId, hasContent }: { gameId: string; hasContent:
         <button type="button" disabled={pending} onClick={run} className="text-danger hover:underline disabled:opacity-50">
           {pending ? "importing…" : "replace"}
         </button>
-        <button type="button" onClick={() => setConfirming(false)} className="text-muted hover:text-silver">
+        <button type="button" onClick={disarm} className="text-muted hover:text-silver">
           cancel
         </button>
       </span>
@@ -40,7 +43,7 @@ export function ImportDemo({ gameId, hasContent }: { gameId: string; hasContent:
       <button
         type="button"
         disabled={pending}
-        onClick={hasContent ? () => setConfirming(true) : run}
+        onClick={hasContent ? arm : run}
         className={hasContent ? "text-xs text-muted hover:text-silver" : primary}
       >
         {pending ? "Importing…" : hasContent ? "Import demo (replaces content)" : "Import current demo"}

@@ -64,6 +64,7 @@ function ChatBubbleInner({
   const topDecorPosition = "top-[-15px] right-[-30px]";
   const topDecorSize = "w-[100px] h-[40px]";
 
+  const tapImage = () => onImageTap?.(file!);
   return (
     <div className="flex gap-4 items-end">
       <div className="w-10 shrink-0 mb-2">{showAvatar && <Avatar name={character} />}</div>
@@ -98,7 +99,7 @@ function ChatBubbleInner({
             {contentType === "sticker" ? (
               <img src={`/stickers/${file}`} alt="sticker" className="w-24 h-24 object-contain" />
             ) : contentType === "image" ? (
-              <button onClick={() => onImageTap?.(file!)}>
+              <button onClick={tapImage}>
                 <img
                   src={`/images/${file}`}
                   alt="shared image"

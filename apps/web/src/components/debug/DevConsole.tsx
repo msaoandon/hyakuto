@@ -11,11 +11,13 @@ type DevConsoleProps = {
 
 export function DevConsole({ axes, counters, flags, lastEvent }: DevConsoleProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const expand = () => setCollapsed(false);
+  const collapse = () => setCollapsed(true);
 
   if (collapsed) {
     return (
       <button
-        onClick={() => setCollapsed(false)}
+        onClick={expand}
         className="fixed top-16 right-2 z-50 bg-black/80 text-green-400 text-xs px-2 py-1 rounded font-mono"
       >
         ▶ DEV
@@ -27,7 +29,7 @@ export function DevConsole({ axes, counters, flags, lastEvent }: DevConsoleProps
     <div className="fixed top-16 right-2 z-50 w-56 bg-black/90 text-green-400 text-xs font-mono rounded-lg p-3 shadow-lg">
       <div className="flex justify-between items-center mb-2">
         <span className="font-bold">🛠 DEV</span>
-        <button onClick={() => setCollapsed(true)} className="text-green-400/60 hover:text-green-400">✕</button>
+        <button onClick={collapse} className="text-green-400/60 hover:text-green-400">✕</button>
       </div>
 
       {Object.keys(axes).length > 0 && (

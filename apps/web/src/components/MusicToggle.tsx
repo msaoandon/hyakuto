@@ -9,13 +9,14 @@ export function MusicToggle() {
   const enabled = useGameStore((s) => s.musicEnabled);
   const setMusicEnabled = useGameStore((s) => s.setMusicEnabled);
   const t = useT();
+  const toggle = () => setMusicEnabled(!enabled);
 
   return (
     <button
       role="switch"
       aria-checked={enabled}
       aria-label={t("settings.music")}
-      onClick={() => setMusicEnabled(!enabled)}
+      onClick={toggle}
       className="rounded bg-[#a5cbfd] text-ink-black px-3 py-1 font-medium min-w-16"
     >
       {enabled ? t("settings.on") : t("settings.off")}

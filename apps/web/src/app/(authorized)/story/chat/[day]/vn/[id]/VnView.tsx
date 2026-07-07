@@ -117,6 +117,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
   };
 
   const handleExit = () => router.push(`/story/chat/${dayNum}`);
+  const toggleAuto = () => setAuto((a) => !a);
 
   const controlBtn =
     "px-4 py-2 rounded-xl font-medium border-2 border-solid border-[#2f406d] text-[#daccd0]";
@@ -153,7 +154,7 @@ export function VnView({ day, id }: { day: string; id: string }) {
         ) : (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setAuto((a) => !a)}
+              onClick={toggleAuto}
               aria-pressed={auto}
               className={`${controlBtn} ${auto ? "bg-[#2f406d]" : "bg-[#162347]/60"}`}
             >

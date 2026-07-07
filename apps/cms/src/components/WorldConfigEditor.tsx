@@ -69,6 +69,30 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
     arr.map((x, j) => (j === i ? { ...x, ...patch } : x));
   const removeAt = <T,>(arr: T[], i: number): T[] => arr.filter((_, j) => j !== i);
 
+  // Named add/edit/remove handlers per section — JSX passes factory-call results,
+  // never inline lambdas (enforced by no-restricted-syntax in the eslint config).
+  type Input = React.ChangeEvent<HTMLInputElement>;
+  const addCharacter = () => set("characters", [...world.characters, { id: "", typing_rate: 1 }]);
+  const editCharacterId = (i: number) => (e: Input) => set("characters", editAt(world.characters, i, { id: e.target.value }));
+  const editCharacterRate = (i: number) => (e: Input) => set("characters", editAt(world.characters, i, { typing_rate: Number(e.target.value) }));
+  const removeCharacter = (i: number) => () => set("characters", removeAt(world.characters, i));
+  const addAxis = () => set("axes", [...world.axes, { id: "" }]);
+  const editAxisId = (i: number) => (e: Input) => set("axes", editAt(world.axes, i, { id: e.target.value }));
+  const removeAxis = (i: number) => () => set("axes", removeAt(world.axes, i));
+  const addCounter = () => set("counters", [...world.counters, { id: "", start: 0, end: 0, direction: "down" }]);
+  const editCounterId = (i: number) => (e: Input) => set("counters", editAt(world.counters, i, { id: e.target.value }));
+  const editCounterStart = (i: number) => (e: Input) => set("counters", editAt(world.counters, i, { start: Number(e.target.value) }));
+  const editCounterEnd = (i: number) => (e: Input) => set("counters", editAt(world.counters, i, { end: Number(e.target.value) }));
+  const editCounterDirection = (i: number) => (e: React.ChangeEvent<HTMLSelectElement>) =>
+    set("counters", editAt(world.counters, i, { direction: e.target.value as "up" | "down" }));
+  const removeCounter = (i: number) => () => set("counters", removeAt(world.counters, i));
+  const addFlag = () => set("flags", [...world.flags, { id: "" }]);
+  const editFlagId = (i: number) => (e: Input) => set("flags", editAt(world.flags, i, { id: e.target.value }));
+  const removeFlag = (i: number) => () => set("flags", removeAt(world.flags, i));
+  const addCueChannel = () => set("cueChannels", [...world.cueChannels, { id: "" }]);
+  const editCueChannelId = (i: number) => (e: Input) => set("cueChannels", editAt(world.cueChannels, i, { id: e.target.value }));
+  const removeCueChannel = (i: number) => () => set("cueChannels", removeAt(world.cueChannels, i));
+
   const save = () =>
     startTransition(async () => {
       const result = await saveWorld(gameId, world);
@@ -103,18 +127,18 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         <Section
           title="Characters"
           hint="Generates gameConfig.characters. id must match the names used in content."
-          onAdd={() => set("characters", [...world.characters, { id: "", typing_rate: 1 }])}
+          onAdd={addCharacter}
         >
           {world.characters.map((c, i) => (
-            <Row key={i} onRemove={() => set("characters", removeAt(world.characters, i))}>
+            <Row key={i} onRemove={removeCharacter(i)}>
               <input
                 className={input} placeholder="id" value={c.id}
-                onChange={(e) => set("characters", editAt(world.characters, i, { id: e.target.value }))}
+                onChange={editCharacterId(i)}
               />
               <label className="text-xs text-muted">typing rate</label>
               <input
                 className={`${input} w-20`} type="number" step="0.1" value={c.typing_rate}
-                onChange={(e) => set("characters", editAt(world.characters, i, { typing_rate: Number(e.target.value) }))}
+                onChange={editCharacterRate(i)}
               />
             </Row>
           ))}
@@ -123,13 +147,13 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         <Section
           title="Affinity axes"
           hint="Generates gameConfig.axes. Referenced by effects and conditions."
-          onAdd={() => set("axes", [...world.axes, { id: "" }])}
+          onAdd={addAxis}
         >
           {world.axes.map((a, i) => (
-            <Row key={i} onRemove={() => set("axes", removeAt(world.axes, i))}>
+            <Row key={i} onRemove={removeAxis(i)}>
               <input
                 className={input} placeholder="id" value={a.id}
-                onChange={(e) => set("axes", editAt(world.axes, i, { id: e.target.value }))}
+                onChange={editAxisId(i)}
               />
             </Row>
           ))}
@@ -138,27 +162,27 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         <Section
           title="Counters"
           hint="Generates gameConfig.counters (e.g. candles)."
-          onAdd={() => set("counters", [...world.counters, { id: "", start: 0, end: 0, direction: "down" }])}
+          onAdd={addCounter}
         >
           {world.counters.map((c, i) => (
-            <Row key={i} onRemove={() => set("counters", removeAt(world.counters, i))}>
+            <Row key={i} onRemove={removeCounter(i)}>
               <input
                 className={input} placeholder="id" value={c.id}
-                onChange={(e) => set("counters", editAt(world.counters, i, { id: e.target.value }))}
+                onChange={editCounterId(i)}
               />
               <label className="text-xs text-muted">start</label>
               <input
                 className={`${input} w-16`} type="number" value={c.start}
-                onChange={(e) => set("counters", editAt(world.counters, i, { start: Number(e.target.value) }))}
+                onChange={editCounterStart(i)}
               />
               <label className="text-xs text-muted">end</label>
               <input
                 className={`${input} w-16`} type="number" value={c.end}
-                onChange={(e) => set("counters", editAt(world.counters, i, { end: Number(e.target.value) }))}
+                onChange={editCounterEnd(i)}
               />
               <select
                 className={input} value={c.direction}
-                onChange={(e) => set("counters", editAt(world.counters, i, { direction: e.target.value as "up" | "down" }))}
+                onChange={editCounterDirection(i)}
               >
                 <option value="down">down</option>
                 <option value="up">up</option>
@@ -170,13 +194,13 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         <Section
           title="Flags"
           hint="Boolean story flags referenced by flag: conditions."
-          onAdd={() => set("flags", [...world.flags, { id: "" }])}
+          onAdd={addFlag}
         >
           {world.flags.map((f, i) => (
-            <Row key={i} onRemove={() => set("flags", removeAt(world.flags, i))}>
+            <Row key={i} onRemove={removeFlag(i)}>
               <input
                 className={input} placeholder="id" value={f.id}
-                onChange={(e) => set("flags", editAt(world.flags, i, { id: e.target.value }))}
+                onChange={editFlagId(i)}
               />
             </Row>
           ))}
@@ -185,13 +209,13 @@ export function WorldConfigEditor({ gameId, workspace, world: initial }: { gameI
         <Section
           title="Cue channels"
           hint="Channels a cue line can target (music, glitch, scene)."
-          onAdd={() => set("cueChannels", [...world.cueChannels, { id: "" }])}
+          onAdd={addCueChannel}
         >
           {world.cueChannels.map((c, i) => (
-            <Row key={i} onRemove={() => set("cueChannels", removeAt(world.cueChannels, i))}>
+            <Row key={i} onRemove={removeCueChannel(i)}>
               <input
                 className={input} placeholder="id" value={c.id}
-                onChange={(e) => set("cueChannels", editAt(world.cueChannels, i, { id: e.target.value }))}
+                onChange={editCueChannelId(i)}
               />
             </Row>
           ))}

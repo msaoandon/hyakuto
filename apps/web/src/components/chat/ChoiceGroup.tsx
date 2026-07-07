@@ -13,6 +13,7 @@ type ChoiceGroupProps = {
 };
 
 export function ChoiceGroup({ options, onChoose, disabled = false, chosenIndex }: ChoiceGroupProps) {
+  const chooseAt = (i: number) => () => onChoose(i);
   return (
     <div className="flex flex-col gap-2 py-2 px-4">
       {options.map((opt, i) => {
@@ -20,7 +21,7 @@ export function ChoiceGroup({ options, onChoose, disabled = false, chosenIndex }
         return (
           <button
             key={i}
-            onClick={() => onChoose(i)}
+            onClick={chooseAt(i)}
             disabled={disabled}
             className={`text-left text-base px-4 py-3 rounded-xl border transition-colors
               ${isChosen

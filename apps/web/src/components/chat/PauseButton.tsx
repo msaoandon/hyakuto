@@ -10,10 +10,11 @@ export function PauseButton() {
   const paused = useGameStore((s) => s.chatPaused);
   const setChatPaused = useGameStore((s) => s.setChatPaused);
   const t = useT();
+  const toggle = () => setChatPaused(!paused);
 
   return (
     <button
-      onClick={() => setChatPaused(!paused)}
+      onClick={toggle}
       aria-pressed={paused}
       aria-label={paused ? t("play.resume") : t("play.pause")}
       className="px-2 py-1 text-sm leading-none rounded bg-ink-black/40 text-beige"

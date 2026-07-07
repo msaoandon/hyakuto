@@ -9,11 +9,15 @@ export function DeleteGame({ id, name }: { id: string; name: string }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  function arm() { setConfirming(true); }
+  function cancel() { setConfirming(false); }
+  function confirm() { startTransition(async () => { await deleteGame(id); }); }
+
   if (!confirming)
     return (
       <button
         type="button"
-        onClick={() => setConfirming(true)}
+        onClick={arm}
         className="text-xs text-muted hover:text-danger"
         aria-label={`Delete ${name}`}
       >
@@ -26,12 +30,12 @@ export function DeleteGame({ id, name }: { id: string; name: string }) {
       <button
         type="button"
         disabled={pending}
-        onClick={() => startTransition(async () => { await deleteGame(id); })}
+        onClick={confirm}
         className="text-danger hover:underline disabled:opacity-50"
       >
         {pending ? "deleting…" : "confirm"}
       </button>
-      <button type="button" onClick={() => setConfirming(false)} className="text-muted hover:text-silver">
+      <button type="button" onClick={cancel} className="text-muted hover:text-silver">
         cancel
       </button>
     </span>

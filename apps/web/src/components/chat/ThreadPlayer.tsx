@@ -63,6 +63,12 @@ export function ThreadPlayer({
   const replyEnabled = pendingChoice !== null && chosenText === null;
 
   const handleExit = () => router.push(back);
+  const handleThreadEnded = () => {
+    setThreadEnded(true);
+    onComplete?.();
+  };
+  const closeImage = () => setOpenImage(null);
+  const closeModal = () => setModalOpen(false);
 
   const handleStateChange = (state: {
     axes: Record<string, number>;
@@ -104,10 +110,7 @@ export function ThreadPlayer({
         onChosenRendered={handleChosenRendered}
         onEngineEvent={setLastEvent}
         onImageTap={setOpenImage}
-        onThreadEnded={() => {
-          setThreadEnded(true);
-          onComplete?.();
-        }}
+        onThreadEnded={handleThreadEnded}
       />
       <footer className="shrink-0 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-black/10">
         {showExit ? (
@@ -139,12 +142,12 @@ export function ThreadPlayer({
           </button>
         )}
       </footer>
-      {openImage && <ImageModal file={openImage} onClose={() => setOpenImage(null)} />}
+      {openImage && <ImageModal file={openImage} onClose={closeImage} />}
       {modalOpen && pendingChoice && (
         <ChoiceModal
           options={pendingChoice.options}
           onChoose={handleChoose}
-          onClose={() => setModalOpen(false)}
+          onClose={closeModal}
         />
       )}
       {process.env.NODE_ENV === "development" && (

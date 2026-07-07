@@ -17,10 +17,22 @@ import { addFlag, addScene, saveSegment } from "@/app/actions";
 // Keyboard: Enter appends a row below (message on main fields; option/variant on
 // sub-rows) · Shift+Enter = newline inside a text · ↑/↓ move between rows (from a
 // text's first/last edge) · Alt+↑/↓ reorder · ⌘/Ctrl+Backspace deletes.
+//
+// Handler style: JSX props take named handlers or named-factory calls — never
+// inline lambdas (enforced by no-restricted-syntax in the eslint config).
 
 type Choice = Extract<LineT, { type: "choice" }>;
 type Pool = Extract<LineT, { type: "pool" }>;
 type Cue = Extract<LineT, { type: "cue" }>;
+/** Line types with a required `character` (choice's is optional, so excluded). */
+type Voiced = Extract<LineT, { character: string }>;
+/** Line types carrying a text unit. */
+type Texted = Extract<LineT, { text: TranslatableUnitT }>;
+/** Line types carrying effects. */
+type Effectful = Extract<LineT, { type: "message" | "sticker" | "image" | "pool" }>;
+/** Line types that gate (condition + branch). */
+type Gated = Exclude<LineT, Extract<LineT, { type: "choice" | "typing" }>>;
+type Gate = { condition: string | undefined; branch: BranchRef | undefined };
 
 const input =
   "rounded border border-edge bg-ink px-2 py-1 text-sm text-silver outline-none focus:border-gold/60";
@@ -40,14 +52,19 @@ function GrowingText({ inputRef, value, placeholder, onChange, onKeyDown }: {
   onChange: (value: string) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }) {
+  const attach = (el: HTMLTextAreaElement | null) => {
+    inputRef?.(el);
+    if (el) autoGrow(el);
+  };
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value);
   return (
     <textarea
-      ref={(el) => { inputRef?.(el); if (el) autoGrow(el); }}
+      ref={attach}
       rows={1}
       className={`${input} min-w-40 flex-1 resize-none overflow-hidden`}
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={handleChange}
       onKeyDown={onKeyDown}
     />
   );
@@ -66,8 +83,9 @@ type SaveStatus =
 function CharacterSelect({ value, characters, allowMC, onChange }: {
   value: string | undefined; characters: string[]; allowMC?: boolean; onChange: (v: string | undefined) => void;
 }) {
+  const pick = (e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || undefined);
   return (
-    <select className={input} value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}>
+    <select className={input} value={value ?? ""} onChange={pick}>
       {allowMC && <option value="">MC (player)</option>}
       {value && !characters.includes(value) && <option value={value}>{value} (unknown!)</option>}
       {characters.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -82,26 +100,32 @@ function EffectsEditor({ effects, targets, onChange }: {
   const list = effects ?? [];
   const edit = (i: number, patch: Partial<EffectRef>) =>
     onChange(list.map((e, j) => (j === i ? { ...e, ...patch } : e)));
+
+  const editTarget = (i: number) => (ev: React.ChangeEvent<HTMLSelectElement>) => edit(i, { target: ev.target.value });
+  const editDelta = (i: number) => (ev: React.ChangeEvent<HTMLInputElement>) =>
+    edit(i, { delta: Math.trunc(Number(ev.target.value)) });
+  const removeAt = (i: number) => () => {
+    const next = list.filter((_, j) => j !== i);
+    onChange(next.length ? next : undefined);
+  };
+  const add = () => onChange([...list, { target: targets[0], delta: 1 }]);
+
   return (
     <span className="flex flex-wrap items-center gap-1">
       {list.map((e, i) => (
         <span key={i} className="flex items-center gap-1 rounded border border-edge bg-ink px-1 py-0.5">
-          <select className="bg-ink text-xs text-silver outline-none" value={e.target}
-            onChange={(ev) => edit(i, { target: ev.target.value })}>
+          <select className="bg-ink text-xs text-silver outline-none" value={e.target} onChange={editTarget(i)}>
             {!targets.includes(e.target) && <option value={e.target}>{e.target} (unknown!)</option>}
             {targets.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
           <input type="number" step={1} className="w-12 bg-ink text-xs text-silver outline-none" value={e.delta}
-            onChange={(ev) => edit(i, { delta: Math.trunc(Number(ev.target.value)) })} />
-          <button type="button" className={tinyBtn} onClick={() => {
-            const next = list.filter((_, j) => j !== i);
-            onChange(next.length ? next : undefined);
-          }}>✕</button>
+            onChange={editDelta(i)} />
+          <button type="button" className={tinyBtn} onClick={removeAt(i)}>✕</button>
         </span>
       ))}
       <button type="button" disabled={targets.length === 0} className={tinyBtn}
         title={targets.length ? "add effect" : "define axes/counters in World config first"}
-        onClick={() => onChange([...list, { target: targets[0], delta: 1 }])}>
+        onClick={add}>
         +fx
       </button>
     </span>
@@ -132,26 +156,33 @@ function FlagPicker({ gameId, flags, value, placeholder, onChange }: {
     setDraft(null);
     setError(null);
   };
+  const commitClick = () => void commit();
+  const editDraft = (e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value);
+  const draftKeys = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { e.preventDefault(); void commit(); }
+    if (e.key === "Escape") setDraft(null);
+  };
+  const openDraft = () => setDraft("");
+  const pick = (e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || undefined);
 
   if (draft !== null)
     return (
       <span className="flex items-center gap-1">
         <input autoFocus className={`${input} w-40 font-mono text-xs`} placeholder="e.g. d1_asked_lantern" value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void commit(); } if (e.key === "Escape") setDraft(null); }} />
-        <button type="button" className={tinyBtn} onClick={() => void commit()}>ok</button>
+          onChange={editDraft} onKeyDown={draftKeys} />
+        <button type="button" className={tinyBtn} onClick={commitClick}>ok</button>
         {error && <span className="text-xs text-danger">{error}</span>}
       </span>
     );
 
   return (
     <span className="flex items-center gap-1">
-      <select className={`${input} text-xs`} value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}>
+      <select className={`${input} text-xs`} value={value ?? ""} onChange={pick}>
         <option value="">{placeholder}</option>
         {value && !all.includes(value) && <option value={value}>{value} (unknown!)</option>}
         {all.map((f) => <option key={f} value={f}>🚩 {f}</option>)}
       </select>
-      <button type="button" className={tinyBtn} title="declare a new flag" onClick={() => setDraft("")}>+ new</button>
+      <button type="button" className={tinyBtn} title="declare a new flag" onClick={openDraft}>+ new</button>
     </span>
   );
 }
@@ -177,7 +208,7 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
   branch: BranchRef | undefined;
   choices: ChoiceInfo[];
   flags: string[];
-  onChange: (gate: { condition: string | undefined; branch: BranchRef | undefined }) => void;
+  onChange: (gate: Gate) => void;
 }) {
   const current = choices.find((c) => c.id === branch?.choiceId);
   // AND a clause onto whatever is there; parenthesise the old part only if it ORs.
@@ -186,16 +217,35 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
     const combined = !condition ? clause : condition.includes(" OR ") ? `(${condition}) AND ${clause}` : `${condition} AND ${clause}`;
     onChange({ condition: combined, branch });
   };
+
+  const editCondition = (e: React.ChangeEvent<HTMLInputElement>) =>
+    onChange({ condition: e.target.value || undefined, branch });
+  const requireFlag = (e: React.ChangeEvent<HTMLSelectElement>) =>
+    addClause(e.target.value && `flag:${e.target.value}`);
+  const requireMc = (e: React.ChangeEvent<HTMLSelectElement>) => addClause(e.target.value);
+  const pickChoice = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = choices.find((c) => c.id === e.target.value);
+    onChange({ condition, branch: { choiceId: e.target.value, optionId: next?.options[0]?.id ?? "" } });
+  };
+  const pickOption = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (branch) onChange({ condition, branch: { ...branch, optionId: e.target.value } });
+  };
+  const clearBranch = () => onChange({ condition, branch: undefined });
+  const addBranch = () => {
+    const first = choices[0];
+    onChange({ condition, branch: { choiceId: first.id, optionId: first.options[0]?.id ?? "" } });
+  };
+
   return (
     <span className="flex flex-wrap items-center gap-1">
       <input
         className={`${input} w-36 font-mono text-xs`} placeholder="condition"
-        value={condition ?? ""} onChange={(e) => onChange({ condition: e.target.value || undefined, branch })}
+        value={condition ?? ""} onChange={editCondition}
       />
       <select
         className={`${input} w-8 text-xs`} value="" title={flags.length ? "require a flag (set by a choice option)" : "no flags declared yet — set one on a choice option"}
         disabled={flags.length === 0}
-        onChange={(e) => addClause(e.target.value && `flag:${e.target.value}`)}
+        onChange={requireFlag}
       >
         <option value="">🚩</option>
         {flags.map((f) => <option key={f} value={f}>{f}</option>)}
@@ -205,7 +255,7 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
       <select
         className={`${input} w-12 text-xs`} value=""
         title="only when MC participates / is absent (missed-chat replay modes)"
-        onChange={(e) => addClause(e.target.value)}
+        onChange={requireMc}
       >
         <option value="">MC</option>
         <option value="mc:present">if with MC</option>
@@ -214,21 +264,12 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
       {branch ? (
         <span className="flex items-center gap-1 rounded border border-gold/40 bg-gold/5 px-1 py-0.5">
           <span className="text-[10px] uppercase tracking-wide text-gold">if</span>
-          <select
-            className="max-w-44 bg-ink text-xs text-silver outline-none" value={branch.choiceId}
-            onChange={(e) => {
-              const next = choices.find((c) => c.id === e.target.value);
-              onChange({ condition, branch: { choiceId: e.target.value, optionId: next?.options[0]?.id ?? "" } });
-            }}
-          >
+          <select className="max-w-44 bg-ink text-xs text-silver outline-none" value={branch.choiceId} onChange={pickChoice}>
             {!current && <option value={branch.choiceId}>{branch.choiceId} (missing!)</option>}
             {choices.map((c) => <option key={c.id} value={c.id}>{choiceLabel(c)}</option>)}
           </select>
           <span className="text-[10px] text-gold">=</span>
-          <select
-            className="max-w-36 bg-ink text-xs text-silver outline-none" value={branch.optionId}
-            onChange={(e) => onChange({ condition, branch: { ...branch, optionId: e.target.value } })}
-          >
+          <select className="max-w-36 bg-ink text-xs text-silver outline-none" value={branch.optionId} onChange={pickOption}>
             {current && !current.options.some((o) => o.id === branch.optionId) && (
               <option value={branch.optionId}>{branch.optionId} (missing!)</option>
             )}
@@ -236,8 +277,7 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
               <option key={o.id} value={o.id}>{o.label || o.id}</option>
             ))}
           </select>
-          <button type="button" className={tinyBtn} title="remove branch"
-            onClick={() => onChange({ condition, branch: undefined })}>✕</button>
+          <button type="button" className={tinyBtn} title="remove branch" onClick={clearBranch}>✕</button>
         </span>
       ) : (
         <button
@@ -245,10 +285,7 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
           title={choices.length
             ? "advanced: gate on the exact option picked (usually a 🚩 flag reads better)"
             : "no choices to branch on yet"}
-          onClick={() => {
-            const first = choices[0];
-            onChange({ condition, branch: { choiceId: first.id, optionId: first.options[0]?.id ?? "" } });
-          }}
+          onClick={addBranch}
         >
           ⑂
         </button>
@@ -277,26 +314,33 @@ function ScenePicker({ gameId, scenes, value, onChange }: {
     setDraft(null);
     setError(null);
   };
+  const commitClick = () => void commit();
+  const editDraft = (e: React.ChangeEvent<HTMLInputElement>) => setDraft(e.target.value);
+  const draftKeys = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") { e.preventDefault(); void commit(); }
+    if (e.key === "Escape") setDraft(null);
+  };
+  const openDraft = () => setDraft("");
+  const pick = (e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || undefined);
 
   if (draft !== null)
     return (
       <span className="flex items-center gap-1">
         <input autoFocus className={`${input} w-32`} placeholder="scene id" value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void commit(); } if (e.key === "Escape") setDraft(null); }} />
-        <button type="button" className={tinyBtn} onClick={() => void commit()}>ok</button>
+          onChange={editDraft} onKeyDown={draftKeys} />
+        <button type="button" className={tinyBtn} onClick={commitClick}>ok</button>
         {error && <span className="text-xs text-danger">{error}</span>}
       </span>
     );
 
   return (
     <span className="flex items-center gap-1">
-      <select className={input} value={value ?? ""} onChange={(e) => onChange(e.target.value || undefined)}>
+      <select className={input} value={value ?? ""} onChange={pick}>
         <option value="">— no scene —</option>
         {value && !all.includes(value) && <option value={value}>{value} (unknown!)</option>}
         {all.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
-      <button type="button" className={tinyBtn} onClick={() => setDraft("")}>+ new</button>
+      <button type="button" className={tinyBtn} onClick={openDraft}>+ new</button>
     </span>
   );
 }
@@ -306,10 +350,13 @@ function ScenePicker({ gameId, scenes, value, onChange }: {
 function CueValue({ gameId, line, world, onChange }: {
   gameId: string; line: Cue; world: WorldConfigT; onChange: (value: string) => void;
 }) {
+  const pickValue = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => onChange(e.target.value);
+  const pickScene = (v: string | undefined) => onChange(v ?? "");
+
   if (line.channel === "music") {
     const themes = world.musicThemes.map((t) => t.id);
     return (
-      <select className={input} value={line.value} onChange={(e) => onChange(e.target.value)}>
+      <select className={input} value={line.value} onChange={pickValue}>
         <option value="">— off —</option>
         {line.value && !themes.includes(line.value) && <option value={line.value}>{line.value} (unknown!)</option>}
         {themes.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -319,9 +366,9 @@ function CueValue({ gameId, line, world, onChange }: {
   if (line.channel === "scene")
     return (
       <ScenePicker gameId={gameId} scenes={world.scenes.map((s) => s.id)} value={line.value || undefined}
-        onChange={(v) => onChange(v ?? "")} />
+        onChange={pickScene} />
     );
-  return <input className={`${input} w-32`} placeholder="value" value={line.value} onChange={(e) => onChange(e.target.value)} />;
+  return <input className={`${input} w-32`} placeholder="value" value={line.value} onChange={pickValue} />;
 }
 
 /** Amber marker when a source edit left translations stale (§III.5). */
@@ -428,6 +475,7 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
     setLines([...segment.lines.slice(0, at + 1), line, ...segment.lines.slice(at + 1)]);
     pendingFocus.current = type === "choice" ? `${id}__o0` : type === "pool" ? `${id}__v0` : id;
   };
+  const addLineOf = (type: LineT["type"]) => () => addLine(type);
 
   const moveLine = (id: string, dir: -1 | 1) => {
     const i = segment.lines.findIndex((l) => l.id === id);
@@ -438,12 +486,14 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
     setLines(lines);
     pendingFocus.current = id;
   };
+  const moveLineBy = (id: string, dir: -1 | 1) => () => moveLine(id, dir);
 
   const removeLine = (id: string) => {
     const i = segment.lines.findIndex((l) => l.id === id);
     pendingFocus.current = segment.lines[i - 1]?.id ?? segment.lines[i + 1]?.id ?? null;
     setLines(segment.lines.filter((l) => l.id !== id));
   };
+  const removeLineFn = (id: string) => () => removeLine(id);
 
   /** Focus the nearest registered input from `from`, walking `dir`. */
   const focusRow = (from: number, dir: -1 | 1) => {
@@ -471,6 +521,22 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
     else if (e.key === "Backspace" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); removeLine(lineId); }
   };
 
+  // ── named per-line handler factories (JSX passes their call results) ──
+  const editCharacter = (line: Voiced) => (v: string | undefined) => replaceLine({ ...line, character: v ?? "" });
+  const editChoiceCharacter = (line: Choice) => (v: string | undefined) => replaceLine({ ...line, character: v });
+  const editText = (line: Texted) => (text: string) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) });
+  const editEffects = (line: Effectful) => (effects: EffectRef[] | undefined) => replaceLine({ ...line, effects });
+  const editSetFlag = (line: Extract<LineT, { type: "message" }>) => (set_flag: string | undefined) =>
+    replaceLine({ ...line, set_flag });
+  const editGate = (line: Gated) => (gate: Gate) => replaceLine({ ...line, ...gate });
+  const editFile = (line: Extract<LineT, { type: "sticker" | "image" }>) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    replaceLine({ ...line, file: e.target.value });
+  const editCueChannel = (line: Cue) => (e: React.ChangeEvent<HTMLSelectElement>) =>
+    replaceLine({ ...line, channel: e.target.value, value: "" });
+  const editCueValue = (line: Cue) => (value: string) => replaceLine({ ...line, value });
+  const setScene = (scene: string | undefined) => setSegment((s) => ({ ...s, scene }));
+  const setSegmentGate = (gate: Gate) => setSegment((s) => ({ ...s, ...gate }));
+
   // ── per-type row bodies ──
   const textOf = (u: TranslatableUnitT) => u.text[dl] ?? "";
 
@@ -479,76 +545,70 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
       case "message":
         return (
           <>
-            <CharacterSelect value={line.character} characters={characters}
-              onChange={(v) => replaceLine({ ...line, character: v ?? "" })} />
+            <CharacterSelect value={line.character} characters={characters} onChange={editCharacter(line)} />
             <GrowingText inputRef={register(line.id)} placeholder="message text"
-              value={textOf(line.text)} onKeyDown={rowKeys(line.id)}
-              onChange={(text) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) })} />
+              value={textOf(line.text)} onKeyDown={rowKeys(line.id)} onChange={editText(line)} />
             <StaleMark unit={line.text} />
-            <EffectsEditor effects={line.effects} targets={effectTargets}
-              onChange={(effects) => replaceLine({ ...line, effects })} />
+            <EffectsEditor effects={line.effects} targets={effectTargets} onChange={editEffects(line)} />
             {/* Showing this line sets a story flag ("the player saw this"). */}
             <FlagPicker gameId={gameId} flags={flagIds} value={line.set_flag} placeholder="sets flag…"
-              onChange={(set_flag) => replaceLine({ ...line, set_flag })} />
+              onChange={editSetFlag(line)} />
             <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
-              onChange={(gate) => replaceLine({ ...line, ...gate })} />
+              onChange={editGate(line)} />
           </>
         );
       case "status":
         return (
           <>
             <GrowingText inputRef={register(line.id)} placeholder="status text"
-              value={textOf(line.text)} onKeyDown={rowKeys(line.id)}
-              onChange={(text) => replaceLine({ ...line, text: editUnitText(line.text, text, dl) })} />
+              value={textOf(line.text)} onKeyDown={rowKeys(line.id)} onChange={editText(line)} />
             <StaleMark unit={line.text} />
             <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
-              onChange={(gate) => replaceLine({ ...line, ...gate })} />
+              onChange={editGate(line)} />
           </>
         );
       case "sticker":
       case "image":
         return (
           <>
-            <CharacterSelect value={line.character} characters={characters}
-              onChange={(v) => replaceLine({ ...line, character: v ?? "" })} />
+            <CharacterSelect value={line.character} characters={characters} onChange={editCharacter(line)} />
             <input ref={register(line.id)} className={`${input} min-w-40 flex-1`}
               placeholder={`${line.type} file (asset upload — later step)`}
-              value={line.file} onKeyDown={rowKeys(line.id)}
-              onChange={(e) => replaceLine({ ...line, file: e.target.value })} />
-            <EffectsEditor effects={line.effects} targets={effectTargets}
-              onChange={(effects) => replaceLine({ ...line, effects })} />
+              value={line.file} onKeyDown={rowKeys(line.id)} onChange={editFile(line)} />
+            <EffectsEditor effects={line.effects} targets={effectTargets} onChange={editEffects(line)} />
             <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
-              onChange={(gate) => replaceLine({ ...line, ...gate })} />
+              onChange={editGate(line)} />
           </>
         );
       case "typing":
         return (
-          <CharacterSelect value={line.character} characters={characters}
-            onChange={(v) => replaceLine({ ...line, character: v ?? "" })} />
+          <CharacterSelect value={line.character} characters={characters} onChange={editCharacter(line)} />
         );
       case "cue":
         return (
           <>
             <select ref={register(line.id)} className={input} value={line.channel} onKeyDown={rowKeys(line.id)}
-              onChange={(e) => replaceLine({ ...line, channel: e.target.value, value: "" })}>
+              onChange={editCueChannel(line)}>
               {!world.cueChannels.some((c) => c.id === line.channel) && (
                 <option value={line.channel}>{line.channel} (unknown!)</option>
               )}
               {world.cueChannels.map((c) => <option key={c.id} value={c.id}>{c.id}</option>)}
             </select>
-            <CueValue gameId={gameId} line={line} world={world} onChange={(value) => replaceLine({ ...line, value })} />
+            <CueValue gameId={gameId} line={line} world={world} onChange={editCueValue(line)} />
             <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
-              onChange={(gate) => replaceLine({ ...line, ...gate })} />
+              onChange={editGate(line)} />
           </>
         );
       case "pool":
-        return poolBody(line);
+        return renderPool(line);
       case "choice":
-        return choiceBody(line);
+        return renderChoice(line);
     }
   }
 
-  function poolBody(line: Pool): React.ReactNode {
+  // Plain render functions (not nested components — a nested component's identity
+  // changes every render, remounting the subtree and dropping input focus).
+  function renderPool(line: Pool): React.ReactNode {
     const editVariant = (i: number, patch: Partial<Pool["variants"][number]>) =>
       replaceLine({ ...line, variants: line.variants.map((v, j) => (j === i ? { ...v, ...patch } : v)) });
     const addVariant = () => {
@@ -556,36 +616,42 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
       replaceLine({ ...line, variants: [...line.variants, { id: vid, text: newUnit(vid, dl), weight: 1 }] });
       pendingFocus.current = vid;
     };
+    const variantKeys = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addVariant(); }
+    };
+    const editVariantText = (i: number, unit: TranslatableUnitT) => (text: string) =>
+      editVariant(i, { text: editUnitText(unit, text, dl) });
+    const editVariantWeight = (i: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      editVariant(i, { weight: Number(e.target.value) });
+    const removeVariant = (i: number) => () =>
+      replaceLine({ ...line, variants: line.variants.filter((_, j) => j !== i) });
+
     return (
       <>
-        <CharacterSelect value={line.character} characters={characters}
-          onChange={(v) => replaceLine({ ...line, character: v ?? "" })} />
+        <CharacterSelect value={line.character} characters={characters} onChange={editCharacter(line)} />
         <div className="flex flex-1 flex-col gap-1">
           {line.variants.map((v, i) => (
             <div key={v.id} className="flex items-center gap-2">
               <GrowingText inputRef={register(v.id)} placeholder={`variant ${i + 1}`}
-                value={textOf(v.text)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addVariant(); } }}
-                onChange={(text) => editVariant(i, { text: editUnitText(v.text, text, dl) })} />
+                value={textOf(v.text)} onKeyDown={variantKeys} onChange={editVariantText(i, v.text)} />
               <StaleMark unit={v.text} />
               <label className="text-[10px] text-muted">w</label>
               <input type="number" step={0.5} min={0.5} className={`${input} w-16`} value={v.weight}
-                onChange={(e) => editVariant(i, { weight: Number(e.target.value) })} />
+                onChange={editVariantWeight(i)} />
               <button type="button" className={tinyBtn} disabled={line.variants.length === 1}
-                onClick={() => replaceLine({ ...line, variants: line.variants.filter((_, j) => j !== i) })}>✕</button>
+                onClick={removeVariant(i)}>✕</button>
             </div>
           ))}
           <button type="button" className={`${tinyBtn} self-start`} onClick={addVariant}>+ variant</button>
         </div>
-        <EffectsEditor effects={line.effects} targets={effectTargets}
-          onChange={(effects) => replaceLine({ ...line, effects })} />
+        <EffectsEditor effects={line.effects} targets={effectTargets} onChange={editEffects(line)} />
         <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
-              onChange={(gate) => replaceLine({ ...line, ...gate })} />
+          onChange={editGate(line)} />
       </>
     );
   }
 
-  function choiceBody(line: Choice): React.ReactNode {
+  function renderChoice(line: Choice): React.ReactNode {
     const editOption = (i: number, patch: Partial<Choice["options"][number]>) =>
       replaceLine({ ...line, options: line.options.map((o, j) => (j === i ? { ...o, ...patch } : o)) });
     const addOption = () => {
@@ -593,29 +659,36 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
       replaceLine({ ...line, options: [...line.options, { id: oid, text: newUnit(oid, dl) }] });
       pendingFocus.current = oid;
     };
+    const optionKeys = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") { e.preventDefault(); addOption(); }
+    };
+    const editOptionText = (i: number, unit: TranslatableUnitT) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      editOption(i, { text: editUnitText(unit, e.target.value, dl) });
+    const editOptionEffects = (i: number) => (effects: EffectRef[] | undefined) => editOption(i, { effects });
+    const editOptionFlag = (i: number) => (set_flag: string | undefined) => editOption(i, { set_flag });
+    const editOptionGate = (i: number) => (gate: Gate) => editOption(i, gate);
+    const removeOption = (i: number) => () =>
+      replaceLine({ ...line, options: line.options.filter((_, j) => j !== i) });
+
     return (
       <>
-        <CharacterSelect value={line.character} characters={characters} allowMC
-          onChange={(v) => replaceLine({ ...line, ...(v ? { character: v } : { character: undefined }) })} />
+        <CharacterSelect value={line.character} characters={characters} allowMC onChange={editChoiceCharacter(line)} />
         <div className="flex flex-1 flex-col gap-1">
           {line.options.map((o, i) => (
             <div key={o.id} className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] text-muted">{String.fromCharCode(65 + i)}</span>
               <input ref={register(o.id)} className={`${input} min-w-40 flex-1`} placeholder={`option ${i + 1}`}
-                value={textOf(o.text)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addOption(); } }}
-                onChange={(e) => editOption(i, { text: editUnitText(o.text, e.target.value, dl) })} />
+                value={textOf(o.text)} onKeyDown={optionKeys} onChange={editOptionText(i, o.text)} />
               <StaleMark unit={o.text} />
-              <EffectsEditor effects={o.effects} targets={effectTargets}
-                onChange={(effects) => editOption(i, { effects })} />
+              <EffectsEditor effects={o.effects} targets={effectTargets} onChange={editOptionEffects(i)} />
               {/* The writer-named consequence: picking this option sets the flag. */}
               <FlagPicker gameId={gameId} flags={flagIds} value={o.set_flag} placeholder="remember as…"
-                onChange={(set_flag) => editOption(i, { set_flag })} />
+                onChange={editOptionFlag(i)} />
               <GateEditor condition={o.condition} branch={o.branch}
                 choices={choices.filter((c) => c.id !== line.id)} flags={flagIds}
-                onChange={(gate) => editOption(i, gate)} />
+                onChange={editOptionGate(i)} />
               <button type="button" className={tinyBtn} disabled={line.options.length === 1}
-                onClick={() => replaceLine({ ...line, options: line.options.filter((_, j) => j !== i) })}>✕</button>
+                onClick={removeOption(i)}>✕</button>
             </div>
           ))}
           <button type="button" className={`${tinyBtn} self-start`} onClick={addOption}>+ option</button>
@@ -650,7 +723,7 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
           <span className="flex items-center gap-2">
             <label className="text-xs text-muted">scene</label>
             <ScenePicker gameId={gameId} scenes={world.scenes.map((s) => s.id)} value={segment.scene}
-              onChange={(scene) => setSegment((s) => ({ ...s, scene }))} />
+              onChange={setScene} />
           </span>
         )}
         <span className="flex items-center gap-2">
@@ -658,7 +731,7 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
           {/* A segment's own choices can't gate it (they haven't happened when it starts). */}
           <GateEditor condition={segment.condition} branch={segment.branch}
             choices={choices.filter((c) => c.segmentId !== segment.id)} flags={flagIds}
-            onChange={(gate) => setSegment((s) => ({ ...s, ...gate }))} />
+            onChange={setSegmentGate} />
         </span>
       </div>
 
@@ -670,16 +743,16 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
           <div key={line.id} className="flex flex-wrap items-start gap-2 rounded border border-edge bg-panel/30 px-2 py-1.5">
             <span className="flex flex-col leading-none pt-1">
               <button type="button" className="text-[10px] text-muted hover:text-silver disabled:opacity-30"
-                disabled={i === 0} onClick={() => moveLine(line.id, -1)} aria-label="move up">▲</button>
+                disabled={i === 0} onClick={moveLineBy(line.id, -1)} aria-label="move up">▲</button>
               <button type="button" className="text-[10px] text-muted hover:text-silver disabled:opacity-30"
-                disabled={i === segment.lines.length - 1} onClick={() => moveLine(line.id, 1)} aria-label="move down">▼</button>
+                disabled={i === segment.lines.length - 1} onClick={moveLineBy(line.id, 1)} aria-label="move down">▼</button>
             </span>
             <span className="w-14 pt-1.5 text-[10px] uppercase tracking-wide text-muted" title={line.id}>
               {line.type}
             </span>
             {rowBody(line)}
             <button type="button" className={`${tinyBtn} ml-auto pt-1.5 hover:text-danger`} title="delete row (⌘⌫)"
-              onClick={() => removeLine(line.id)}>✕</button>
+              onClick={removeLineFn(line.id)}>✕</button>
           </div>
         ))}
       </div>
@@ -688,7 +761,7 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
         {(["message", "status", "choice", "pool", "cue", "sticker", "image", "typing"] as const).map((t) => (
           <button key={t} type="button" className={chip}
             disabled={needsCharacters.includes(t) && !hasCharacters}
-            onClick={() => addLine(t)}>
+            onClick={addLineOf(t)}>
             + {t}
           </button>
         ))}

@@ -9,6 +9,7 @@ type AvatarProps = {
 
 export function Avatar({ name }: AvatarProps) {
   const [failed, setFailed] = useState(false);
+  const markFailed = () => setFailed(true);
   const src = `/avatars/${name.toLowerCase()}.jpg`;
   const design = getCharacterDesign(name);
 
@@ -29,7 +30,7 @@ export function Avatar({ name }: AvatarProps) {
       alt={name}
       className="w-10 h-10 rounded-full object-cover"
       style={{ border: `1px solid ${design.borderColor}`, boxShadow: design.shadow }}
-      onError={() => setFailed(true)}
+      onError={markFailed}
     />
   );
 }
