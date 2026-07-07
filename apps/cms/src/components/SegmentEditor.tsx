@@ -487,6 +487,9 @@ export function SegmentEditor({ gameId, segment: initial, defaultLocale: dl, wor
             <StaleMark unit={line.text} />
             <EffectsEditor effects={line.effects} targets={effectTargets}
               onChange={(effects) => replaceLine({ ...line, effects })} />
+            {/* Showing this line sets a story flag ("the player saw this"). */}
+            <FlagPicker gameId={gameId} flags={flagIds} value={line.set_flag} placeholder="sets flag…"
+              onChange={(set_flag) => replaceLine({ ...line, set_flag })} />
             <GateEditor condition={line.condition} branch={line.branch} choices={choices} flags={flagIds}
               onChange={(gate) => replaceLine({ ...line, ...gate })} />
           </>

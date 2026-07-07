@@ -608,3 +608,16 @@ describe("resolveChoices — faithful read-back of recorded picks", () => {
     expect(resolveChoices(legacy, { c1: "o1" }).choices).toEqual(legacy.choices);
   });
 });
+
+describe("convertBlockToSegment — message set_flag", () => {
+  it("carries set_flag on the LAST bubble of a multi-bubble message only", () => {
+    const block = {
+      block_id: "b2",
+      items: [
+        { type: "message" as const, character: "ao", messages: ["one", "two"], set_flag: "saw_it" },
+      ],
+    };
+    const seg = convertBlockToSegment(block);
+    expect(seg.messages.map((m) => m.set_flag)).toEqual([undefined, "saw_it"]);
+  });
+});

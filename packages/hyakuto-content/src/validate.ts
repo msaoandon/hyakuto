@@ -148,9 +148,12 @@ export function validateBlocks(
       if ('condition' in item) condCheck(item.condition);
       if ('effects' in item) fxCheck(item.effects);
 
-      if (item.type === 'message')
+      if (item.type === 'message') {
         for (const m of item.messages)
           if (emptyLocalized(m)) errors.push({ ...ctx, message: 'Message has empty text' });
+        if (item.set_flag && !flags.has(item.set_flag))
+          errors.push({ ...ctx, message: `Message sets undeclared flag "${item.set_flag}"` });
+      }
 
       if (item.type === 'pool')
         for (const v of item.variants)

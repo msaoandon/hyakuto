@@ -59,7 +59,8 @@ function lineToItem(line: Line, defaultLocale: string): BlockItem {
     case 'message': {
       const item = { type: 'message', character: line.character, messages: [compileLocalized(line.text, defaultLocale)] };
       put(item, 'condition', combineGate(line.condition, line.branch));
-      return put(item, 'effects', compileEffects(line.effects)) as BlockItem;
+      put(item, 'effects', compileEffects(line.effects));
+      return put(item, 'set_flag', line.set_flag) as BlockItem;
     }
     case 'sticker':
     case 'image': {

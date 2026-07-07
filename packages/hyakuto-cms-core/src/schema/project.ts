@@ -42,6 +42,8 @@ const MessageLine = z.object({
   character: z.string().min(1),
   text: TranslatableUnit,
   effects: z.array(EffectRef).optional(),
+  /** Story flag set when this line shows (a declared world flag). */
+  set_flag: z.string().min(1).optional(),
   ...gate,
 });
 

@@ -34,6 +34,7 @@ function itemToLine(item: BlockItem, segId: string, index: number, dl: string): 
         type: 'message', id, character: item.character,
         text: unitFromLocalized(single(item.messages, id), id, dl),
         ...cond(item.condition), ...fx(item.effects),
+        ...(item.set_flag ? { set_flag: item.set_flag } : {}),
       };
     case 'sticker':
     case 'image':

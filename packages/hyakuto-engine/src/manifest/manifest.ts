@@ -247,7 +247,7 @@ export function convertBlockToSegment(block: Block, locale: string = DEFAULT_LOC
 
       case "message": {
         if (item.messages) {
-          for (const text of item.messages) {
+          for (const [i, text] of item.messages.entries()) {
             const id = `${block.block_id}_msg_${msgIndex++}`;
             messages.push({
               id,
@@ -255,6 +255,8 @@ export function convertBlockToSegment(block: Block, locale: string = DEFAULT_LOC
               text: resolveLocale(text, locale),
               condition: item.condition,
               effects: item.effects,
+              // The flag fires once the item has fully shown — on the last bubble.
+              set_flag: i === item.messages.length - 1 ? item.set_flag : undefined,
             });
           }
         }

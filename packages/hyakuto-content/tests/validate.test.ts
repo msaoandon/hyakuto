@@ -271,3 +271,17 @@ describe('flags — declared allowlist (gameConfig.flags)', () => {
       .toContainEqual(expect.stringContaining('undeclared flag "asked_lantren"'));
   });
 });
+
+describe('message-level set_flag', () => {
+  const msgBlock = (set_flag: string) => mergeBlocks([{ path: 'f.json', data: [{
+    block_id: 'b1',
+    items: [{ type: 'message' as const, character: 'Kou', messages: ['hi'], set_flag }],
+  }] }]).pool;
+
+  it('accepts a declared flag, rejects an undeclared one', () => {
+    const flagged = { ...config, flags: ['saw_it'] };
+    expect(validateBlocks(msgBlock('saw_it'), flagged)).toEqual([]);
+    expect(validateBlocks(msgBlock('ghost'), flagged).map((e) => e.message))
+      .toContainEqual(expect.stringContaining('undeclared flag "ghost"'));
+  });
+});

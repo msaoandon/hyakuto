@@ -14,6 +14,8 @@ const MessageItem = z.object({
   messages: z.array(Localized).min(1),
   condition: z.string().optional(),
   effects: z.array(EffectDef).optional(),
+  /** Story flag set when this message shows (declared in gameConfig.flags). */
+  set_flag: z.string().min(1).optional(),
 });
 
 const StickerItem = z.object({

@@ -18,7 +18,7 @@ const gameConfig: GameConfig = {
     { id: 'Ren', typing_rate: 1.2 },
   ],
   counters: [{ id: 'candles', start: 100, end: 0, direction: 'down' }],
-  flags: ['asked_where'],
+  flags: ['asked_where', 'met_tatsumi'],
 };
 
 // blocks are declared in the same order as manifest.segments keys, because compile
@@ -56,7 +56,7 @@ const blocks: Block[] = [
     block_id: 'dm1',
     items: [
       // A cross-segment branch: gated on the recorded g1 choice by stable id.
-      { type: 'message', character: 'Tatsumi', messages: [{ en: 'I am also awake.', uk: 'Я теж не сплю.' }], condition: 'choice:g1_age==g1_age__o1' },
+      { type: 'message', character: 'Tatsumi', messages: [{ en: 'I am also awake.', uk: 'Я теж не сплю.' }], condition: 'choice:g1_age==g1_age__o1', set_flag: 'met_tatsumi' },
       { type: 'sticker', character: 'Tatsumi', file: 'wave.png' },
     ],
   },

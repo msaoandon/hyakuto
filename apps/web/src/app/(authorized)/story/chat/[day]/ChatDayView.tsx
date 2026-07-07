@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { listThreads, isThreadUnlocked } from "@/data/loadDay";
+import { listThreads, isThreadUnlocked, nextUnlockAt } from "@/data/loadDay";
 import { StoryHeader } from "@/components/layout/StoryHeader";
 import { LanternBackground } from "@/components/LanternBackground";
 import { DayRail } from "./DayRail";
@@ -18,19 +18,42 @@ export function ChatDayView({ day }: { day: string }) {
   const save = useGameStore((s) => s.save);
   const completed = useGameStore((s) => s.completed);
 
-  // Time-gated chats reveal as the wall-clock passes; poll + re-check on focus.
+  const state = useMemo(() => saveToState(save, completed), [save, completed]);
+
+  // Time-gated chats reveal the moment the wall-clock crosses their unlock.
+  // Instead of polling, arm ONE timer for the earliest pending unlock
+  // (nextUnlockAt gives the exact timestamp) and re-arm after it fires; when
+  // nothing is pending there is no timer at all. visibilitychange + focus
+  // re-checks cover sleep/wake, the Capacitor webview resuming, and device
+  // clock changes — cases a poll can miss or hit late.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const tick = () => setNow(Date.now());
-    const id = setInterval(tick, 30_000);
+
+    const t = Date.now();
+    const pending = listThreads(dayNum, locale)
+      .filter((thread) => thread.kind !== "dm")
+      .map((thread) => nextUnlockAt(dayNum, thread.id, state, t))
+      .filter((at): at is number => at !== null && at > t);
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (pending.length > 0) {
+      // A small cushion past the boundary; clamp to setTimeout's int32 ceiling
+      // (~24.8 days) — the re-arm on fire covers anything farther out.
+      const wait = Math.min(...pending) - t + 250;
+      timer = setTimeout(tick, Math.min(wait, 2 ** 31 - 1));
+    }
+
+    document.addEventListener("visibilitychange", tick);
     window.addEventListener("focus", tick);
     return () => {
-      clearInterval(id);
+      if (timer !== undefined) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", tick);
       window.removeEventListener("focus", tick);
     };
-  }, []);
-
-  const state = useMemo(() => saveToState(save, completed), [save, completed]);
+    // Re-runs on every tick (`now`) so the timer re-arms for the next unlock,
+    // and on state changes (completing a prerequisite starts the next gate).
+  }, [dayNum, locale, state, now]);
 
   return (
     <>
