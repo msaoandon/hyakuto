@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { createGameState, DEFAULT_GENDER, type SaveState, type GameState } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
-import { type Locale, DEFAULT_LOCALE } from "@/i18n/locales";
+import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
 
 // Player chat-speed preference is a 1–9 level (1 slowest … 9 fastest). Level 5
@@ -39,6 +39,10 @@ function freshSave(): SaveState {
 type GameStore = {
   save: SaveState;
   locale: Locale;
+  /** True once the player picked a language themself (Settings / chooser). Until
+   *  then the locale follows the device language on each launch; an explicit
+   *  pick wins forever after. Persisted. */
+  localeChosen: boolean;
   /** Player preference: background music on/off. Persisted; honoured by AudioProvider. */
   musicEnabled: boolean;
   /** Player preference: chat drip speed as a 1–9 level. Persisted; applied live
@@ -59,6 +63,9 @@ type GameStore = {
   markDmRead: (threadId: string, segmentIds: string[]) => void;
   reset: () => void;
   setLocale: (locale: Locale) => void;
+  /** Adopt the device language on a fresh profile (no explicit pick yet). Called
+   *  after hydration, when the persisted state is known. No-op once chosen. */
+  seedLocaleFromDevice: () => void;
   setMusicEnabled: (on: boolean) => void;
   setChatPaceLevel: (level: number) => void;
   setChatPaused: (paused: boolean) => void;
@@ -68,9 +75,10 @@ type GameStore = {
 
 export const useGameStore = create<GameStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       save: freshSave(),
       locale: DEFAULT_LOCALE,
+      localeChosen: false,
       musicEnabled: true,
       chatPaceLevel: DEFAULT_PACE_LEVEL,
       completed: {},
@@ -87,7 +95,12 @@ export const useGameStore = create<GameStore>()(
           return { dmRead: { ...s.dmRead, [threadId]: [...seen] } };
         }),
       reset: () => set({ save: freshSave(), completed: {}, dmRead: {} }),
-      setLocale: (locale) => set({ locale }),
+      setLocale: (locale) => set({ locale, localeChosen: true }),
+      seedLocaleFromDevice: () => {
+        if (get().localeChosen || typeof navigator === "undefined") return;
+        const device = matchDeviceLocale(navigator.languages ?? [navigator.language]);
+        if (device) set({ locale: device }); // not "chosen" — keeps following the device
+      },
       setMusicEnabled: (on) => set({ musicEnabled: on }),
       setChatPaceLevel: (level) => set({ chatPaceLevel: clampPaceLevel(level) }),
       setChatPaused: (paused) => set({ chatPaused: paused }),
@@ -96,11 +109,12 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
         locale: s.locale,
+        localeChosen: s.localeChosen,
         musicEnabled: s.musicEnabled,
         chatPaceLevel: s.chatPaceLevel,
         completed: s.completed,
@@ -109,11 +123,15 @@ export const useGameStore = create<GameStore>()(
       // v0 stored `completed` as a string[] (membership only). v1 needs timestamps to
       // anchor time-gated unlocks; legacy entries get 0 ("completed long ago"), which
       // leaves any successor's time gate already satisfied — the safe direction.
+      // v2 adds `localeChosen`. Existing installs get true — whatever locale they
+      // have (picked or lived-with default) must never be silently switched by
+      // device seeding; only genuinely fresh profiles follow the device language.
       migrate: (persisted, version) => {
-        const s = persisted as { completed?: unknown };
+        const s = persisted as { completed?: unknown; localeChosen?: boolean };
         if (version < 1 && Array.isArray(s.completed)) {
           s.completed = Object.fromEntries((s.completed as string[]).map((k) => [k, 0]));
         }
+        if (version < 2) s.localeChosen = true;
         return persisted as GameStore;
       },
       skipHydration: true,
