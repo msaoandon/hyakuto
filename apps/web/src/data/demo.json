@@ -86,7 +86,8 @@
             "text": {
               "en": "So you're a dragon god of the sea?",
               "uk": "То ти дракон-бог моря?"
-            }
+            },
+            "id": "demo_d1_s1__8__o0"
           },
           {
             "text": {
@@ -98,15 +99,18 @@
                 "axis": "tatsumi",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d1_s1__8__o1"
           },
           {
             "text": {
               "en": "Do you have a palace down there?",
               "uk": "У тебе там, унизу, палац?"
-            }
+            },
+            "id": "demo_d1_s1__8__o2"
           }
-        ]
+        ],
+        "id": "demo_d1_s1__8"
       },
       {
         "type": "message",
@@ -316,7 +320,8 @@
             "text": {
               "en": "Kō, please sleep.",
               "uk": "Ко, прошу, поспи."
-            }
+            },
+            "id": "demo_d1_s2__10__o0"
           },
           {
             "text": {
@@ -328,7 +333,8 @@
                 "axis": "kou",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d1_s2__10__o1"
           },
           {
             "text": {
@@ -340,9 +346,11 @@
                 "axis": "ren",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d1_s2__10__o2"
           }
-        ]
+        ],
+        "id": "demo_d1_s2__10"
       },
       {
         "type": "message",
@@ -532,21 +540,25 @@
             "text": {
               "en": "I've heard of her.",
               "uk": "Я про неї чула."
-            }
+            },
+            "id": "demo_d1_s3__6__o0"
           },
           {
             "text": {
               "en": "No, tell me.",
               "uk": "Ні, розкажи."
-            }
+            },
+            "id": "demo_d1_s3__6__o1"
           },
           {
             "text": {
               "en": "Please don't, I have to walk home.",
               "uk": "Будь ласка, не треба, мені ще додому йти."
-            }
+            },
+            "id": "demo_d1_s3__6__o2"
           }
-        ]
+        ],
+        "id": "demo_d1_s3__6"
       },
       {
         "type": "message",
@@ -691,21 +703,25 @@
             "text": {
               "en": "You thought about it for a whole day?",
               "uk": "Ти думав про це цілу добу?"
-            }
+            },
+            "id": "demo_dm1_1__1__o0"
           },
           {
             "text": {
               "en": "That's oddly flattering.",
               "uk": "Це дивно приємно."
-            }
+            },
+            "id": "demo_dm1_1__1__o1"
           },
           {
             "text": {
               "en": "Okay, dragon, tell me.",
               "uk": "Гаразд, драконе, розказуй."
-            }
+            },
+            "id": "demo_dm1_1__1__o2"
           }
-        ]
+        ],
+        "id": "demo_dm1_1__1"
       }
     ]
   },
@@ -725,21 +741,25 @@
                 "axis": "ren",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d2_s1__0__o0"
           },
           {
             "text": {
               "en": "You seem like you know a lot about mountains.",
               "uk": "Ти, здається, багато знаєш про гори."
-            }
+            },
+            "id": "demo_d2_s1__0__o1"
           },
           {
             "text": {
               "en": "You give very... bird energy.",
               "uk": "Від тебе дуже... пташина енергія."
-            }
+            },
+            "id": "demo_d2_s1__0__o2"
           }
-        ]
+        ],
+        "id": "demo_d2_s1__0"
       },
       {
         "type": "message",
@@ -938,15 +958,18 @@
             "text": {
               "en": "Fair. So what did you conclude?",
               "uk": "Гаразд. То що ти надумав?"
-            }
+            },
+            "id": "demo_dm1_2__1__o0"
           },
           {
             "text": {
               "en": "That's a very you distinction.",
               "uk": "Це дуже в твоєму стилі розрізнення."
-            }
+            },
+            "id": "demo_dm1_2__1__o1"
           }
-        ]
+        ],
+        "id": "demo_dm1_2__1"
       }
     ]
   },
@@ -981,21 +1004,25 @@
                 "axis": "ren",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d2_s3__2__o0"
           },
           {
             "text": {
               "en": "Is it scary?",
               "uk": "Вона страшна?"
-            }
+            },
+            "id": "demo_d2_s3__2__o1"
           },
           {
             "text": {
               "en": "Will it give me bird nightmares?",
               "uk": "Вона подарує мені пташині кошмари?"
-            }
+            },
+            "id": "demo_d2_s3__2__o2"
           }
-        ]
+        ],
+        "id": "demo_d2_s3__2"
       },
       {
         "type": "message",
@@ -1126,21 +1153,25 @@
                 "axis": "kou",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d3_s1__0__o0"
           },
           {
             "text": {
               "en": "You dodge this every time.",
               "uk": "Ти щоразу від цього ухиляєшся."
-            }
+            },
+            "id": "demo_d3_s1__0__o1"
           },
           {
             "text": {
               "en": "Let me guess — fox?",
               "uk": "Дай угадаю — лис?"
-            }
+            },
+            "id": "demo_d3_s1__0__o2"
           }
-        ]
+        ],
+        "id": "demo_d3_s1__0"
       },
       {
         "type": "message",
@@ -1294,15 +1325,18 @@
             "text": {
               "en": "That sounds like advice about more than tea.",
               "uk": "Це звучить як порада не лише про чай."
-            }
+            },
+            "id": "demo_dm1_3__1__o0"
           },
           {
             "text": {
               "en": "Noted. I'll let my water rest.",
               "uk": "Гаразд. Дам воді відпочити."
-            }
+            },
+            "id": "demo_dm1_3__1__o1"
           }
-        ]
+        ],
+        "id": "demo_dm1_3__1"
       },
       {
         "type": "message",
@@ -1392,21 +1426,25 @@
                 "axis": "kou",
                 "delta": 1
               }
-            ]
+            ],
+            "id": "demo_d3_s2__5__o0"
           },
           {
             "text": {
               "en": "Foxhole",
               "uk": "«Лисяча Нора»."
-            }
+            },
+            "id": "demo_d3_s2__5__o1"
           },
           {
             "text": {
               "en": "Just call it \"Kō's.\"",
               "uk": "Просто назви його «У Ко»."
-            }
+            },
+            "id": "demo_d3_s2__5__o2"
           }
-        ]
+        ],
+        "id": "demo_d3_s2__5"
       },
       {
         "type": "message",

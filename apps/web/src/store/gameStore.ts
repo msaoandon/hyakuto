@@ -134,8 +134,8 @@ export function saveToState(
     // A legacy save (persisted before gender existed) restores as unset — the
     // inclusive baseline — so no destructive migration is needed.
     gender: save.gender ?? DEFAULT_GENDER,
-    // Recorded choices are runtime-only until DEV_PLAN Phase 3 adds them to the
-    // save schema — a restored session starts with none.
-    choices: {},
+    // Recorded picks (choiceId → optionId). Legacy saves have none — their old
+    // choices are unknowable, and read-back falls back to stripping the prompt.
+    choices: { ...(save.choices ?? {}) },
   };
 }

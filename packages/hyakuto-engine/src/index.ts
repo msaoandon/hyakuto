@@ -59,6 +59,7 @@ export {
   threadDisplayName,
   stripEffects,
   stripChoices,
+  resolveChoices,
   threadKey,
   previousThread,
   nextUnlockAt,

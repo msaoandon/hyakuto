@@ -83,4 +83,4 @@ export const dmThreadIds = () => dms(manifest, NO_STATE).map((d) => d.id);
 
 export type { DayStatus, DmEntry };
 
-export { stripEffects, stripChoices } from "@hyakuto/engine";
+export { stripEffects, stripChoices, resolveChoices } from "@hyakuto/engine";

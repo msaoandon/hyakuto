@@ -6,6 +6,7 @@ import {
   listDays,
   listThreads,
   stripEffects,
+  resolveChoices,
   previousThread,
   nextUnlockAt,
   isThreadUnlocked,
@@ -564,5 +565,46 @@ describe("convertBlockToSegment — choice identity (the `choice:` data path)", 
     const choice = Object.values(convertBlockToSegment(legacy).choices!)[0]!;
     expect(choice.id).toBeUndefined();
     expect(choice.options[0]!.id).toBeUndefined();
+  });
+});
+
+describe("resolveChoices — faithful read-back of recorded picks", () => {
+  const segment = {
+    id: "dm1",
+    messages: [
+      { id: "m1", character: "oiwa", text: "You saw it too, right?", condition: "flag:met_oiwa" },
+      { id: "m2", character: "oiwa", text: "Anyway." },
+    ],
+    choices: {
+      m1: {
+        id: "c1",
+        options: [
+          { id: "o0", text: "Saw what?" },
+          { id: "o1", text: "Yes. The lantern.", effects: [{ axis: "story", delta: 1 }] },
+        ],
+      },
+    },
+  };
+
+  it("replaces a recorded choice with the picked reply as an MC message", () => {
+    const resolved = resolveChoices(segment, { c1: "o1" });
+    expect(resolved.choices).toBeUndefined(); // prompt gone
+    const ids = resolved.messages.map((m) => m.id);
+    expect(ids).toEqual(["m1", "m1__mc_reply", "m2"]); // reply right after its carrier
+    const reply = resolved.messages[1]!;
+    expect(reply).toMatchObject({ character: "MC", text: "Yes. The lantern.", typing_ms: 0 });
+    // Inherits the carrier's gate — never shows without the message it answers.
+    expect(reply.condition).toBe("flag:met_oiwa");
+  });
+
+  it("leaves unrecorded choices for the caller (legacy sessions)", () => {
+    const untouched = resolveChoices(segment, {});
+    expect(untouched.choices).toEqual(segment.choices);
+    expect(untouched.messages).toHaveLength(2);
+  });
+
+  it("an id-less legacy choice can never resolve", () => {
+    const legacy = { ...segment, choices: { m1: { options: [{ text: "ok" }] } } };
+    expect(resolveChoices(legacy, { c1: "o1" }).choices).toEqual(legacy.choices);
   });
 });

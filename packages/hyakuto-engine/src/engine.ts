@@ -88,6 +88,10 @@ export interface SaveState {
   /** MC gender-for-address (durable customisation). Optional for back-compat:
    *  a legacy save without it restores as `unset`. */
   gender?: MCGender;
+  /** choiceId → picked optionId (DEV_PLAN Phase 3 "record choice history",
+   *  pulled forward for faithful DM read-back). Optional for back-compat: a
+   *  legacy save restores with none recorded — its old picks are unknowable. */
+  choices?: Record<string, string>;
 }
 
 export interface CreateEngineOptions {
@@ -119,9 +123,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
       // the play loop); the engine's per-play SaveState doesn't carry it.
       completed: {},
       gender: options.savedState.gender ?? DEFAULT_GENDER,
-      // Recorded choices are runtime-only until DEV_PLAN Phase 3 adds them to
-      // the save schema — a restored session starts with none recorded.
-      choices: {},
+      choices: { ...(options.savedState.choices ?? {}) },
     };
   } else {
     state = createGameState(config);
@@ -421,6 +423,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
         flags: Array.from(state.flags),
         poolSelections: { ...state.poolSelections },
         gender: state.gender,
+        choices: { ...state.choices },
       };
     },
   };

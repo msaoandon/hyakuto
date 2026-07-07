@@ -6,6 +6,7 @@ import {
   availableDmSegments,
   stripEffects,
   stripChoices,
+  resolveChoices,
   threadDisplayName,
 } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
@@ -37,8 +38,11 @@ export function DmView({ thread }: { thread: string }) {
     const state = saveToState(save, completed);
     const unread = available.filter((id) => !readAtOpen.has(id));
     if (unread.length > 0) return assembleDM(thread, state, unread, locale); // new messages, interactive
-    // Caught up → read-back the full conversation without prompts or effects.
-    return stripChoices(stripEffects(assembleDM(thread, state, available, locale)));
+    // Caught up → a faithful transcript: recorded picks render as MC replies
+    // (resolveChoices); anything unrecorded (legacy saves) is stripped rather
+    // than re-prompted, and effects never re-apply.
+    const full = assembleDM(thread, state, available, locale);
+    return stripChoices(stripEffects(resolveChoices(full, state.choices)));
   }, [thread, save, completed, available, readAtOpen, locale]);
 
   const handleComplete = () => {

@@ -526,6 +526,51 @@ export function stripEffects(segment: SegmentInput): SegmentInput {
   };
 }
 
+/**
+ * Resolve recorded picks into the transcript: for every choice whose pick is in
+ * `recorded` (state.choices — persisted in the save), replace the prompt with a
+ * plain `MC` message of the chosen option's text, right after the message the
+ * choice attaches to. The reply inherits the carrier's condition so it never
+ * shows without it. Choices with no recorded pick (legacy sessions, ids absent)
+ * are left as-is — the caller decides to re-prompt or strip them.
+ * This is what makes a re-read DM a faithful transcript: your replies show,
+ * nothing re-prompts.
+ */
+export function resolveChoices(
+  segment: SegmentInput,
+  recorded: Record<string, string>,
+): SegmentInput {
+  if (!segment.choices) return segment;
+
+  const remaining: NonNullable<SegmentInput["choices"]> = {};
+  const replyAfter = new Map<string, string>(); // carrier message id → picked option text
+  for (const [msgId, choice] of Object.entries(segment.choices)) {
+    const pickedId = choice.id ? recorded[choice.id] : undefined;
+    const picked = pickedId ? choice.options.find((o) => o.id === pickedId) : undefined;
+    if (picked) replyAfter.set(msgId, picked.text);
+    else remaining[msgId] = choice;
+  }
+  if (replyAfter.size === 0) return segment;
+
+  const messages = segment.messages.flatMap((m) =>
+    replyAfter.has(m.id)
+      ? [m, {
+          id: `${m.id}__mc_reply`,
+          character: "MC" as const,
+          text: replyAfter.get(m.id)!,
+          typing_ms: 0, // the player doesn't watch themself type
+          condition: m.condition,
+        }]
+      : [m],
+  );
+
+  return {
+    ...segment,
+    messages,
+    choices: Object.keys(remaining).length > 0 ? remaining : undefined,
+  };
+}
+
 /** Return a copy of a segment with its choices removed — a non-interactive
  *  read-back (the messages stream, but no prompt re-appears). Pairs with
  *  stripEffects for re-reading a DM that's fully caught up. */

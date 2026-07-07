@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { gameConfig } from "@hyakuto/game";
-import { assembleThread, stripEffects, threadDisplayName, manifest } from "@/data/loadDay";
+import { assembleThread, stripEffects, resolveChoices, threadDisplayName, manifest } from "@/data/loadDay";
 import { useGameStore, saveToState } from "@/store/gameStore";
 import { useT, useLocale } from "@/i18n";
 import { StoryHeader } from "@/components/layout/StoryHeader";
@@ -47,9 +47,11 @@ export function VnView({ day, id }: { day: string; id: string }) {
   const completed = useGameStore((s) => s.completed);
 
   const segment = useMemo(() => {
-    const seg = assembleThread(dayNum, id, saveToState(save, completed), locale);
+    const state = saveToState(save, completed);
+    const seg = assembleThread(dayNum, id, state, locale);
     const isReplay = `${dayNum}:${id}` in completed;
-    return isReplay ? stripEffects(seg) : seg;
+    // Replay = transcript: the recorded pick renders as MC's line, no re-prompt.
+    return isReplay ? stripEffects(resolveChoices(seg, state.choices)) : seg;
   }, [dayNum, id, save, completed, locale]);
 
   const candleStart = gameConfig.counters.find((c) => c.id === "candles")?.start ?? 100;

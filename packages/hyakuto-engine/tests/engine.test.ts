@@ -846,7 +846,16 @@ describe("recorded choices (drives the choice: predicate)", () => {
     expect(engine.getState().choices).toEqual({});
   });
 
-  it("a restored save starts with no recorded choices (runtime-only until Phase 3)", () => {
+  it("round-trips choices through serialize/restore (Phase 3 record-choice-history)", async () => {
+    const { engine } = await playChoosing(1);
+    const save = engine.serialize();
+    expect(save.choices).toEqual({ c1: "o_ask" });
+
+    const restored = createEngine({ config, onEvent: () => {}, savedState: save });
+    expect(restored.getState().choices).toEqual({ c1: "o_ask" });
+  });
+
+  it("a legacy save without choices restores with none recorded (back-compat)", () => {
     const engine = createEngine({
       config,
       onEvent: () => {},
