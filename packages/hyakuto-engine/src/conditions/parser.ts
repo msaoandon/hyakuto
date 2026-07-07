@@ -3,9 +3,12 @@ import { type TimeBand, isTimeBand, bandOf } from './time';
 import { type MCGender, isMCGender } from '../state/mc';
 
 /** Non-GameState inputs to condition evaluation. Carries the clock so a `time:`
- *  predicate is deterministic and a trusted-time source can be injected later;
- *  when absent, time resolves against the real local clock. */
-export type RuntimeContext = { now?: number };
+ *  predicate is deterministic and a trusted-time source can be injected later
+ *  (absent → the real local clock), and whether MC participates in THIS playback
+ *  (absent → true). MC-presence is deliberately context, not a flag: flags are
+ *  durable save state, while the same chat can be watched without MC today and
+ *  replayed with MC tomorrow (the missed-chat modes). */
+export type RuntimeContext = { now?: number; mcPresent?: boolean };
 
 type Comparison = '>' | '>=' | '<' | '<=' | '==' | '!=';
 
@@ -45,6 +48,15 @@ interface ChoiceExpr {
   optionId: string;
 }
 
+/** `mc:present` / `mc:absent` — whether MC participates in this playback
+ *  (authored in the CMS as "if with MC"). Context, like `time:` — a missed-chat
+ *  free watch plays with MC absent; normal play and paid participation with MC
+ *  present (the default). */
+interface McExpr {
+  kind: 'mc';
+  present: boolean;
+}
+
 interface NotExpr {
   kind: 'not';
   expr: Expr;
@@ -69,6 +81,7 @@ type Expr =
   | TimeExpr
   | GenderExpr
   | ChoiceExpr
+  | McExpr
   | NotExpr
   | AndExpr
   | OrExpr;
@@ -87,6 +100,7 @@ type Token =
   | { type: 'time'; band: TimeBand }
   | { type: 'gender'; value: MCGender }
   | { type: 'choice'; choiceId: string; optionId: string }
+  | { type: 'mc'; present: boolean }
   | { type: 'lparen' }
   | { type: 'rparen' };
 
@@ -160,6 +174,14 @@ function tokenize(input: string): Token[] {
           throw new Error(`Unknown gender "${value}" in condition: "${input}"`);
         }
         tokens.push({ type: 'gender', value });
+        continue;
+      }
+      if (word.startsWith('mc:')) {
+        const value = word.slice(3);
+        if (value !== 'present' && value !== 'absent') {
+          throw new Error(`Unknown mc predicate "${value}" (expected present|absent) in condition: "${input}"`);
+        }
+        tokens.push({ type: 'mc', present: value === 'present' });
         continue;
       }
       if (word.startsWith('choice:')) {
@@ -281,6 +303,12 @@ class Parser {
       return { kind: 'choice', choiceId: token.choiceId, optionId: token.optionId };
     }
 
+    // MC-participation predicate (context)
+    if (token.type === 'mc') {
+      this.advance();
+      return { kind: 'mc', present: token.present };
+    }
+
     // Comparison: identifier op number
     if (token.type === 'ident') {
       this.advance();
@@ -349,6 +377,10 @@ function evaluate(expr: Expr, state: GameState, ctx?: RuntimeContext): boolean {
       // Unanswered (or unrecorded legacy) choices evaluate false — gating waits
       // for the pick. Dangling ids are content bugs caught by validation.
       return state.choices[expr.choiceId] === expr.optionId;
+    case 'mc':
+      // Playback context, defaulting to present (normal play). A missed-chat
+      // free watch evaluates with mcPresent=false.
+      return (ctx?.mcPresent ?? true) === expr.present;
     case 'not':
       return !evaluate(expr.expr, state, ctx);
     case 'and':

@@ -103,13 +103,19 @@ export interface CreateEngineOptions {
    *  deterministic in tests and a trusted-time source can replace it later;
    *  defaults to the real local clock. */
   now?: () => number;
+  /** Whether MC participates in this playback (the `mc:` predicate; CMS "if
+   *  with MC"). Defaults to true; a missed-chat free watch passes false so
+   *  MC-directed lines hide and absent-texture lines show. */
+  mcPresent?: boolean;
 }
 
 export function createEngine(options: CreateEngineOptions): Engine {
   // Declared flags come from gameConfig (the CMS generates them from the world
   // config); the explicit option remains an override for tests/legacy callers.
-  const { config, onEvent, now = Date.now } = options;
+  const { config, onEvent, now = Date.now, mcPresent = true } = options;
   const flagsManifest = options.flagsManifest ?? config.flags ?? [];
+  // One evaluation context per check: fresh clock, fixed MC-presence.
+  const evalCtx = () => ({ now: now(), mcPresent });
 
   // Restore or create fresh state
   let state: GameState;
@@ -194,7 +200,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
       // Resolve at base timing (pace 1.0); the pace multiplier is applied live at
       // playback (see play()), so a mid-segment setPace speeds up / slows down the
       // remaining drip instead of being frozen at load time.
-      queue = resolveQueue(segment.messages, state, config.characters, 1.0, { now: now() });
+      queue = resolveQueue(segment.messages, state, config.characters, 1.0, evalCtx());
     },
 
     loadDay(day: DayConfig, segments: Record<string, SegmentInput>): void {
@@ -227,7 +233,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
         // ── GATING (show time) ── the gate sees the state as it is NOW, so a
         // line can branch on a choice or effect from earlier in this same
         // segment — the same "current state, in order" rule playDay applies.
-        if (item.condition && !evaluateCondition(item.condition, state, { now: now() })) {
+        if (item.condition && !evaluateCondition(item.condition, state, evalCtx())) {
           // A pool variant selected at load for a line that never shows must
           // not count as seen — roll the recording back.
           if (item.poolJustSelected) delete state.poolSelections[item.id];
@@ -269,7 +275,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
           // Filter options by condition
           const availableOptions = allOptions.filter((opt) => {
             if (!opt.condition) return true;
-            return evaluateCondition(opt.condition, state, { now: now() });
+            return evaluateCondition(opt.condition, state, evalCtx());
           });
 
           if (availableOptions.length === 0) {
@@ -364,7 +370,7 @@ export function createEngine(options: CreateEngineOptions): Engine {
         if (!segment) throw new Error(`Day references unknown segment: "${segId}"`);
 
         // ── GATING ── evaluate against *current* state, in order
-        if (segment.condition && !evaluateCondition(segment.condition, state, { now: now() })) {
+        if (segment.condition && !evaluateCondition(segment.condition, state, evalCtx())) {
           onEvent({ type: "segment_skipped", segmentId: segId });
           continue; // skip; loop advances automatically
         }

@@ -231,3 +231,28 @@ describe('recorded-choice predicate: choice:', () => {
     expect(evaluateCondition('(choice:c1==o1) OR (choice:c1==o2)', state)).toBe(true);
   });
 });
+
+describe('context predicate: mc: (participation)', () => {
+  it('parses present/absent, throws on anything else', () => {
+    expect(() => parseCondition('mc:present')).not.toThrow();
+    expect(() => parseCondition('mc:absent')).not.toThrow();
+    expect(() => parseCondition('mc:maybe')).toThrow('Unknown mc predicate');
+  });
+
+  it('defaults to present (normal play) when no context is supplied', () => {
+    expect(evaluateCondition('mc:present', stateWith({}))).toBe(true);
+    expect(evaluateCondition('mc:absent', stateWith({}))).toBe(false);
+  });
+
+  it('flips under a spectator context (missed-chat free watch)', () => {
+    const ctx = { mcPresent: false };
+    expect(evaluateCondition('mc:present', stateWith({}), ctx)).toBe(false);
+    expect(evaluateCondition('mc:absent', stateWith({}), ctx)).toBe(true);
+  });
+
+  it('composes with state predicates', () => {
+    const s = stateWith({ flags: ['met_ren'] });
+    expect(evaluateCondition('mc:present AND flag:met_ren', s, { mcPresent: true })).toBe(true);
+    expect(evaluateCondition('NOT mc:absent', s, { mcPresent: true })).toBe(true);
+  });
+});

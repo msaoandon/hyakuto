@@ -180,10 +180,9 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
   onChange: (gate: { condition: string | undefined; branch: BranchRef | undefined }) => void;
 }) {
   const current = choices.find((c) => c.id === branch?.choiceId);
-  const requireFlag = (id: string) => {
-    if (!id) return;
-    const clause = `flag:${id}`;
-    // AND onto whatever is there; parenthesise the old part only if it ORs.
+  // AND a clause onto whatever is there; parenthesise the old part only if it ORs.
+  const addClause = (clause: string) => {
+    if (!clause) return;
     const combined = !condition ? clause : condition.includes(" OR ") ? `(${condition}) AND ${clause}` : `${condition} AND ${clause}`;
     onChange({ condition: combined, branch });
   };
@@ -196,10 +195,21 @@ function GateEditor({ condition, branch, choices, flags, onChange }: {
       <select
         className={`${input} w-8 text-xs`} value="" title={flags.length ? "require a flag (set by a choice option)" : "no flags declared yet — set one on a choice option"}
         disabled={flags.length === 0}
-        onChange={(e) => requireFlag(e.target.value)}
+        onChange={(e) => addClause(e.target.value && `flag:${e.target.value}`)}
       >
         <option value="">🚩</option>
         {flags.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+      {/* MC participation (context, not a flag): a missed chat watched free plays
+          with MC absent; normal play / paid participation with MC present. */}
+      <select
+        className={`${input} w-12 text-xs`} value=""
+        title="only when MC participates / is absent (missed-chat replay modes)"
+        onChange={(e) => addClause(e.target.value)}
+      >
+        <option value="">MC</option>
+        <option value="mc:present">if with MC</option>
+        <option value="mc:absent">if without MC</option>
       </select>
       {branch ? (
         <span className="flex items-center gap-1 rounded border border-gold/40 bg-gold/5 px-1 py-0.5">

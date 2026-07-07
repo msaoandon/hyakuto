@@ -934,3 +934,31 @@ describe("option set_flag (writer-named consequence)", () => {
     await expect(engine.play()).rejects.toThrow(/Unknown flag/);
   });
 });
+
+describe("mc: participation context in play", () => {
+  const segment = {
+    id: "seg_mc",
+    messages: [
+      { id: "m1", character: "ao", text: "Anyone here?" },
+      { id: "m2", character: "ao", text: "Oh, you made it!", condition: "mc:present" },
+      { id: "m3", character: "ao", text: "Guess they're busy tonight.", condition: "mc:absent" },
+    ],
+  };
+
+  const playAs = async (mcPresent?: boolean) => {
+    const events: EngineEvent[] = [];
+    const engine = createEngine({ config, onEvent: (e) => events.push(e), ...(mcPresent === undefined ? {} : { mcPresent }) });
+    engine.setPace(0);
+    engine.loadSegment(segment);
+    await engine.play();
+    return shownTexts(events);
+  };
+
+  it("normal play (default) shows MC-directed lines, hides absent-texture ones", async () => {
+    expect(await playAs()).toEqual(["Anyone here?", "Oh, you made it!"]);
+  });
+
+  it("a free missed-chat watch (mcPresent: false) shows the conversation without MC", async () => {
+    expect(await playAs(false)).toEqual(["Anyone here?", "Guess they're busy tonight."]);
+  });
+});
