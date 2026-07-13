@@ -25,10 +25,13 @@ Two reasons this framing is load-bearing:
 
 1. **Friendlier UX.** The player is casting themself in a story, not filling in a
    form. An address preference is diegetic — it belongs to the fiction, the way
-   choosing a name does. It also makes `unset` a first-class option ("let them
-   figure it out"), not a missing answer: `unset` is the engine default and every
+   choosing a name does. It also makes `unset` a first-class option, not a
+   missing answer: `unset` is the engine default and every
    `gender:`-gated line must have a coherent unset path (the inclusive baseline —
-   already enforced by the engine's default and exercised in tests).
+   already enforced by the engine's default and exercised in tests). Label it
+   **neutrally** ("Not set" / "Не вказано") — deliberately not phrasing like
+   "let them figure it out", which would promise that characters react to the
+   omission; unset simply plays the canonical lines.
 2. **Smaller GDPR surface.** A gender *identity* is personal data with special-
    category gravity; an *address preference inside a game save* is game state.
    It lives in the opaque save blob (Phase 3: "MC customisation stored in an
