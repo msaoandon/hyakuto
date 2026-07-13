@@ -35,7 +35,7 @@ export const uk = {
   "mc.name": "Ім'я",
   "mc.namePlaceholder": "Як тебе називати?",
   "mc.address": "Як інші мають до тебе звертатися?",
-  "mc.addressUnset": "Нехай самі розберуться",
+  "mc.addressUnset": "Не вказано",
   "mc.addressFemale": "Як до жінки",
   "mc.addressMale": "Як до чоловіка",
   "mc.pronouns": "Займенники",

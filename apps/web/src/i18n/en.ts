@@ -35,7 +35,7 @@ export const en = {
   "mc.name": "Name",
   "mc.namePlaceholder": "What do they call you?",
   "mc.address": "How should the others address you?",
-  "mc.addressUnset": "Let them figure it out",
+  "mc.addressUnset": "Not set",
   "mc.addressFemale": "As a woman",
   "mc.addressMale": "As a man",
   "mc.pronouns": "Pronouns",
