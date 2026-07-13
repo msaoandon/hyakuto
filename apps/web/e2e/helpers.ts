@@ -4,10 +4,21 @@ import { expect, type Page } from "@playwright/test";
 // three `data-testid`s (thread-link, choice-option, vn-choice-option) cover the
 // spots where the on-screen text is authored content we don't want to hard-code.
 
-/** Splash → Lobby → Story → the current day's Chat list. */
-export async function enterChatDay(page: Page): Promise<void> {
+/** Splash → (first-run MC picker, defaults) → Lobby. A fresh profile lands on
+ *  /welcome; a returning one goes straight to the Lobby — handle both. */
+export async function enterLobby(page: Page): Promise<void> {
   await page.goto("/");
   await page.getByText("Touch to Start").click(); // waits out the hydration gate
+  await page.waitForURL(/\/(welcome|lobby)/);
+  if (page.url().includes("/welcome")) {
+    await page.getByRole("button", { name: "Begin" }).click();
+    await page.waitForURL(/\/lobby/);
+  }
+}
+
+/** Splash → Lobby → Story → the current day's Chat list. */
+export async function enterChatDay(page: Page): Promise<void> {
+  await enterLobby(page);
   await page.getByRole("link", { name: "Story", exact: true }).click();
   await page.getByRole("link", { name: "Chat", exact: true }).click();
   await expect(page.getByTestId("thread-link").first()).toBeVisible();

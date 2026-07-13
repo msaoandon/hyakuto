@@ -25,3 +25,11 @@ export function useT() {
   const dict = dictionaries[useLocale()];
   return (key: MessageKey, vars?: Vars): string => interpolate(dict[key], vars);
 }
+
+/** MC display name: the player's chosen name, or the localized default ("You").
+ *  Reactive to both the name and the locale. */
+export function useMcName(): string {
+  const name = useGameStore((s) => s.mc.name);
+  const dict = dictionaries[useLocale()];
+  return name.trim() || dict["mc.defaultName"];
+}

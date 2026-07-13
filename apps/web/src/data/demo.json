@@ -14,6 +14,39 @@
         "character": "Kou",
         "messages": [
           {
+            "en": "a new face! make yourself comfy, stranger",
+            "uk": "нове обличчя! влаштовуйся зручніше, таємнича особо"
+          }
+        ],
+        "condition": "gender:unset"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "a new face! make yourself comfy, ma'am",
+            "uk": "нове обличчя! влаштовуйся зручніше, пані"
+          }
+        ],
+        "condition": "gender:female"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
+            "en": "a new face! make yourself comfy, sir",
+            "uk": "нове обличчя! влаштовуйся зручніше, пане"
+          }
+        ],
+        "condition": "gender:male"
+      },
+      {
+        "type": "message",
+        "character": "Kou",
+        "messages": [
+          {
             "en": "ok genuine question for the room",
             "uk": "окей щире питання до всіх"
           }

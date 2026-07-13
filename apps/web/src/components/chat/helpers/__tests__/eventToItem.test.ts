@@ -13,14 +13,14 @@ const msg = (over: Partial<QueuedMessage>): QueuedMessage => ({
 
 describe("messageToItem", () => {
   it("maps a __status__ prefix to a status item and substitutes {MC}", () => {
-    expect(messageToItem(msg({ text: "__status__:{MC} entered the chat" }))).toEqual({
+    expect(messageToItem(msg({ text: "__status__:{MC} entered the chat" }), "You")).toEqual({
       kind: "status",
       text: "You entered the chat",
     });
   });
 
   it("maps a __sticker__ prefix to a sticker item keeping the file untouched", () => {
-    expect(messageToItem(msg({ character: "kou", text: "__sticker__:wink.png" }))).toEqual({
+    expect(messageToItem(msg({ character: "kou", text: "__sticker__:wink.png" }), "You")).toEqual({
       kind: "sticker",
       character: "kou",
       file: "wink.png",
@@ -28,7 +28,7 @@ describe("messageToItem", () => {
   });
 
   it("maps an __image__ prefix to an image item", () => {
-    expect(messageToItem(msg({ character: "kou", text: "__image__:kojiki1.jpg" }))).toEqual({
+    expect(messageToItem(msg({ character: "kou", text: "__image__:kojiki1.jpg" }), "You")).toEqual({
       kind: "image",
       character: "kou",
       file: "kojiki1.jpg",
@@ -36,7 +36,7 @@ describe("messageToItem", () => {
   });
 
   it("maps plain text to a message item and substitutes {@MC}", () => {
-    expect(messageToItem(msg({ character: "ren", text: "hey {@MC}!" }))).toEqual({
+    expect(messageToItem(msg({ character: "ren", text: "hey {@MC}!" }), "You")).toEqual({
       kind: "message",
       character: "ren",
       text: "hey You!",
@@ -46,7 +46,7 @@ describe("messageToItem", () => {
   });
 
   it("flags MC and dev senders", () => {
-    expect(messageToItem(msg({ character: "MC", text: "hi" }))).toMatchObject({ isMC: true });
-    expect(messageToItem(msg({ character: "dev", text: "hi" }))).toMatchObject({ isDev: true });
+    expect(messageToItem(msg({ character: "MC", text: "hi" }), "You")).toMatchObject({ isMC: true });
+    expect(messageToItem(msg({ character: "dev", text: "hi" }), "You")).toMatchObject({ isDev: true });
   });
 });

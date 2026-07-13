@@ -13,6 +13,7 @@ export function HydrationGate({ children }: { children: ReactNode }) {
       // The persisted state is known now: a fresh profile adopts the device
       // language (an explicit pick — localeChosen — always wins).
       useGameStore.getState().seedLocaleFromDevice();
+      void useGameStore.getState().loadMcAvatar();
       setHydrated(true);
       // Release the native splash (held via launchAutoHide: false) only once
       // the web gate clears — a seamless handoff, no flash of unhydrated UI.

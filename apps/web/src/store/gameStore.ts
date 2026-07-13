@@ -1,9 +1,19 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { createGameState, DEFAULT_GENDER, type SaveState, type GameState } from "@hyakuto/engine";
+import { createGameState, DEFAULT_GENDER, type MCGender, type SaveState, type GameState } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
+import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
+
+// MC customisation (docs/worldbuilding/mc.md): name + pronouns are presentation
+// state and live here; gender-for-address is ENGINE state and lives in
+// save.gender (setMc writes it through) — never duplicated. The avatar is an
+// IndexedDB blob (see mcAvatar.ts); only its object URL passes through the store.
+export type McPronouns = "they" | "she" | "he";
+export type McProfile = { name: string; pronouns: McPronouns };
+export const MC_NAME_MAX = 20;
+const EMPTY_MC: McProfile = { name: "", pronouns: "they" };
 
 // Player chat-speed preference is a 1–9 level (1 slowest … 9 fastest). Level 5
 // is the default. Each level maps to an engine delay multiplier; the mapping is
@@ -38,6 +48,15 @@ function freshSave(): SaveState {
 
 type GameStore = {
   save: SaveState;
+  /** MC identity (name + pronouns). Persisted; belongs to the playthrough —
+   *  reset() clears it (and the avatar) and re-arms the first-run picker. */
+  mc: McProfile;
+  /** True once the player has been through the picker (or dismissed it with
+   *  defaults). False → the entry flow routes through /welcome. Persisted. */
+  mcChosen: boolean;
+  /** Object URL of the stored avatar blob, or null. Transient — loaded from
+   *  IndexedDB after hydration (loadMcAvatar); never serialized. */
+  mcAvatarUrl: string | null;
   locale: Locale;
   /** True once the player picked a language themself (Settings / chooser). Until
    *  then the locale follows the device language on each launch; an explicit
@@ -62,6 +81,15 @@ type GameStore = {
   completeThread: (key: string, save: SaveState) => void;
   markDmRead: (threadId: string, segmentIds: string[]) => void;
   reset: () => void;
+  /** Apply picker edits. Name/pronouns merge into `mc`; `gender` writes through
+   *  to save.gender (the engine's field). Marks the picker as answered. */
+  setMc: (patch: Partial<McProfile> & { gender?: MCGender }) => void;
+  /** Load the avatar blob from IndexedDB into an object URL (post-hydration). */
+  loadMcAvatar: () => Promise<void>;
+  /** Persist a new avatar blob and expose its object URL. */
+  setMcAvatar: (blob: Blob) => Promise<void>;
+  /** Remove the stored avatar. */
+  clearMcAvatar: () => Promise<void>;
   setLocale: (locale: Locale) => void;
   /** Adopt the device language on a fresh profile (no explicit pick yet). Called
    *  after hydration, when the persisted state is known. No-op once chosen. */
@@ -77,6 +105,9 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       save: freshSave(),
+      mc: EMPTY_MC,
+      mcChosen: false,
+      mcAvatarUrl: null,
       locale: DEFAULT_LOCALE,
       localeChosen: false,
       musicEnabled: true,
@@ -94,7 +125,30 @@ export const useGameStore = create<GameStore>()(
           const seen = new Set([...(s.dmRead[threadId] ?? []), ...segmentIds]);
           return { dmRead: { ...s.dmRead, [threadId]: [...seen] } };
         }),
-      reset: () => set({ save: freshSave(), completed: {}, dmRead: {} }),
+      // A new game = a new identity: MC name/pronouns/avatar belong to the
+      // playthrough (and wiping the save wipes the personal data with it).
+      reset: () => {
+        void deleteMcAvatar();
+        set({ save: freshSave(), completed: {}, dmRead: {}, mc: EMPTY_MC, mcChosen: false, mcAvatarUrl: null });
+      },
+      setMc: ({ gender, ...profile }) =>
+        set((s) => ({
+          mc: { ...s.mc, ...profile },
+          mcChosen: true,
+          ...(gender !== undefined ? { save: { ...s.save, gender } } : {}),
+        })),
+      loadMcAvatar: async () => {
+        const blob = await readMcAvatar();
+        set({ mcAvatarUrl: blob ? URL.createObjectURL(blob) : null });
+      },
+      setMcAvatar: async (blob) => {
+        await writeMcAvatar(blob);
+        set({ mcAvatarUrl: URL.createObjectURL(blob), mcChosen: true });
+      },
+      clearMcAvatar: async () => {
+        await deleteMcAvatar();
+        set({ mcAvatarUrl: null });
+      },
       setLocale: (locale) => set({ locale, localeChosen: true }),
       seedLocaleFromDevice: () => {
         if (get().localeChosen || typeof navigator === "undefined") return;
@@ -109,10 +163,12 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
+        mc: s.mc,
+        mcChosen: s.mcChosen,
         locale: s.locale,
         localeChosen: s.localeChosen,
         musicEnabled: s.musicEnabled,
@@ -126,12 +182,19 @@ export const useGameStore = create<GameStore>()(
       // v2 adds `localeChosen`. Existing installs get true — whatever locale they
       // have (picked or lived-with default) must never be silently switched by
       // device seeding; only genuinely fresh profiles follow the device language.
+      // v3 adds MC identity. Existing installs get mcChosen: true — a mid-story
+      // player must never be interrupted by a first-run picker; their name stays
+      // the localized default ("" → fallback) until they visit Settings.
       migrate: (persisted, version) => {
-        const s = persisted as { completed?: unknown; localeChosen?: boolean };
+        const s = persisted as { completed?: unknown; localeChosen?: boolean; mc?: McProfile; mcChosen?: boolean };
         if (version < 1 && Array.isArray(s.completed)) {
           s.completed = Object.fromEntries((s.completed as string[]).map((k) => [k, 0]));
         }
         if (version < 2) s.localeChosen = true;
+        if (version < 3) {
+          s.mc = EMPTY_MC;
+          s.mcChosen = true;
+        }
         return persisted as GameStore;
       },
       skipHydration: true,

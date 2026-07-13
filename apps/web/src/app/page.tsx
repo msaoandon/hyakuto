@@ -5,6 +5,7 @@ import { Shippori_Mincho } from 'next/font/google';
 import { LanguageChooser } from '@/components/LanguageChooser';
 import { LanternBackground } from '@/components/LanternBackground';
 import { useT } from '@/i18n';
+import { useGameStore } from '@/store/gameStore';
 
 const shipporiMincho = Shippori_Mincho({
   weight: '800',
@@ -18,11 +19,12 @@ const shipporiMincho = Shippori_Mincho({
 // later).
 export default function Home() {
   const t = useT();
+  const mcChosen = useGameStore((s) => s.mcChosen);
 
   return (
     <main className="relative min-h-screen">
       <Link
-        href="/lobby"
+        href={mcChosen ? "/lobby" : "/welcome"}
         className="min-h-screen flex flex-col items-center justify-center gap-10 transition-colors duration-500"
       >
         <LanternBackground />

@@ -8,7 +8,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import type { SegmentInput } from "@hyakuto/engine";
 import { groupItems } from "./helpers/groupMessages";
 import { useChatEngine, type ChatEngineHandlers } from "./hooks/useChatEngine";
-import { MC_NAME } from "./helpers/mc";
+import { useMcName } from "@/i18n";
 
 type ChatFeedProps = ChatEngineHandlers & {
   segment: SegmentInput;
@@ -18,6 +18,7 @@ type ChatFeedProps = ChatEngineHandlers & {
 
 export function ChatFeed({ segment, chosenText, onImageTap, ...handlers }: ChatFeedProps) {
   const { visible, typingCharacter } = useChatEngine(segment, chosenText, handlers);
+  const mcName = useMcName();
   const grouped = useMemo(() => groupItems(visible), [visible]);
 
   return (
@@ -32,7 +33,7 @@ export function ChatFeed({ segment, chosenText, onImageTap, ...handlers }: ChatF
               return (
                 <div key={item.index} className="mt-3">
                   <ChatBubble
-                    character={item.isDev ? "dev" : MC_NAME}
+                    character={item.isDev ? "dev" : mcName}
                     text={item.text}
                     isMC={!item.isDev}
                     isDev={item.isDev}

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createEngine, type EngineEvent, type SegmentInput } from "@hyakuto/engine";
 import { gameConfig } from "@hyakuto/game";
 import { useGameStore, paceMultiplier } from "@/store/gameStore";
+import { useMcName } from "@/i18n";
 import { messageToItem } from "../helpers/eventToItem";
 import { substituteMC } from "../helpers/mc";
 import type { VisibleItem, PendingChoice, EngineSnapshot } from "../types";
@@ -43,6 +44,9 @@ export function useChatEngine(
   } = handlers;
 
   const [visible, setVisible] = useState<VisibleItem[]>([]);
+  // Captured per thread (the engine effect keys on segment.id): a rename in
+  // Settings applies from the next thread on, not mid-drip.
+  const mcName = useMcName();
   const [typingCharacter, setTypingCharacter] = useState<string | null>(null);
   const engineRef = useRef<Engine | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
@@ -104,10 +108,10 @@ export function useChatEngine(
             setTypingCharacter(null);
             break;
           case "message_shown":
-            setVisible((prev) => [...prev, messageToItem(event.message)]);
+            setVisible((prev) => [...prev, messageToItem(event.message, mcName)]);
             break;
           case "choice_required": {
-            const options = event.options.map((o) => ({ ...o, text: substituteMC(o.text) }));
+            const options = event.options.map((o) => ({ ...o, text: substituteMC(o.text, mcName) }));
             pendingOptionsRef.current = options;
             pendingCharacterRef.current = event.character;
             onChoiceAvailable({ options, character: event.character });

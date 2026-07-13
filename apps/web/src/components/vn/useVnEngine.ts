@@ -5,6 +5,7 @@ import { createEngine, NARRATOR, type EngineEvent, type SegmentInput } from "@hy
 import { gameConfig } from "@hyakuto/game";
 import { useGameStore } from "@/store/gameStore";
 import { substituteMC } from "../chat/helpers/mc";
+import { useMcName } from "@/i18n";
 import type { PendingChoice, EngineSnapshot } from "../chat/types";
 
 type Engine = ReturnType<typeof createEngine>;
@@ -41,6 +42,8 @@ export function useVnEngine(segment: SegmentInput, handlers: VnEngineHandlers) {
     handlers;
 
   const [current, setCurrent] = useState<VnItem | null>(null);
+  // Captured per segment (the engine effect keys on segment.id).
+  const mcName = useMcName();
   const [scene, setScene] = useState<string | undefined>(undefined);
   const engineRef = useRef<Engine | null>(null);
   const pendingOptionsRef = useRef<{ text: string }[]>([]);
@@ -68,14 +71,14 @@ export function useVnEngine(segment: SegmentInput, handlers: VnEngineHandlers) {
             setCurrent({
               id: m.id,
               character: m.character,
-              text: substituteMC(m.text),
+              text: substituteMC(m.text, mcName),
               isNarration: m.character === NARRATOR,
               isMC: m.character === "MC",
             });
             break;
           }
           case "choice_required": {
-            const options = event.options.map((o) => ({ ...o, text: substituteMC(o.text) }));
+            const options = event.options.map((o) => ({ ...o, text: substituteMC(o.text, mcName) }));
             pendingOptionsRef.current = options;
             onChoiceAvailable({ options, character: event.character });
             break;

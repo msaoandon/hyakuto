@@ -7,12 +7,13 @@ const STATUS = "__status__:";
 const STICKER = "__sticker__:";
 const IMAGE = "__image__:";
 
-/** Map a shown engine message to a renderable feed item. */
-export function messageToItem(message: QueuedMessage): VisibleItem {
+/** Map a shown engine message to a renderable feed item. `mcName` resolves the
+ *  `{MC}` authoring tokens (the player's chosen name or localized default). */
+export function messageToItem(message: QueuedMessage, mcName: string): VisibleItem {
   const { character, text } = message;
 
   if (text.startsWith(STATUS)) {
-    return { kind: "status", text: substituteMC(text.slice(STATUS.length)) };
+    return { kind: "status", text: substituteMC(text.slice(STATUS.length), mcName) };
   }
   if (text.startsWith(STICKER)) {
     return { kind: "sticker", character, file: text.slice(STICKER.length) };
@@ -23,7 +24,7 @@ export function messageToItem(message: QueuedMessage): VisibleItem {
   return {
     kind: "message",
     character,
-    text: substituteMC(text),
+    text: substituteMC(text, mcName),
     isMC: character === "MC",
     isDev: character === "dev",
   };

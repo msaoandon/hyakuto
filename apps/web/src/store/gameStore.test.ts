@@ -68,3 +68,33 @@ describe("saveToState", () => {
     expect(state.completed).toEqual({ "1:a": 1234 });
   });
 });
+
+describe("MC customisation", () => {
+  it("setMc merges name/pronouns, writes gender through to save.gender, and marks chosen", () => {
+    expect(useGameStore.getState().mcChosen).toBe(false);
+    useGameStore.getState().setMc({ name: "Yuki", gender: "female" });
+    const s = useGameStore.getState();
+    expect(s.mc.name).toBe("Yuki");
+    expect(s.mc.pronouns).toBe("they"); // untouched field survives the merge
+    expect(s.save.gender).toBe("female"); // engine field, not duplicated
+    expect(s.mcChosen).toBe(true);
+  });
+
+  it("setMc({}) marks the picker answered without changing anything (Begin with defaults)", () => {
+    useGameStore.getState().setMc({});
+    const s = useGameStore.getState();
+    expect(s.mcChosen).toBe(true);
+    expect(s.mc).toEqual({ name: "", pronouns: "they" });
+    expect(s.save.gender).toBe("unset");
+  });
+
+  it("reset clears the identity and re-arms the first-run picker", () => {
+    useGameStore.getState().setMc({ name: "Yuki", pronouns: "she", gender: "female" });
+    useGameStore.getState().reset();
+    const s = useGameStore.getState();
+    expect(s.mc).toEqual({ name: "", pronouns: "they" });
+    expect(s.mcChosen).toBe(false);
+    expect(s.save.gender).toBe("unset"); // fresh save = fresh engine defaults
+    expect(s.mcAvatarUrl).toBeNull();
+  });
+});
