@@ -5,7 +5,8 @@ import {
   IconBook2, IconPhoto, IconDeviceFloppy, IconHistory, IconSettings, type Icon,
 } from "@tabler/icons-react";
 import { LanternBackground } from "@/components/LanternBackground";
-import { useT } from "@/i18n";
+import { McAvatar } from "@/components/mc/McAvatar";
+import { useT, useMcName } from "@/i18n";
 
 // The persistent hub, reachable any time. Story is the primary action; the rest
 // are secondary surfaces (some still stubs). History is a concept for now.
@@ -18,6 +19,7 @@ const tileBase =
 
 export default function LobbyPage() {
   const t = useT();
+  const mcName = useMcName();
 
   const tiles: { href: string; label: string; icon: Icon; disabled?: boolean }[] = [
     { href: "/library", label: t("lobby.library"), icon: IconBook2 },
@@ -30,6 +32,11 @@ export default function LobbyPage() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-10 p-6">
       <LanternBackground />
+
+      <Link href="/settings" className="flex flex-col items-center gap-2" aria-label={t("settings.mc")}>
+        <McAvatar className="w-20 h-20 text-2xl" />
+        <span className="text-ink-black/80 font-medium">{mcName}</span>
+      </Link>
 
       <Link
         href="/story"

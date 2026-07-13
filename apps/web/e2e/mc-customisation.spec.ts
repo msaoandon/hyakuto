@@ -20,6 +20,7 @@ test("first-run picker personalizes address and {MC} name in the story", async (
   await page.getByRole("button", { name: "As a woman" }).click();
   await page.getByRole("button", { name: "Begin" }).click();
   await page.waitForURL(/\/lobby/);
+  await expect(page.getByText("Yuki", { exact: true })).toBeVisible(); // lobby identity badge
 
   // Into the first chat: the gendered variant and the chosen name must show.
   await page.getByRole("link", { name: "Story", exact: true }).click();

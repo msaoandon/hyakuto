@@ -3,8 +3,9 @@
 import { useRef } from "react";
 import type { MCGender } from "@hyakuto/engine";
 import { useGameStore, MC_NAME_MAX, type McPronouns } from "@/store/gameStore";
-import { useT, useMcName } from "@/i18n";
+import { useT } from "@/i18n";
 import { toAvatarBlob } from "./cropImage";
+import { McAvatar } from "./McAvatar";
 
 // The MC customisation fields (docs/worldbuilding/mc.md) — shared verbatim by
 // the first-run /welcome step and the Settings section. Edits write straight
@@ -33,7 +34,6 @@ export function McFields() {
   const setMc = useGameStore((s) => s.setMc);
   const setMcAvatar = useGameStore((s) => s.setMcAvatar);
   const clearMcAvatar = useGameStore((s) => s.clearMcAvatar);
-  const mcName = useMcName();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const editName = (e: React.ChangeEvent<HTMLInputElement>) => setMc({ name: e.target.value });
@@ -51,16 +51,9 @@ export function McFields() {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Avatar (Option 1 surface: picker/Settings only — chat bubbles unchanged) */}
+      {/* Avatar (surfaces: lobby badge + picker/Settings — chat bubbles unchanged) */}
       <div className="flex items-center gap-4">
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local blob URL
-          <img src={avatarUrl} alt={t("mc.avatar")} className="w-16 h-16 rounded-full object-cover border border-[#2f406d]" />
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-navy-light/80 border border-[#2f406d] flex items-center justify-center text-xl font-bold text-beige">
-            {mcName.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <McAvatar className="w-16 h-16 text-xl" />
         <div className="flex flex-col gap-1">
           <button type="button" onClick={openFile} className="text-sm text-lantern-blue text-left hover:underline">
             {t("mc.avatarUpload")}
