@@ -142,8 +142,14 @@ export const useGameStore = create<GameStore>()(
         set({ mcAvatarUrl: blob ? URL.createObjectURL(blob) : null });
       },
       setMcAvatar: async (blob) => {
-        await writeMcAvatar(blob);
+        // Preview first — the picked photo must show even if persistence fails
+        // (e.g. private-mode storage restrictions); it then lasts the session.
         set({ mcAvatarUrl: URL.createObjectURL(blob), mcChosen: true });
+        try {
+          await writeMcAvatar(blob);
+        } catch (err) {
+          console.warn("avatar preview only — could not persist:", err);
+        }
       },
       clearMcAvatar: async () => {
         await deleteMcAvatar();

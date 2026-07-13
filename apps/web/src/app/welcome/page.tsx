@@ -22,9 +22,9 @@ export default function WelcomePage() {
   };
 
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center p-6">
+    <main className="relative flex-1 overflow-y-auto flex flex-col items-center p-6">
       <LanternBackground />
-      <div className="relative w-full max-w-sm flex flex-col gap-6 rounded-2xl bg-ink-black/60 backdrop-blur-sm border border-[#2f406d] p-6">
+      <div className="relative my-auto w-full max-w-sm flex flex-col gap-6 rounded-2xl bg-ink-black/60 backdrop-blur-sm border border-[#2f406d] p-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-semibold text-beige">{t("welcome.title")}</h1>
           <p className="text-sm text-beige/60">{t("welcome.hint")}</p>

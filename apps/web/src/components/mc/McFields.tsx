@@ -79,24 +79,30 @@ export function McFields() {
         />
       </label>
 
-      <fieldset className="flex flex-col gap-1.5">
+      {/* Plain-block fieldsets with an inner flex div: Safari mis-lays-out a
+          legend that is itself a flex item (phantom space that shifts on focus). */}
+      <fieldset>
         <legend className="text-sm text-beige/70 mb-1.5">{t("mc.address")}</legend>
-        {GENDERS.map(({ value, label }) => (
-          <button key={value} type="button" onClick={pickGender(value)} aria-pressed={gender === value}
-            className={`${option} ${gender === value ? selected : unselected}`}>
-            {t(label)}
-          </button>
-        ))}
+        <div className="flex flex-col gap-1.5">
+          {GENDERS.map(({ value, label }) => (
+            <button key={value} type="button" onClick={pickGender(value)} aria-pressed={gender === value}
+              className={`${option} ${gender === value ? selected : unselected}`}>
+              {t(label)}
+            </button>
+          ))}
+        </div>
       </fieldset>
 
-      <fieldset className="flex items-center gap-2">
+      <fieldset>
         <legend className="text-sm text-beige/70 mb-1.5">{t("mc.pronouns")}</legend>
-        {PRONOUNS.map((value) => (
-          <button key={value} type="button" onClick={pickPronouns(value)} aria-pressed={mc.pronouns === value}
-            className={`flex-1 rounded-xl px-3 py-2 text-center border border-[#2f406d] transition-colors ${mc.pronouns === value ? selected : unselected}`}>
-            {t(`mc.pronouns.${value}`)}
-          </button>
-        ))}
+        <div className="flex items-center gap-2">
+          {PRONOUNS.map((value) => (
+            <button key={value} type="button" onClick={pickPronouns(value)} aria-pressed={mc.pronouns === value}
+              className={`flex-1 rounded-xl px-3 py-2 text-center border border-[#2f406d] transition-colors ${mc.pronouns === value ? selected : unselected}`}>
+              {t(`mc.pronouns.${value}`)}
+            </button>
+          ))}
+        </div>
       </fieldset>
     </div>
   );

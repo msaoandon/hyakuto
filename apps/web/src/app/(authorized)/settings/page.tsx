@@ -22,7 +22,7 @@ export default function SettingsPage() {
         </Link>
         <span className="flex-1 truncate">{t("settings.title")}</span>
       </header>
-      <div className="relative flex-1 flex flex-col gap-3 p-6">
+      <div className="relative flex-1 flex flex-col gap-3 p-6 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <LanternBackground />
         <SettingRow label={t("settings.language")}>
           <LanguageChooser />
