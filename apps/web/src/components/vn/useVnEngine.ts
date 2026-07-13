@@ -107,7 +107,14 @@ export function useVnEngine(segment: SegmentInput, handlers: VnEngineHandlers) {
     engineRef.current = engine;
     engine.loadSegment(segment);
     onStateChange?.(snapshot(engine));
-    engine.play({ stepped: true });
+    // Same guard as the chat player: a mid-play exception ends the thread
+    // visibly instead of freezing the reader.
+    engine.play({ stepped: true }).catch((err: unknown) => {
+      if (cancelled) return;
+      console.error("vn play failed:", err);
+      onEngineEvent?.(`play failed: ${(err as Error).message}`);
+      onThreadEnded?.();
+    });
 
     return () => {
       cancelled = true;

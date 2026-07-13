@@ -142,7 +142,14 @@ export function useChatEngine(
     engine.setPace(paceMultiplier(useGameStore.getState().chatPaceLevel));
     engine.loadSegment(segment);
     onStateChange?.(snapshot(engine));
-    engine.play();
+    // A mid-play exception must never strand the player in a dead chat (no
+    // exit, no messages): surface it and end the thread so Exit appears.
+    engine.play().catch((err: unknown) => {
+      if (cancelled) return;
+      console.error("chat play failed:", err);
+      onEngineEvent?.(`play failed: ${(err as Error).message}`);
+      onThreadEnded?.();
+    });
 
     return () => {
       cancelled = true;
