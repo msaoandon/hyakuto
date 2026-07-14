@@ -53,4 +53,12 @@ export const uk = {
   "settings.newGameHint": "Зітре весь прогрес і твого персонажа.",
   "settings.newGameConfirm": "Стерти все",
   "settings.cancel": "Скасувати",
+  "account.title": "Обліковий запис",
+  "account.guestNote": "Ти граєш як гість. Увійди, щоб зберегти прогрес при зміні пристрою.",
+  "account.signInWith": "Увійти через {provider}",
+  "account.signedInAs": "Увійшли через {provider}",
+  "account.signOut": "Вийти",
+  "account.connecting": "З'єднання…",
+  "account.error": "Не вдалося увійти. Спробуй ще раз.",
+  "account.restoreNotice": "На сервері знайдено збереження цього акаунта. Відновлення поки не підтримується — твій локальний прогрес тут не постраждав.",
 };

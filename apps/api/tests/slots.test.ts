@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { PLAYER_SAVE_VERSION, type PlayerSaveT } from "@hyakuto/player-save";
 import { createApp } from "../src/app";
 import { prisma } from "../src/db";
+import { newGuest, authed } from "./helpers";
 
 const app = createApp();
-const P = "11111111-1111-4111-8111-111111111111";
 
 // Maximal: every field populated (the round-trip must be byte-faithful).
 const full: PlayerSaveT = {
@@ -23,22 +23,28 @@ const full: PlayerSaveT = {
   dmRead: { demo_dm1: ["demo_dm1_1"] },
 };
 
-const put = (playerId: string, slot: number, body: unknown) =>
-  app.request(`/v1/players/${playerId}/slots/${slot}`, {
+const put = (token: string, slot: number | string, body: unknown) =>
+  app.request(`/v1/me/slots/${slot}`, {
     method: "PUT",
     body: JSON.stringify(body),
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...authed(token) },
   });
-const get = (playerId: string, slot: number) => app.request(`/v1/players/${playerId}/slots/${slot}`);
+const get = (token: string, slot: number | string) =>
+  app.request(`/v1/me/slots/${slot}`, { headers: authed(token) });
+
+let mine: string; // guest bearer tokens — every request is authenticated
+let theirs: string;
 
 beforeAll(async () => {
   await prisma.player.deleteMany();
+  mine = await newGuest(app);
+  theirs = await newGuest(app);
 });
 
 describe("save-slot round-trip", () => {
   it("PUT → GET is byte-faithful for a maximal save", async () => {
-    expect((await put(P, 0, full)).status).toBe(200);
-    const res = await get(P, 0);
+    expect((await put(mine, 0, full)).status).toBe(200);
+    const res = await get(mine, 0);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(full);
   });
@@ -52,8 +58,8 @@ describe("save-slot round-trip", () => {
       completed: {},
       dmRead: {},
     };
-    expect((await put(P, 1, fresh)).status).toBe(200);
-    const body = await (await get(P, 1)).json();
+    expect((await put(mine, 1, fresh)).status).toBe(200);
+    const body = await (await get(mine, 1)).json();
     // Optional engine fields normalize: gender → "unset", choices → {}.
     expect(body).toEqual({ ...fresh, save: { ...fresh.save, gender: "unset", choices: {} } });
   });
@@ -64,11 +70,14 @@ describe("save-slot round-trip", () => {
       save: { ...full.save, axes: { kou: 5 }, flags: [], choices: {} },
       completed: { "1:demo_d1_t1": 1760000000000 },
     };
-    expect((await put(P, 0, smaller)).status).toBe(200);
-    expect(await (await get(P, 0)).json()).toEqual({ ...smaller, save: { ...smaller.save } });
+    expect((await put(mine, 0, smaller)).status).toBe(200);
+    expect(await (await get(mine, 0)).json()).toEqual(smaller);
 
+    const { playerId } = (await (
+      await app.request("/v1/me", { headers: authed(mine) })
+    ).json()) as { playerId: string };
     const slotRow = await prisma.saveSlot.findUniqueOrThrow({
-      where: { playerId_slot: { playerId: P, slot: 0 } },
+      where: { playerId_slot: { playerId, slot: 0 } },
       include: { axes: true, flags: true, choices: true, completions: true },
     });
     expect(slotRow.axes).toHaveLength(1);
@@ -77,17 +86,16 @@ describe("save-slot round-trip", () => {
     expect(slotRow.completions).toHaveLength(1);
   });
 
-  it("slots and players are isolated", async () => {
-    const other = "22222222-2222-4222-8222-222222222222";
-    await put(other, 0, full);
-    const mine = await (await get(P, 0)).json();
-    const theirs = await (await get(other, 0)).json();
-    expect(theirs).toEqual(full);
-    expect(mine).not.toEqual(full); // P slot 0 holds the smaller overwrite
+  it("players are isolated: another token never sees my slots", async () => {
+    await put(theirs, 0, full);
+    const mineBody = await (await get(mine, 0)).json();
+    const theirsBody = await (await get(theirs, 0)).json();
+    expect(theirsBody).toEqual(full);
+    expect(mineBody).not.toEqual(full); // my slot 0 holds the smaller overwrite
   });
 
   it("lists slots with metadata", async () => {
-    const res = await app.request(`/v1/players/${P}/slots`);
+    const res = await app.request("/v1/me/slots", { headers: authed(mine) });
     const list = await res.json();
     expect(list.map((s: { slot: number }) => s.slot)).toEqual([0, 1]);
     expect(list[0].candles).toBe(93);
@@ -98,30 +106,29 @@ describe("save-slot round-trip", () => {
 
 describe("boundaries", () => {
   it("rejects malformed payloads with 400 and a located message", async () => {
-    const res = await put(P, 0, { ...full, save: { ...full.save, flags: "nope" } });
+    const res = await put(mine, 0, { ...full, save: { ...full.save, flags: "nope" } });
     expect(res.status).toBe(400);
     expect((await res.json()).error).toMatch(/save\.flags/);
   });
 
   it("rejects future schema versions (never store what we can't read)", async () => {
-    const res = await put(P, 0, { ...full, schemaVersion: 99 });
+    const res = await put(mine, 0, { ...full, schemaVersion: 99 });
     expect(res.status).toBe(400);
   });
 
   it("404s an absent slot; 400s a garbage slot number", async () => {
-    expect((await get(P, 7)).status).toBe(404);
-    expect((await app.request(`/v1/players/${P}/slots/x`)).status).toBe(400);
+    expect((await get(mine, 7)).status).toBe(404);
+    expect((await get(mine, "x")).status).toBe(400);
   });
 
-  it("DELETE player removes every trace (GDPR path)", async () => {
-    const ghost = "33333333-3333-4333-8333-333333333333";
+  it("DELETE /me removes every trace, session included (GDPR path)", async () => {
+    const ghost = await newGuest(app);
     await put(ghost, 0, full);
     await put(ghost, 1, full);
-    const res = await app.request(`/v1/players/${ghost}`, { method: "DELETE" });
+    const res = await app.request("/v1/me", { method: "DELETE", headers: authed(ghost) });
     expect(res.status).toBe(200);
-    expect((await get(ghost, 0)).status).toBe(404);
-    expect(await prisma.saveSlot.count({ where: { playerId: ghost } })).toBe(0);
-    expect(await prisma.axisValue.count()).toBeGreaterThanOrEqual(0); // no FK debris possible: cascades
-    expect(await prisma.player.findUnique({ where: { id: ghost } })).toBeNull();
+    // The cascade revoked the session too: the very next call is unauthenticated.
+    expect((await get(ghost, 0)).status).toBe(401);
+    expect(await prisma.player.count()).toBe(2); // only mine + theirs remain
   });
 });

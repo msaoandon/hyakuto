@@ -7,6 +7,7 @@ import { LanternBackground } from "@/components/LanternBackground";
 import { LanguageChooser } from "@/components/LanguageChooser";
 import { MusicToggle } from "@/components/MusicToggle";
 import { McFields } from "@/components/mc/McFields";
+import { AccountSection } from "@/components/account/AccountSection";
 import { useGameStore } from "@/store/gameStore";
 import { useT } from "@/i18n";
 
@@ -34,6 +35,7 @@ export default function SettingsPage() {
           <span>{t("settings.mc")}</span>
           <McFields />
         </div>
+        <AccountSection />
         <NewGameRow />
       </div>
     </>

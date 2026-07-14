@@ -53,4 +53,12 @@ export const en = {
   "settings.newGameHint": "Erases all progress and your character.",
   "settings.newGameConfirm": "Erase everything",
   "settings.cancel": "Cancel",
+  "account.title": "Account",
+  "account.guestNote": "Playing as a guest. Sign in to keep your progress if you switch devices.",
+  "account.signInWith": "Continue with {provider}",
+  "account.signedInAs": "Signed in with {provider}",
+  "account.signOut": "Sign out",
+  "account.connecting": "Connecting…",
+  "account.error": "Sign-in didn't go through. Please try again.",
+  "account.restoreNotice": "A save from this account was found on the server. Restoring it isn't supported yet — your local progress here is unaffected.",
 } as const;

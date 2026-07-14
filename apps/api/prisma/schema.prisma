@@ -15,11 +15,54 @@ datasource db {
 }
 
 model Player {
-  id        String     @id
-  createdAt DateTime   @default(now())
-  /// Auth.js account id — filled by the auth slice; null = local/guest player.
-  authId    String?    @unique
+  id        String        @id @default(uuid())
+  createdAt DateTime      @default(now())
   slots     SaveSlot[]
+  accounts  AuthAccount[]
+  sessions  ApiSession[]
+  codes     LoginCode[]
+}
+
+/// An OAuth identity linked to a player. A relation table (not a column on
+/// Player): one player can link several providers, and each provider identity
+/// carries its own nullable email — Apple hides the real address behind a relay,
+/// so no code may ever assume an email exists. A player with zero accounts is a
+/// guest.
+model AuthAccount {
+  provider          String
+  providerAccountId String
+  player            Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId          String
+  email             String?
+  displayName       String?
+  createdAt         DateTime @default(now())
+
+  @@id([provider, providerAccountId])
+}
+
+/// A bearer-token session. The token itself is never stored — only its SHA-256 —
+/// so a leaked database cannot impersonate anyone. DB-backed (not a JWT) so
+/// sign-out and account deletion revoke for real. Expiry slides on use.
+model ApiSession {
+  tokenHash  String   @id
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId   String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+}
+
+/// Single-use, 60-second code minted at the end of the OAuth dance and exchanged
+/// (via POST body) for an ApiSession — the bearer token never rides a redirect
+/// URL, where it would leak into history and logs. Hashed at rest like tokens.
+model LoginCode {
+  codeHash          String    @id
+  player            Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId          String
+  provider          String
+  providerAccountId String
+  expiresAt         DateTime
+  consumedAt        DateTime?
 }
 
 model SaveSlot {

@@ -5,7 +5,8 @@ import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
 import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
-import { pushSave, pushSlotDelete, type SaveSnapshot } from "@/data/saveSync";
+import { pushSave, pushSlotDelete, syncEnabled, type SaveSnapshot } from "@/data/saveSync";
+import { mintGuestSession, revokeSession, type AuthAccount } from "@/data/authClient";
 
 // MC customisation (docs/worldbuilding/mc.md): name + pronouns are presentation
 // state and live here; gender-for-address is ENGINE state and lives in
@@ -49,9 +50,21 @@ function freshSave(): SaveState {
 
 type GameStore = {
   save: SaveState;
-  /** Client-generated identity for the local save-sync API (documented Phase-3
-   *  shortcut) — replaced by the Auth.js session when accounts land. Persisted. */
-  playerId: string;
+  /** The save-sync bearer session: a guest (account: null) until the player
+   *  signs in, then the linked account's identity. Persisted so a guest token
+   *  survives reloads — losing it would mint a new guest player server-side on
+   *  every launch and break the "adopt on first sign-in" path. null before the
+   *  first sync attempt (nothing minted yet — sync is opt-in). */
+  session: { token: string; account: AuthAccount | null } | null;
+  /** Returns a usable bearer token, minting a guest session on first use if
+   *  none exists yet. The one place a session is created. */
+  ensureSession: () => Promise<string>;
+  /** Adopt a session returned by authClient.exchangeCode (called from
+   *  /auth/return after the OAuth dance completes). */
+  signIn: (result: { token: string; account: AuthAccount }) => void;
+  /** Revoke the session server-side and drop it locally. The local save is
+   *  untouched — play continues as a guest; the next sync mints a fresh one. */
+  signOut: () => Promise<void>;
   /** MC identity (name + pronouns). Persisted; belongs to the playthrough —
    *  reset() clears it (and the avatar) and re-arms the first-run picker. */
   mc: McProfile;
@@ -109,7 +122,7 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       save: freshSave(),
-      playerId: crypto.randomUUID(),
+      session: null,
       mc: EMPTY_MC,
       mcChosen: false,
       mcAvatarUrl: null,
@@ -125,20 +138,22 @@ export const useGameStore = create<GameStore>()(
         set((s) =>
           key in s.completed ? {} : { save, completed: { ...s.completed, [key]: Date.now() } },
         );
-        pushSave(snapshot(get()));
+        void syncNow(get);
       },
       markDmRead: (threadId, segmentIds) => {
         set((s) => {
           const seen = new Set([...(s.dmRead[threadId] ?? []), ...segmentIds]);
           return { dmRead: { ...s.dmRead, [threadId]: [...seen] } };
         });
-        pushSave(snapshot(get()));
+        void syncNow(get);
       },
       // A new game = a new identity: MC name/pronouns/avatar belong to the
-      // playthrough (and wiping the save wipes the personal data with it).
+      // playthrough (and wiping the save wipes the personal data with it). The
+      // session (guest or signed-in account) is untouched — a new game does
+      // not sign anyone out.
       reset: () => {
         void deleteMcAvatar();
-        pushSlotDelete(get().playerId); // the server copy goes with the local one
+        pushSlotDelete(get().session?.token ?? null); // the server copy goes with the local one
         set({ save: freshSave(), completed: {}, dmRead: {}, mc: EMPTY_MC, mcChosen: false, mcAvatarUrl: null });
       },
       setMc: ({ gender, ...profile }) => {
@@ -147,7 +162,20 @@ export const useGameStore = create<GameStore>()(
           mcChosen: true,
           ...(gender !== undefined ? { save: { ...s.save, gender } } : {}),
         }));
-        pushSave(snapshot(get()));
+        void syncNow(get);
+      },
+      ensureSession: async () => {
+        const existing = get().session?.token;
+        if (existing) return existing;
+        const token = await mintGuestSession();
+        set({ session: { token, account: null } });
+        return token;
+      },
+      signIn: ({ token, account }) => set({ session: { token, account } }),
+      signOut: async () => {
+        const token = get().session?.token;
+        if (token) await revokeSession(token);
+        set({ session: null }); // the next sync mints a fresh guest session
       },
       loadMcAvatar: async () => {
         const blob = await readMcAvatar();
@@ -181,11 +209,11 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
-        playerId: s.playerId,
+        session: s.session,
         mc: s.mc,
         mcChosen: s.mcChosen,
         locale: s.locale,
@@ -204,8 +232,22 @@ export const useGameStore = create<GameStore>()(
       // v3 adds MC identity. Existing installs get mcChosen: true — a mid-story
       // player must never be interrupted by a first-run picker; their name stays
       // the localized default ("" → fallback) until they visit Settings.
+      // v4 replaces the unauthenticated `playerId` (a documented Phase-3
+      // shortcut — the client claimed its own identity) with a server-issued
+      // `session`. There is no data to carry forward: the old identity was
+      // never authenticated, so nothing it synced can be claimed by a new
+      // session anyway. Existing installs simply start syncing as a fresh
+      // guest on their next sync event — the local save (the thing that
+      // actually matters) is untouched.
       migrate: (persisted, version) => {
-        const s = persisted as { completed?: unknown; localeChosen?: boolean; mc?: McProfile; mcChosen?: boolean };
+        const s = persisted as {
+          completed?: unknown;
+          localeChosen?: boolean;
+          mc?: McProfile;
+          mcChosen?: boolean;
+          playerId?: string;
+          session?: unknown;
+        };
         if (version < 1 && Array.isArray(s.completed)) {
           s.completed = Object.fromEntries((s.completed as string[]).map((k) => [k, 0]));
         }
@@ -213,6 +255,10 @@ export const useGameStore = create<GameStore>()(
         if (version < 3) {
           s.mc = EMPTY_MC;
           s.mcChosen = true;
+        }
+        if (version < 4) {
+          delete s.playerId;
+          s.session = null;
         }
         return persisted as GameStore;
       },
@@ -223,7 +269,22 @@ export const useGameStore = create<GameStore>()(
 
 /** The slice of store state the sync contract carries (device prefs excluded). */
 function snapshot(s: GameStore): SaveSnapshot {
-  return { playerId: s.playerId, save: s.save, mc: s.mc, mcChosen: s.mcChosen, completed: s.completed, dmRead: s.dmRead };
+  return { save: s.save, mc: s.mc, mcChosen: s.mcChosen, completed: s.completed, dmRead: s.dmRead };
+}
+
+/** Resolve (or lazily mint) a session, then fire the debounced push. Session
+ *  failures are swallowed here — sync is best-effort by design; a dead API or
+ *  offline device must never block play. */
+async function syncNow(get: () => GameStore): Promise<void> {
+  if (!syncEnabled) return;
+  let token: string;
+  try {
+    token = await get().ensureSession();
+  } catch (err) {
+    console.warn("save sync: could not establish a session —", err);
+    return;
+  }
+  pushSave(token, snapshot(get()));
 }
 
 export function saveToState(
