@@ -30,7 +30,8 @@
     "next": "15.5.15",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "@hyakuto/player-save": "workspace:*"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.3.1",

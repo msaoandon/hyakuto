@@ -1,0 +1,91 @@
+// The server-side player save (DEV_PLAN Phase 3). Structured where Phase 4's
+// server-authoritative gating will QUERY state (axes, counters, flags, choices,
+// completions); opaque JSON where the value is an engine-internal cursor
+// (poolSelections, dmRead) or mandated opaque (the MC blob — GDPR posture).
+// SQLite locally; the Supabase swap (Phase 4) is a datasource change against a
+// stable schema, which is exactly why this lands now.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id        String     @id
+  createdAt DateTime   @default(now())
+  /// Auth.js account id — filled by the auth slice; null = local/guest player.
+  authId    String?    @unique
+  slots     SaveSlot[]
+}
+
+model SaveSlot {
+  id            String   @id @default(uuid())
+  player        Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId      String
+  slot          Int
+  schemaVersion Int
+  updatedAt     DateTime @updatedAt
+  /// save.gender — a queryable column (address gating), not blob content.
+  gender        String
+  /// Opaque MC customisation JSON ({ name, pronouns } + mcChosen) — never columns.
+  mcBlob        String
+  /// Engine-internal cursors — JSON, never queried server-side.
+  poolSelections String
+  dmRead         String
+
+  axes        AxisValue[]
+  counters    CounterValue[]
+  flags       FlagSet[]
+  choices     ChoiceRecord[]
+  completions Completion[]
+
+  @@unique([playerId, slot])
+}
+
+model AxisValue {
+  slot   SaveSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId String
+  axis   String
+  value  Int
+
+  @@id([slotId, axis])
+}
+
+model CounterValue {
+  slot    SaveSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId  String
+  counter String
+  value   Int
+
+  @@id([slotId, counter])
+}
+
+model FlagSet {
+  slot   SaveSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId String
+  flag   String
+
+  @@id([slotId, flag])
+}
+
+model ChoiceRecord {
+  slot     SaveSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId   String
+  choiceId String
+  optionId String
+
+  @@id([slotId, choiceId])
+}
+
+model Completion {
+  slot        SaveSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slotId      String
+  threadKey   String
+  completedAt BigInt
+
+  @@id([slotId, threadKey])
+}

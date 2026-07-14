@@ -5,6 +5,7 @@ import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
 import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
+import { pushSave, pushSlotDelete, type SaveSnapshot } from "@/data/saveSync";
 
 // MC customisation (docs/worldbuilding/mc.md): name + pronouns are presentation
 // state and live here; gender-for-address is ENGINE state and lives in
@@ -48,6 +49,9 @@ function freshSave(): SaveState {
 
 type GameStore = {
   save: SaveState;
+  /** Client-generated identity for the local save-sync API (documented Phase-3
+   *  shortcut) — replaced by the Auth.js session when accounts land. Persisted. */
+  playerId: string;
   /** MC identity (name + pronouns). Persisted; belongs to the playthrough —
    *  reset() clears it (and the avatar) and re-arms the first-run picker. */
   mc: McProfile;
@@ -105,6 +109,7 @@ export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
       save: freshSave(),
+      playerId: crypto.randomUUID(),
       mc: EMPTY_MC,
       mcChosen: false,
       mcAvatarUrl: null,
@@ -116,27 +121,34 @@ export const useGameStore = create<GameStore>()(
       cues: {},
       chatPaused: false,
       dmRead: {},
-      completeThread: (key, save) =>
+      completeThread: (key, save) => {
         set((s) =>
           key in s.completed ? {} : { save, completed: { ...s.completed, [key]: Date.now() } },
-        ),
-      markDmRead: (threadId, segmentIds) =>
+        );
+        pushSave(snapshot(get()));
+      },
+      markDmRead: (threadId, segmentIds) => {
         set((s) => {
           const seen = new Set([...(s.dmRead[threadId] ?? []), ...segmentIds]);
           return { dmRead: { ...s.dmRead, [threadId]: [...seen] } };
-        }),
+        });
+        pushSave(snapshot(get()));
+      },
       // A new game = a new identity: MC name/pronouns/avatar belong to the
       // playthrough (and wiping the save wipes the personal data with it).
       reset: () => {
         void deleteMcAvatar();
+        pushSlotDelete(get().playerId); // the server copy goes with the local one
         set({ save: freshSave(), completed: {}, dmRead: {}, mc: EMPTY_MC, mcChosen: false, mcAvatarUrl: null });
       },
-      setMc: ({ gender, ...profile }) =>
+      setMc: ({ gender, ...profile }) => {
         set((s) => ({
           mc: { ...s.mc, ...profile },
           mcChosen: true,
           ...(gender !== undefined ? { save: { ...s.save, gender } } : {}),
-        })),
+        }));
+        pushSave(snapshot(get()));
+      },
       loadMcAvatar: async () => {
         const blob = await readMcAvatar();
         set({ mcAvatarUrl: blob ? URL.createObjectURL(blob) : null });
@@ -173,6 +185,7 @@ export const useGameStore = create<GameStore>()(
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
+        playerId: s.playerId,
         mc: s.mc,
         mcChosen: s.mcChosen,
         locale: s.locale,
@@ -207,6 +220,11 @@ export const useGameStore = create<GameStore>()(
     },
   ),
 );
+
+/** The slice of store state the sync contract carries (device prefs excluded). */
+function snapshot(s: GameStore): SaveSnapshot {
+  return { playerId: s.playerId, save: s.save, mc: s.mc, mcChosen: s.mcChosen, completed: s.completed, dmRead: s.dmRead };
+}
 
 export function saveToState(
   save: SaveState,
