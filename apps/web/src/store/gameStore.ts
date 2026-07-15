@@ -4,10 +4,18 @@ import { createGameState, DEFAULT_GENDER, type MCGender, type SaveState, type Ga
 import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
-import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
+import { readMcAvatar, writeMcAvatar, deleteMcAvatar, deleteAllMcAvatars } from "./mcAvatar";
 import type { PlayerSaveT } from "@hyakuto/player-save";
 import { pushSave, pushSlotDelete, syncEnabled, type SaveSnapshot } from "@/data/saveSync";
-import { mintGuestSession, revokeSession, deleteAccount as deleteAccountRequest, type AuthAccount } from "@/data/authClient";
+import {
+  mintGuestSession,
+  revokeSession,
+  deleteAccount as deleteAccountRequest,
+  fetchServerSlot,
+  listSlots,
+  deleteSlot as deleteSlotRequest,
+  type AuthAccount,
+} from "@/data/authClient";
 
 // MC customisation (docs/worldbuilding/mc.md): name + pronouns are presentation
 // state and live here; gender-for-address is ENGINE state and lives in
@@ -88,6 +96,25 @@ type GameStore = {
    *  Rejects — and leaves local state untouched — if the server call fails,
    *  so the UI never tells the player their data is gone when it isn't. */
   deleteAccount: () => Promise<void>;
+  /** Which server save slot this device is currently playing. Persisted.
+   *  Sync (pushSave/pushSlotDelete) and the avatar always target this slot —
+   *  switching slots (Saved Games, signed-in only) changes where local play
+   *  reads from and writes to. */
+  currentSlot: number;
+  /** Switch to a different save slot: pulls it from the server and fully
+   *  replaces local state (save/mc/completed/dmRead/avatar) — the same "safe
+   *  full replace" reasoning as restoreFromServer, except here it's safe
+   *  because the player explicitly chose this from the Saved Games list, not
+   *  because the device had nothing local to lose. */
+  loadSlot: (slot: number) => Promise<void>;
+  /** Start a fresh playthrough in a brand-new slot (the next free slot
+   *  number) — every existing slot, local or remote, is left untouched. */
+  startNewSlot: () => Promise<number>;
+  /** Delete a slot server-side. Refuses to delete the slot currently being
+   *  played (switch away first) — an active slot must always resolve to
+   *  something, so that footgun is structurally blocked, not just a UI
+   *  affordance a caller could forget to check. */
+  deleteSlot: (slot: number) => Promise<void>;
   /** MC identity (name + pronouns). Persisted; belongs to the playthrough —
    *  reset() clears it (and the avatar) and re-arms the first-run picker. */
   mc: McProfile;
@@ -147,6 +174,7 @@ export const useGameStore = create<GameStore>()(
       save: freshSave(),
       session: null,
       authChoiceMade: false,
+      currentSlot: 0,
       mc: EMPTY_MC,
       mcChosen: false,
       mcAvatarUrl: null,
@@ -176,8 +204,9 @@ export const useGameStore = create<GameStore>()(
       // session (guest or signed-in account) is untouched — a new game does
       // not sign anyone out.
       reset: () => {
-        void deleteMcAvatar();
-        pushSlotDelete(get().session?.token ?? null); // the server copy goes with the local one
+        const slot = get().currentSlot;
+        void deleteMcAvatar(slot);
+        pushSlotDelete(get().session?.token ?? null, slot); // the server copy goes with the local one
         set({ save: freshSave(), completed: {}, dmRead: {}, mc: EMPTY_MC, mcChosen: false, mcAvatarUrl: null });
       },
       setMc: ({ gender, ...profile }) => {
@@ -201,6 +230,7 @@ export const useGameStore = create<GameStore>()(
         set({
           session,
           authChoiceMade: true,
+          currentSlot: 0, // /auth/return's auto-restore always pulls slot 0
           save: payload.save,
           mc: payload.mc,
           mcChosen: payload.mcChosen,
@@ -215,7 +245,7 @@ export const useGameStore = create<GameStore>()(
       deleteAccount: async () => {
         const token = get().session?.token;
         if (token) await deleteAccountRequest(token); // throws on failure — nothing below runs
-        void deleteMcAvatar();
+        void deleteAllMcAvatars(); // every local slot's photo, not just the current one — none are reachable anymore
         set({
           save: freshSave(),
           completed: {},
@@ -225,10 +255,37 @@ export const useGameStore = create<GameStore>()(
           mcAvatarUrl: null,
           session: null,
           authChoiceMade: false,
+          currentSlot: 0,
         });
       },
+      loadSlot: async (slot) => {
+        const token = await get().ensureSession();
+        const payload = await fetchServerSlot(token, slot);
+        set({
+          currentSlot: slot,
+          save: payload.save,
+          mc: payload.mc,
+          mcChosen: payload.mcChosen,
+          completed: payload.completed,
+          dmRead: payload.dmRead,
+        });
+        await get().loadMcAvatar(); // re-reads under the now-current slot's key
+      },
+      startNewSlot: async () => {
+        const token = await get().ensureSession();
+        const existing = await listSlots(token);
+        const next = existing.length ? Math.max(...existing.map((s) => s.slot)) + 1 : 0;
+        set({ currentSlot: next, save: freshSave(), completed: {}, dmRead: {}, mc: EMPTY_MC, mcChosen: false });
+        await get().loadMcAvatar(); // the new slot has no photo yet — clears mcAvatarUrl
+        return next;
+      },
+      deleteSlot: async (slot) => {
+        if (slot === get().currentSlot) throw new Error("cannot delete the slot currently being played");
+        const token = await get().ensureSession();
+        await deleteSlotRequest(token, slot);
+      },
       loadMcAvatar: async () => {
-        const blob = await readMcAvatar();
+        const blob = await readMcAvatar(get().currentSlot);
         set({ mcAvatarUrl: blob ? URL.createObjectURL(blob) : null });
       },
       setMcAvatar: async (blob) => {
@@ -236,13 +293,13 @@ export const useGameStore = create<GameStore>()(
         // (e.g. private-mode storage restrictions); it then lasts the session.
         set({ mcAvatarUrl: URL.createObjectURL(blob), mcChosen: true });
         try {
-          await writeMcAvatar(blob);
+          await writeMcAvatar(get().currentSlot, blob);
         } catch (err) {
           console.warn("avatar preview only — could not persist:", err);
         }
       },
       clearMcAvatar: async () => {
-        await deleteMcAvatar();
+        await deleteMcAvatar(get().currentSlot);
         set({ mcAvatarUrl: null });
       },
       setLocale: (locale) => set({ locale, localeChosen: true }),
@@ -259,12 +316,13 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      version: 5,
+      version: 6,
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
         session: s.session,
         authChoiceMade: s.authChoiceMade,
+        currentSlot: s.currentSlot,
         mc: s.mc,
         mcChosen: s.mcChosen,
         locale: s.locale,
@@ -294,6 +352,10 @@ export const useGameStore = create<GameStore>()(
       // get true — never interrupt a mid-story player with a login screen
       // they weren't shown when they started; the new gate only catches
       // genuinely fresh profiles going forward.
+      // v6 adds `currentSlot` (Saved Games / multi-slot sync). Every install
+      // that predates slots was, by construction, playing what the server
+      // already calls slot 0 (saveSync hardcoded it) — 0 is not a guess here,
+      // it's the only value that was ever possible.
       migrate: (persisted, version) => {
         const s = persisted as {
           completed?: unknown;
@@ -303,6 +365,7 @@ export const useGameStore = create<GameStore>()(
           playerId?: string;
           session?: unknown;
           authChoiceMade?: boolean;
+          currentSlot?: number;
         };
         if (version < 1 && Array.isArray(s.completed)) {
           s.completed = Object.fromEntries((s.completed as string[]).map((k) => [k, 0]));
@@ -317,6 +380,7 @@ export const useGameStore = create<GameStore>()(
           s.session = null;
         }
         if (version < 5) s.authChoiceMade = true;
+        if (version < 6) s.currentSlot = 0;
         return persisted as GameStore;
       },
       skipHydration: true,
@@ -341,7 +405,7 @@ async function syncNow(get: () => GameStore): Promise<void> {
     console.warn("save sync: could not establish a session —", err);
     return;
   }
-  pushSave(token, snapshot(get()));
+  pushSave(token, get().currentSlot, snapshot(get()));
 }
 
 export function saveToState(

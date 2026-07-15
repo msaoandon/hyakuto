@@ -131,4 +131,24 @@ describe("boundaries", () => {
     expect((await get(ghost, 0)).status).toBe(401);
     expect(await prisma.player.count()).toBe(2); // only mine + theirs remain
   });
+
+  it("DELETE /me/slots/:slot removes one save (Saved Games) without touching the others or the session", async () => {
+    const saver = await newGuest(app);
+    await put(saver, 0, full);
+    await put(saver, 1, full);
+
+    const del = await app.request("/v1/me/slots/1", { method: "DELETE", headers: authed(saver) });
+    expect(del.status).toBe(200);
+
+    expect((await get(saver, 1)).status).toBe(404); // gone
+    expect((await get(saver, 0)).status).toBe(200); // untouched
+    expect((await app.request("/v1/me", { headers: authed(saver) })).status).toBe(200); // session still live
+
+    // idempotent: deleting an already-absent slot is not an error
+    expect((await app.request("/v1/me/slots/1", { method: "DELETE", headers: authed(saver) })).status).toBe(200);
+  });
+
+  it("400s a garbage slot number on delete", async () => {
+    expect((await app.request("/v1/me/slots/x", { method: "DELETE", headers: authed(mine) })).status).toBe(400);
+  });
 });

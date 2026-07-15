@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { buildPlayerSave } from "./saveSync";
 
 describe("buildPlayerSave", () => {
@@ -29,5 +29,56 @@ describe("buildPlayerSave", () => {
     const drifted = { ...storeLike, save: { ...storeLike.save, flags: "oops" } };
     // @ts-expect-error — deliberately malformed
     expect(() => buildPlayerSave(drifted)).toThrow();
+  });
+});
+
+describe("pushSave / pushSlotDelete slot targeting", () => {
+  const ORIGINAL = process.env.NEXT_PUBLIC_API_URL;
+  const snapshot = {
+    save: { axes: {}, counters: { candles: 50 }, flags: [], poolSelections: {}, gender: "unset" as const, choices: {} },
+    mc: { name: "", pronouns: "they" as const },
+    mcChosen: false,
+    completed: {},
+    dmRead: {},
+  };
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = ORIGINAL;
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    vi.resetModules();
+  });
+
+  it("PUTs to the caller-supplied slot, not always 0", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3100";
+    vi.resetModules();
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      expect(url).toBe("http://localhost:3100/v1/me/slots/3");
+      expect(init?.method).toBe("PUT");
+      return new Response(null, { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { pushSave } = await import("./saveSync");
+    pushSave("hyk_x", 3, snapshot);
+    await vi.runAllTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("DELETEs the caller-supplied slot, not always 0", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3100";
+    vi.resetModules();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      expect(url).toBe("http://localhost:3100/v1/me/slots/3");
+      expect(init?.method).toBe("DELETE");
+      return new Response(null, { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { pushSlotDelete } = await import("./saveSync");
+    pushSlotDelete("hyk_x", 3);
+    await Promise.resolve(); // let the fire-and-forget fetch's microtask run
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

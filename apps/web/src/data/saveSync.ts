@@ -13,8 +13,9 @@ import { API, syncEnabled } from "./apiBase";
 //    token via authClient before calling pushSave — identity is never a URL
 //    param, it's the request's Authorization header.
 // Pull/restore lands with the guest-migration slice.
+// Slot is caller-supplied (the store's currentSlot) — sync always targets
+// whichever save is actually active locally, never a hardcoded slot.
 
-const SLOT = 0; // single profile today; slots are a schema capability, UI later
 const DEBOUNCE_MS = 1500;
 
 export type SaveSnapshot = {
@@ -37,26 +38,27 @@ export function buildPlayerSave(s: SaveSnapshot): PlayerSaveT {
   });
 }
 
-let pending: { token: string; snapshot: SaveSnapshot } | null = null;
+let pending: { token: string; slot: number; snapshot: SaveSnapshot } | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
 /** Debounced push of the latest snapshot (key events call this). `token` is a
- *  bearer session the caller has already resolved (see gameStore.sync). */
-export function pushSave(token: string, snapshot: SaveSnapshot): void {
+ *  bearer session the caller has already resolved (see gameStore.sync);
+ *  `slot` is the store's currentSlot. */
+export function pushSave(token: string, slot: number, snapshot: SaveSnapshot): void {
   if (!API) return;
-  pending = { token, snapshot };
+  pending = { token, slot, snapshot };
   clearTimeout(timer);
   timer = setTimeout(() => {
-    const { token: t, snapshot: s } = pending!;
+    const { token: t, slot: s, snapshot: snap } = pending!;
     pending = null;
     let payload: PlayerSaveT;
     try {
-      payload = buildPlayerSave(s);
+      payload = buildPlayerSave(snap);
     } catch (err) {
       console.error("save sync: payload drift —", err);
       return;
     }
-    fetch(`${API}/v1/me/slots/${SLOT}`, {
+    fetch(`${API}/v1/me/slots/${s}`, {
       method: "PUT",
       headers: { "content-type": "application/json", authorization: `Bearer ${t}` },
       body: JSON.stringify(payload),
@@ -66,11 +68,11 @@ export function pushSave(token: string, snapshot: SaveSnapshot): void {
 }
 
 /** New game: the server copy goes too (the local reset already wiped IDB). */
-export function pushSlotDelete(token: string | null): void {
+export function pushSlotDelete(token: string | null, slot: number): void {
   if (!API || !token) return;
   clearTimeout(timer);
   pending = null;
-  fetch(`${API}/v1/me/slots/${SLOT}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` }, keepalive: true }).catch(
+  fetch(`${API}/v1/me/slots/${slot}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` }, keepalive: true }).catch(
     (err) => console.warn("save-slot delete failed:", err),
   );
 }

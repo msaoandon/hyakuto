@@ -1,16 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useGameStore, saveToState } from "./gameStore";
-import { deleteAccount as deleteAccountMock } from "@/data/authClient";
+import {
+  deleteAccount as deleteAccountMock,
+  fetchServerSlot as fetchServerSlotMock,
+  listSlots as listSlotsMock,
+  deleteSlot as deleteSlotMock,
+} from "@/data/authClient";
 import type { SaveState } from "@hyakuto/engine";
 import type { PlayerSaveT } from "@hyakuto/player-save";
 
-// The real authClient.deleteAccount does a network call gated on
-// NEXT_PUBLIC_API_URL, which this test env doesn't set — mock just that one
-// export so the "signed in" deletion path is testable without flipping env.
+// The real authClient network calls are gated on NEXT_PUBLIC_API_URL, which
+// this test env doesn't set — mock the ones the store's session-bound actions
+// call so those paths are testable without flipping env.
 vi.mock("@/data/authClient", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/data/authClient")>();
-  return { ...actual, deleteAccount: vi.fn() };
+  return {
+    ...actual,
+    deleteAccount: vi.fn(),
+    fetchServerSlot: vi.fn(),
+    listSlots: vi.fn(),
+    deleteSlot: vi.fn(),
+  };
 });
+
+const SIGNED_IN_SESSION = { token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } };
 
 const makeSave = (over: Partial<SaveState> = {}): SaveState => ({
   axes: {},
@@ -214,5 +227,98 @@ describe("deleteAccount", () => {
     const s = useGameStore.getState();
     expect(Object.keys(s.completed)).toEqual(["1:a"]); // nothing erased on a failed delete
     expect(s.session).toEqual({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } });
+  });
+});
+
+describe("loadSlot", () => {
+  const payload: PlayerSaveT = {
+    schemaVersion: 1,
+    save: { axes: {}, counters: { candles: 42 }, flags: [], poolSelections: {}, gender: "unset", choices: {} },
+    mc: { name: "Ren", pronouns: "he" },
+    mcChosen: true,
+    completed: { "1:demo": 1700000000000 },
+    dmRead: {},
+  };
+
+  beforeEach(() => {
+    useGameStore.setState({ session: SIGNED_IN_SESSION, currentSlot: 0 });
+    vi.mocked(fetchServerSlotMock).mockReset();
+  });
+
+  it("pulls the given slot and fully replaces local state, moving currentSlot", async () => {
+    vi.mocked(fetchServerSlotMock).mockResolvedValue(payload);
+
+    await useGameStore.getState().loadSlot(2);
+
+    expect(fetchServerSlotMock).toHaveBeenCalledWith("hyk_abc", 2);
+    const s = useGameStore.getState();
+    expect(s.currentSlot).toBe(2);
+    expect(s.save).toEqual(payload.save);
+    expect(s.mc).toEqual(payload.mc);
+    expect(s.mcChosen).toBe(true);
+    expect(s.completed).toEqual(payload.completed);
+  });
+
+  it("propagates a fetch failure without moving currentSlot", async () => {
+    vi.mocked(fetchServerSlotMock).mockRejectedValue(new Error("nope"));
+
+    await expect(useGameStore.getState().loadSlot(2)).rejects.toThrow("nope");
+    expect(useGameStore.getState().currentSlot).toBe(0); // still on the original slot
+  });
+});
+
+describe("startNewSlot", () => {
+  beforeEach(() => {
+    useGameStore.setState({ session: SIGNED_IN_SESSION, currentSlot: 0 });
+    useGameStore.getState().setMc({ name: "Yuki" });
+    vi.mocked(listSlotsMock).mockReset();
+  });
+
+  it("picks the next free slot number after the highest existing one", async () => {
+    vi.mocked(listSlotsMock).mockResolvedValue([
+      { slot: 0, updatedAt: "x", candles: 90, completedThreads: 1 },
+      { slot: 2, updatedAt: "x", candles: 10, completedThreads: 0 },
+    ]);
+
+    const next = await useGameStore.getState().startNewSlot();
+
+    expect(next).toBe(3);
+    const s = useGameStore.getState();
+    expect(s.currentSlot).toBe(3);
+    expect(s.mcChosen).toBe(false); // a fresh playthrough, unrelated to slot 0's identity
+    expect(s.mc).toEqual({ name: "", pronouns: "they" });
+    expect(s.save.counters.candles).toBe(100); // fresh-game default, not slot 0's value
+  });
+
+  it("starts at slot 0 when the account has no saves on the server yet", async () => {
+    vi.mocked(listSlotsMock).mockResolvedValue([]);
+
+    expect(await useGameStore.getState().startNewSlot()).toBe(0);
+  });
+});
+
+describe("deleteSlot", () => {
+  beforeEach(() => {
+    useGameStore.setState({ session: SIGNED_IN_SESSION, currentSlot: 0 });
+    vi.mocked(deleteSlotMock).mockReset();
+  });
+
+  it("refuses to delete the slot currently being played, without calling the server", async () => {
+    await expect(useGameStore.getState().deleteSlot(0)).rejects.toThrow(/currently being played/);
+    expect(deleteSlotMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes a non-active slot server-side", async () => {
+    vi.mocked(deleteSlotMock).mockResolvedValue(undefined);
+
+    await useGameStore.getState().deleteSlot(1);
+
+    expect(deleteSlotMock).toHaveBeenCalledWith("hyk_abc", 1);
+  });
+
+  it("propagates a server failure", async () => {
+    vi.mocked(deleteSlotMock).mockRejectedValue(new Error("gone"));
+
+    await expect(useGameStore.getState().deleteSlot(1)).rejects.toThrow("gone");
   });
 });

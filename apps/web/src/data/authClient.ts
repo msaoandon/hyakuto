@@ -49,17 +49,38 @@ export async function exchangeCode(code: string, guestToken: string | null): Pro
   return res.json();
 }
 
-/** Pull the player's own slot-0 save straight from the server — used only
- *  right after sign-in, when the device had nothing local to lose (see
- *  gameStore.restoreFromServer and /auth/return's `wasFresh` check).
- *  Re-validated client-side with the same contract schema the API validates
- *  server-side: this now drives a live hydration of local state, a real
- *  trust boundary even though the bytes nominally came from our own API. */
-export async function fetchServerSlot(token: string): Promise<PlayerSaveT> {
+/** Pull one of the player's own saves straight from the server — used both
+ *  right after sign-in (gameStore.restoreFromServer, always slot 0 — see
+ *  /auth/return's `wasFresh` check) and when switching saves from the Saved
+ *  Games page (any slot). Re-validated client-side with the same contract
+ *  schema the API validates server-side: this drives a live hydration of
+ *  local state, a real trust boundary even though the bytes nominally came
+ *  from our own API. */
+export async function fetchServerSlot(token: string, slot = 0): Promise<PlayerSaveT> {
   if (!API) throw new Error("fetchServerSlot called with sync disabled");
-  const res = await fetch(`${API}/v1/me/slots/0`, { headers: { authorization: `Bearer ${token}` } });
+  const res = await fetch(`${API}/v1/me/slots/${slot}`, { headers: { authorization: `Bearer ${token}` } });
   if (!res.ok) throw new Error(`fetch server slot failed: ${res.status}`);
   return PlayerSave.parse(await res.json());
+}
+
+export type SlotMeta = { slot: number; updatedAt: string; candles: number | null; completedThreads: number };
+
+/** List the player's save slots with display metadata (Saved Games page).
+ *  Ordered by slot ascending, same as the API. */
+export async function listSlots(token: string): Promise<SlotMeta[]> {
+  if (!API) throw new Error("listSlots called with sync disabled");
+  const res = await fetch(`${API}/v1/me/slots`, { headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`list slots failed: ${res.status}`);
+  return res.json();
+}
+
+/** Delete one save slot server-side. Not best-effort, same reasoning as
+ *  deleteAccount — the caller must not remove a slot from the local list
+ *  before the server confirms it's actually gone. */
+export async function deleteSlot(token: string, slot: number): Promise<void> {
+  if (!API) throw new Error("deleteSlot called with sync disabled");
+  const res = await fetch(`${API}/v1/me/slots/${slot}`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`delete slot failed: ${res.status}`);
 }
 
 /** Revoke a session server-side (sign-out). Best-effort — the caller clears
