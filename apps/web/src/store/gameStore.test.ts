@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useGameStore, saveToState } from "./gameStore";
 import type { SaveState } from "@hyakuto/engine";
+import type { PlayerSaveT } from "@hyakuto/player-save";
 
 const makeSave = (over: Partial<SaveState> = {}): SaveState => ({
   axes: {},
@@ -96,5 +97,66 @@ describe("MC customisation", () => {
     expect(s.mcChosen).toBe(false);
     expect(s.save.gender).toBe("unset"); // fresh save = fresh engine defaults
     expect(s.mcAvatarUrl).toBeNull();
+  });
+});
+
+describe("auth choice & session", () => {
+  beforeEach(() => {
+    useGameStore.setState({ session: null, authChoiceMade: false });
+  });
+
+  it("continueAsGuest records the choice without minting a session", () => {
+    useGameStore.getState().continueAsGuest();
+    const s = useGameStore.getState();
+    expect(s.authChoiceMade).toBe(true);
+    expect(s.session).toBeNull(); // no network call — sync mints lazily, as before
+  });
+
+  it("signIn adopts the session and marks the auth choice made", () => {
+    useGameStore.getState().signIn({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: "y@example.com" } });
+    const s = useGameStore.getState();
+    expect(s.authChoiceMade).toBe(true);
+    expect(s.session).toEqual({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: "y@example.com" } });
+  });
+
+  it("signOut drops the session but leaves authChoiceMade set (no re-prompt)", async () => {
+    useGameStore.getState().signIn({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } });
+    await useGameStore.getState().signOut();
+    const s = useGameStore.getState();
+    expect(s.session).toBeNull();
+    expect(s.authChoiceMade).toBe(true); // signing out ≠ un-choosing; play continues as guest
+  });
+});
+
+describe("restoreFromServer", () => {
+  const payload: PlayerSaveT = {
+    schemaVersion: 1,
+    save: {
+      axes: { tatsumi: 3 },
+      counters: { candles: 77 },
+      flags: ["met_ren"],
+      poolSelections: {},
+      gender: "female",
+      choices: {},
+    },
+    mc: { name: "Юкі", pronouns: "she" },
+    mcChosen: true,
+    completed: { "1:demo_d1_t1": 1760000000000 },
+    dmRead: { demo_dm1: ["demo_dm1_1"] },
+  };
+  const session = { token: "hyk_restored", account: { provider: "google", displayName: "Yuki", email: null } };
+
+  it("fully replaces local state from a server save and marks the session established", () => {
+    // The device had nothing local before this — restoreFromServer is only
+    // ever called on that safe path (see /auth/return's wasFresh check).
+    useGameStore.getState().restoreFromServer(session, payload);
+    const s = useGameStore.getState();
+    expect(s.save).toEqual(payload.save);
+    expect(s.mc).toEqual(payload.mc);
+    expect(s.mcChosen).toBe(true);
+    expect(s.completed).toEqual(payload.completed);
+    expect(s.dmRead).toEqual(payload.dmRead);
+    expect(s.session).toEqual(session);
+    expect(s.authChoiceMade).toBe(true);
   });
 });

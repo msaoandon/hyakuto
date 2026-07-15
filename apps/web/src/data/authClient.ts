@@ -1,3 +1,4 @@
+import { PlayerSave, type PlayerSaveT } from "@hyakuto/player-save";
 import { API, syncEnabled } from "./apiBase";
 
 // Auth wire calls (DEV_PLAN Phase 3 — Auth.js on apps/api). Thin data-wiring
@@ -46,6 +47,19 @@ export async function exchangeCode(code: string, guestToken: string | null): Pro
   });
   if (!res.ok) throw new Error(((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? `token exchange failed: ${res.status}`);
   return res.json();
+}
+
+/** Pull the player's own slot-0 save straight from the server — used only
+ *  right after sign-in, when the device had nothing local to lose (see
+ *  gameStore.restoreFromServer and /auth/return's `wasFresh` check).
+ *  Re-validated client-side with the same contract schema the API validates
+ *  server-side: this now drives a live hydration of local state, a real
+ *  trust boundary even though the bytes nominally came from our own API. */
+export async function fetchServerSlot(token: string): Promise<PlayerSaveT> {
+  if (!API) throw new Error("fetchServerSlot called with sync disabled");
+  const res = await fetch(`${API}/v1/me/slots/0`, { headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`fetch server slot failed: ${res.status}`);
+  return PlayerSave.parse(await res.json());
 }
 
 /** Revoke a session server-side (sign-out). Best-effort — the caller clears

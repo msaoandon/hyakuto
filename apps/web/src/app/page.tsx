@@ -6,6 +6,7 @@ import { LanguageChooser } from '@/components/LanguageChooser';
 import { LanternBackground } from '@/components/LanternBackground';
 import { useT } from '@/i18n';
 import { useGameStore } from '@/store/gameStore';
+import { syncEnabled } from '@/data/authClient';
 
 const shipporiMincho = Shippori_Mincho({
   weight: '800',
@@ -20,11 +21,17 @@ const shipporiMincho = Shippori_Mincho({
 export default function Home() {
   const t = useT();
   const mcChosen = useGameStore((s) => s.mcChosen);
+  const authChoiceMade = useGameStore((s) => s.authChoiceMade);
+  // Same precedence as the (authorized) layout guard: a sync-enabled, fresh
+  // profile goes through /login before /welcome. Splash isn't gated by that
+  // layout (it's outside the route group), so it must compute this itself
+  // rather than always assuming mcChosen decides the destination.
+  const entryHref = syncEnabled && !authChoiceMade ? "/login" : mcChosen ? "/lobby" : "/welcome";
 
   return (
     <main className="relative min-h-screen">
       <Link
-        href={mcChosen ? "/lobby" : "/welcome"}
+        href={entryHref}
         className="min-h-screen flex flex-col items-center justify-center gap-10 transition-colors duration-500"
       >
         <LanternBackground />

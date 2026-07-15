@@ -3,21 +3,29 @@
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/gameStore";
+import { syncEnabled } from "@/data/authClient";
 
-// Fresh-profile guard for every in-game route: a profile that has never been
-// through the /welcome picker (deep link, PWA start URL, post-reset) is routed
-// there first — the splash-tap branch alone can be skipped. Existing installs
-// are marked chosen by the persist v3 migration, so this only ever catches
-// genuinely fresh profiles. The store is already hydrated here (HydrationGate
-// wraps the root layout), so mcChosen is trustworthy on first render.
+// Fresh-profile guard for every in-game route, two gates in order:
+//  1. (only when sync is on) authChoiceMade — has the player signed in or
+//     explicitly chosen "Continue as guest" on /login? A build with no API
+//     has no account concept, so this gate never fires there.
+//  2. mcChosen — has the player been through MC customisation? Routes to
+//     /welcome. Deep link, PWA start URL, or post-reset all land here fresh.
+// Existing installs are marked chosen/authChoiceMade by persist migrations, so
+// these only ever catch genuinely fresh profiles. The store is already
+// hydrated here (HydrationGate wraps the root layout), so both flags are
+// trustworthy on first render.
 export default function AuthorizedLayout({ children }: { children: ReactNode }) {
+  const authChoiceMade = useGameStore((s) => s.authChoiceMade);
   const mcChosen = useGameStore((s) => s.mcChosen);
   const router = useRouter();
+  const needsLogin = syncEnabled && !authChoiceMade;
 
   useEffect(() => {
-    if (!mcChosen) router.replace("/welcome");
-  }, [mcChosen, router]);
+    if (needsLogin) router.replace("/login");
+    else if (!mcChosen) router.replace("/welcome");
+  }, [needsLogin, mcChosen, router]);
 
-  if (!mcChosen) return null; // redirecting — never flash the game underneath
+  if (needsLogin || !mcChosen) return null; // redirecting — never flash the game underneath
   return <>{children}</>;
 }

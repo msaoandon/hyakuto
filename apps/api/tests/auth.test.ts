@@ -191,8 +191,12 @@ describe("dance bookends (validation only — the dance itself is oauth-dance.te
   });
 
   it("/start rejects an unconfigured provider", async () => {
+    // "apple" specifically — deferred and never wired into providers() at all,
+    // so this holds regardless of ambient env (unlike google/discord, whose
+    // configured-ness depends on a developer's local .env — see the "test"
+    // provider check above for why we don't assert on those here).
     const res = await app.request(
-      `/v1/auth/start/google?return=${encodeURIComponent("http://localhost:3000/auth/return")}`,
+      `/v1/auth/start/apple?return=${encodeURIComponent("http://localhost:3000/auth/return")}`,
     );
     expect(res.status).toBe(400);
     expect((await res.json()).error).toMatch(/not configured/);

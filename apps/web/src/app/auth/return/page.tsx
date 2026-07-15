@@ -4,12 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LanternBackground } from "@/components/LanternBackground";
 import { useGameStore } from "@/store/gameStore";
-import { exchangeCode } from "@/data/authClient";
+import { exchangeCode, fetchServerSlot } from "@/data/authClient";
 import { useT } from "@/i18n";
 
 // Landing page for the OAuth dance (apps/api /v1/auth/complete redirects here
-// with ?code=). Trades the one-time code for a bearer token — see
+// with ?code=), reached from BOTH the /login front door and Settings' "Link
+// account". Trades the one-time code for a bearer token — see
 // authClient.exchangeCode and the adoption logic in apps/api/src/auth/routes.ts.
+//
+// Auto-restore: if the account already has a server save AND this device had
+// nothing local yet (`wasFresh`, captured before the exchange fires — true for
+// anyone arriving via /login, since that's the very first screen a fresh
+// profile ever sees; false for anyone who already played as guest and is now
+// linking from Settings), there is no conflict to resolve — pull the save
+// down and hydrate the store directly. Otherwise a genuine conflict exists:
+// show the notice and touch nothing (the merge/choose UX is deliberately
+// deferred — see DEV_PLAN).
+//
 // The code is single-use, so the exchange must fire exactly once even under
 // React Strict Mode's double-effect in dev (the `fired` ref guards that, not a
 // cleanup — a stray double GET here is a self-inflicted 400, not a real bug).
@@ -19,8 +30,8 @@ export default function AuthReturnPage() {
   const t = useT();
   const router = useRouter();
   const params = useSearchParams();
-  const guestToken = useGameStore((s) => s.session?.token ?? null);
   const signIn = useGameStore((s) => s.signIn);
+  const restoreFromServer = useGameStore((s) => s.restoreFromServer);
   const [status, setStatus] = useState<Status>("exchanging");
   const fired = useRef(false);
 
@@ -32,11 +43,30 @@ export default function AuthReturnPage() {
       setStatus("error");
       return;
     }
+
+    const local = useGameStore.getState();
+    const guestToken = local.session?.token ?? null;
+    const wasFresh =
+      !local.mcChosen && Object.keys(local.completed).length === 0 && Object.keys(local.dmRead).length === 0;
+
     exchangeCode(code, guestToken)
-      .then((result) => {
-        signIn({ token: result.token, account: result.account });
-        if (result.hasServerSave) setStatus("restoreNotice");
-        else router.replace("/settings");
+      .then(async (result) => {
+        if (result.hasServerSave && wasFresh) {
+          try {
+            const payload = await fetchServerSlot(result.token);
+            restoreFromServer({ token: result.token, account: result.account }, payload);
+            router.replace(payload.mcChosen ? "/lobby" : "/welcome");
+            return;
+          } catch (err) {
+            console.warn("auto-restore failed — falling back to the conflict notice:", err);
+          }
+        }
+        signIn(result);
+        if (result.hasServerSave) {
+          setStatus("restoreNotice");
+          return;
+        }
+        router.replace(useGameStore.getState().mcChosen ? "/lobby" : "/welcome");
       })
       .catch(() => setStatus("error"));
     // Fires once on mount by design (see the fired-ref note above).

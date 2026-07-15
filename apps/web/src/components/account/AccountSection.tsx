@@ -6,10 +6,15 @@ import { startSignIn, syncEnabled, PROVIDERS, type Provider } from "@/data/authC
 
 // Settings → Account. Renders nothing when sync is disabled (no
 // NEXT_PUBLIC_API_URL) — there is no account concept without a server. Signed
-// out shows the two supported providers (Apple is deferred — needs the paid
-// Apple Developer account); signed in shows the linked identity + sign out.
-// Sign-in is a full-page navigation into the OAuth dance (authClient.startSignIn);
-// the result lands back on /auth/return, which calls store.signIn().
+// out this is framed as LINKING (not signing in): by the time someone reaches
+// Settings they've already been playing (as a guest, past the /login front
+// door), so the action is "attach an account to my existing progress," not
+// "log in to start" — that framing lives on /login instead, where a fresh
+// device really is choosing how to begin. Sign-in is a full-page navigation
+// into the OAuth dance (authClient.startSignIn); the result lands on
+// /auth/return, which calls store.signIn() (or restoreFromServer() on the
+// safe-auto-restore path — moot here, since anyone reaching this component
+// already has local progress by definition).
 
 const PROVIDER_LABEL: Record<Provider, string> = { google: "Google", discord: "Discord" };
 
@@ -27,7 +32,7 @@ export function AccountSection() {
 
   return (
     <div className="relative flex flex-col gap-3 rounded-xl bg-ink-black/40 px-4 py-3 text-beige">
-      <span>{t("account.title")}</span>
+      <span>{t(session?.account ? "account.title" : "account.linkTitle")}</span>
       {session?.account ? (
         <div className="flex items-center justify-between gap-4">
           <span className="text-sm text-beige/70">
@@ -47,7 +52,7 @@ export function AccountSection() {
               onClick={signInWith(provider)}
               className="rounded-xl px-4 py-3 text-left bg-navy-light/80 text-white border border-[#2f406d] hover:bg-navy-light"
             >
-              {t("account.signInWith", { provider: PROVIDER_LABEL[provider] })}
+              {t("account.linkWith", { provider: PROVIDER_LABEL[provider] })}
             </button>
           ))}
         </div>

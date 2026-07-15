@@ -5,6 +5,7 @@ import { gameConfig } from "@hyakuto/game";
 import { type Locale, DEFAULT_LOCALE, matchDeviceLocale } from "@/i18n/locales";
 import { idbStorage } from "./idbStorage";
 import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
+import type { PlayerSaveT } from "@hyakuto/player-save";
 import { pushSave, pushSlotDelete, syncEnabled, type SaveSnapshot } from "@/data/saveSync";
 import { mintGuestSession, revokeSession, type AuthAccount } from "@/data/authClient";
 
@@ -56,12 +57,28 @@ type GameStore = {
    *  every launch and break the "adopt on first sign-in" path. null before the
    *  first sync attempt (nothing minted yet — sync is opt-in). */
   session: { token: string; account: AuthAccount | null } | null;
+  /** True once the player has made an explicit auth choice — signed in OR
+   *  tapped "Continue as guest" on /login. Gates /login the same way mcChosen
+   *  gates /welcome; never checked (and so never blocks anything) when sync
+   *  is disabled — a build with no API has no account concept to choose
+   *  between. Persisted. */
+  authChoiceMade: boolean;
   /** Returns a usable bearer token, minting a guest session on first use if
    *  none exists yet. The one place a session is created. */
   ensureSession: () => Promise<string>;
+  /** "Continue as guest" on /login: records the choice. Mints nothing — sync
+   *  still lazily mints a guest session on the first real sync event, same as
+   *  it always has. */
+  continueAsGuest: () => void;
   /** Adopt a session returned by authClient.exchangeCode (called from
    *  /auth/return after the OAuth dance completes). */
   signIn: (result: { token: string; account: AuthAccount }) => void;
+  /** Full local hydration from a server save fetched right after sign-in.
+   *  Only ever called when the device had nothing local to lose (see
+   *  /auth/return's `wasFresh` check) — a safe full replace, not a merge; the
+   *  genuine-conflict case (existing local progress AND an existing server
+   *  save) stays on the notice-only path instead. */
+  restoreFromServer: (session: { token: string; account: AuthAccount }, payload: PlayerSaveT) => void;
   /** Revoke the session server-side and drop it locally. The local save is
    *  untouched — play continues as a guest; the next sync mints a fresh one. */
   signOut: () => Promise<void>;
@@ -123,6 +140,7 @@ export const useGameStore = create<GameStore>()(
     (set, get) => ({
       save: freshSave(),
       session: null,
+      authChoiceMade: false,
       mc: EMPTY_MC,
       mcChosen: false,
       mcAvatarUrl: null,
@@ -171,7 +189,18 @@ export const useGameStore = create<GameStore>()(
         set({ session: { token, account: null } });
         return token;
       },
-      signIn: ({ token, account }) => set({ session: { token, account } }),
+      continueAsGuest: () => set({ authChoiceMade: true }),
+      signIn: ({ token, account }) => set({ session: { token, account }, authChoiceMade: true }),
+      restoreFromServer: (session, payload) =>
+        set({
+          session,
+          authChoiceMade: true,
+          save: payload.save,
+          mc: payload.mc,
+          mcChosen: payload.mcChosen,
+          completed: payload.completed,
+          dmRead: payload.dmRead,
+        }),
       signOut: async () => {
         const token = get().session?.token;
         if (token) await revokeSession(token);
@@ -209,11 +238,12 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: "hyakuto-save",
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
         save: s.save,
         session: s.session,
+        authChoiceMade: s.authChoiceMade,
         mc: s.mc,
         mcChosen: s.mcChosen,
         locale: s.locale,
@@ -239,6 +269,10 @@ export const useGameStore = create<GameStore>()(
       // session anyway. Existing installs simply start syncing as a fresh
       // guest on their next sync event — the local save (the thing that
       // actually matters) is untouched.
+      // v5 adds `authChoiceMade` (the /login front door). Existing installs
+      // get true — never interrupt a mid-story player with a login screen
+      // they weren't shown when they started; the new gate only catches
+      // genuinely fresh profiles going forward.
       migrate: (persisted, version) => {
         const s = persisted as {
           completed?: unknown;
@@ -247,6 +281,7 @@ export const useGameStore = create<GameStore>()(
           mcChosen?: boolean;
           playerId?: string;
           session?: unknown;
+          authChoiceMade?: boolean;
         };
         if (version < 1 && Array.isArray(s.completed)) {
           s.completed = Object.fromEntries((s.completed as string[]).map((k) => [k, 0]));
@@ -260,6 +295,7 @@ export const useGameStore = create<GameStore>()(
           delete s.playerId;
           s.session = null;
         }
+        if (version < 5) s.authChoiceMade = true;
         return persisted as GameStore;
       },
       skipHydration: true,
