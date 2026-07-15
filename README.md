@@ -16,7 +16,8 @@ hyakuto/
 │   ├── hyakuto-game/      # Hyakutō-specific config
 │   └── hyakuto-content/   # Story files (JSON)
 ├── apps/
-│   └── web/               # Next.js frontend
+│   ├── web/               # Next.js frontend
+│   └── api/               # Save-sync + auth service (Hono + Prisma/SQLite)
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
 ```
@@ -43,6 +44,55 @@ pnpm dev
 pnpm build
 ```
  
+## API Server (apps/api)
+
+Save sync + auth (DEV_PLAN Phase 3). Local-only for now — a Hono service backed
+by SQLite via Prisma, not yet deployed. The web app talks to it only when
+`NEXT_PUBLIC_API_URL` is set; unset, `apps/web` runs fully offline against
+IndexedDB, same as before this existed.
+
+### First-time Setup
+
+```bash
+cd apps/api
+cp .env.example .env
+```
+
+Then edit `.env`:
+
+- `AUTH_SECRET` — required. Generate with `openssl rand -base64 32`.
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` and/or `AUTH_DISCORD_ID` / `AUTH_DISCORD_SECRET` — optional, only needed to try real sign-in. Without them the app still runs; the sign-in buttons just respond "not configured." See `.env.example` for the exact redirect URIs to register with each provider (`http://localhost:3100/v1/auth/callback/google`, `.../discord`).
+
+`DATABASE_URL` is already set to a local SQLite file (`apps/api/.data/dev.db`, gitignored) — nothing else to configure.
+
+### Development
+
+```bash
+pnpm --filter @hyakuto/api dev     # http://localhost:3100 — migrations auto-apply on start
+```
+
+To run the web app against it:
+
+```bash
+cd apps/web
+NEXT_PUBLIC_API_URL=http://localhost:3100 pnpm dev
+```
+
+Settings → Account (or the `/login` screen on a fresh profile) will now do real sign-in/link flows if you configured provider credentials above.
+
+### Run Tests
+
+```bash
+pnpm --filter @hyakuto/api test
+```
+
+### Database
+
+```bash
+pnpm --filter @hyakuto/api db:studio    # browse the local SQLite DB
+pnpm --filter @hyakuto/api db:migrate   # create a new migration after editing prisma/schema.prisma
+```
+
 ## Engine CLI (packages/hyakuto-engine)
  
 Run any story JSON file in the terminal with full engine support — timing, conditions, choices, pool selection.

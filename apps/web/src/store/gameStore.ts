@@ -7,7 +7,7 @@ import { idbStorage } from "./idbStorage";
 import { readMcAvatar, writeMcAvatar, deleteMcAvatar } from "./mcAvatar";
 import type { PlayerSaveT } from "@hyakuto/player-save";
 import { pushSave, pushSlotDelete, syncEnabled, type SaveSnapshot } from "@/data/saveSync";
-import { mintGuestSession, revokeSession, type AuthAccount } from "@/data/authClient";
+import { mintGuestSession, revokeSession, deleteAccount as deleteAccountRequest, type AuthAccount } from "@/data/authClient";
 
 // MC customisation (docs/worldbuilding/mc.md): name + pronouns are presentation
 // state and live here; gender-for-address is ENGINE state and lives in
@@ -82,6 +82,12 @@ type GameStore = {
   /** Revoke the session server-side and drop it locally. The local save is
    *  untouched — play continues as a guest; the next sync mints a fresh one. */
   signOut: () => Promise<void>;
+  /** GDPR: destroy the account and every trace of it server-side, then wipe
+   *  local state (save, identity, avatar, session) and un-arm authChoiceMade
+   *  so the device is indistinguishable from one that has never launched.
+   *  Rejects — and leaves local state untouched — if the server call fails,
+   *  so the UI never tells the player their data is gone when it isn't. */
+  deleteAccount: () => Promise<void>;
   /** MC identity (name + pronouns). Persisted; belongs to the playthrough —
    *  reset() clears it (and the avatar) and re-arms the first-run picker. */
   mc: McProfile;
@@ -205,6 +211,21 @@ export const useGameStore = create<GameStore>()(
         const token = get().session?.token;
         if (token) await revokeSession(token);
         set({ session: null }); // the next sync mints a fresh guest session
+      },
+      deleteAccount: async () => {
+        const token = get().session?.token;
+        if (token) await deleteAccountRequest(token); // throws on failure — nothing below runs
+        void deleteMcAvatar();
+        set({
+          save: freshSave(),
+          completed: {},
+          dmRead: {},
+          mc: EMPTY_MC,
+          mcChosen: false,
+          mcAvatarUrl: null,
+          session: null,
+          authChoiceMade: false,
+        });
       },
       loadMcAvatar: async () => {
         const blob = await readMcAvatar();

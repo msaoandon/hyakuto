@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useGameStore } from "@/store/gameStore";
 import { useT } from "@/i18n";
 import { startSignIn, syncEnabled, PROVIDERS, type Provider } from "@/data/authClient";
@@ -42,7 +44,9 @@ export function AccountSection() {
             {t("account.signOut")}
           </button>
         </div>
-      ) : (
+      ) : null}
+      {session?.account ? <DeleteAccountRow /> : null}
+      {!session?.account ? (
         <div className="flex flex-col gap-2">
           <span className="text-xs text-beige/50">{t("account.guestNote")}</span>
           {PROVIDERS.map((provider) => (
@@ -56,6 +60,63 @@ export function AccountSection() {
             </button>
           ))}
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+// Destructive, hard-to-reverse, and the server-side call is NOT best-effort
+// (see gameStore.deleteAccount) — two-step confirm like Settings' New Game
+// row, plus a visible error state on failure (silently "succeeding" locally
+// while the server still holds the data would be worse than not offering it).
+function DeleteAccountRow() {
+  const t = useT();
+  const router = useRouter();
+  const deleteAccountAction = useGameStore((s) => s.deleteAccount);
+  const [arming, setArming] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const arm = () => {
+    setFailed(false);
+    setArming(true);
+  };
+  const cancel = () => setArming(false);
+  const erase = async () => {
+    setPending(true);
+    setFailed(false);
+    try {
+      await deleteAccountAction();
+      router.replace("/login"); // the authorized-layout guard would too; be explicit
+    } catch (err) {
+      console.warn("account deletion failed — nothing was erased:", err);
+      setFailed(true);
+      setPending(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-beige/10 pt-3">
+      {failed ? <span className="text-xs text-red-300">{t("account.deleteError")}</span> : null}
+      {arming ? (
+        <span className="flex items-center gap-3">
+          <span className="text-xs text-beige/50">{t("account.deleteHint")}</span>
+          <button
+            type="button"
+            onClick={erase}
+            disabled={pending}
+            className="text-red-300 hover:underline disabled:opacity-50"
+          >
+            {pending ? t("account.connecting") : t("account.deleteConfirm")}
+          </button>
+          <button type="button" onClick={cancel} className="text-beige/60 hover:text-beige">
+            {t("settings.cancel")}
+          </button>
+        </span>
+      ) : (
+        <button type="button" onClick={arm} className="self-start text-sm text-red-300/80 hover:text-red-300 hover:underline">
+          {t("account.delete")}
+        </button>
       )}
     </div>
   );

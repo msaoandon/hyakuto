@@ -59,3 +59,44 @@ describe("fetchServerSlot", () => {
     await expect(fetchServerSlot("hyk_x")).rejects.toThrow(/404/);
   });
 });
+
+describe("deleteAccount", () => {
+  const ORIGINAL = process.env.NEXT_PUBLIC_API_URL;
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_API_URL = ORIGINAL;
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it("throws when sync is disabled — never a silent no-op on a destructive call", async () => {
+    delete process.env.NEXT_PUBLIC_API_URL;
+    vi.resetModules();
+    const { deleteAccount } = await import("./authClient");
+    await expect(deleteAccount("hyk_x")).rejects.toThrow(/sync disabled/);
+  });
+
+  it("sends the bearer token to DELETE /v1/me", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3100";
+    vi.resetModules();
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      expect(url).toBe("http://localhost:3100/v1/me");
+      expect(init?.method).toBe("DELETE");
+      expect((init?.headers as Record<string, string>).authorization).toBe("Bearer hyk_x");
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { deleteAccount } = await import("./authClient");
+    await expect(deleteAccount("hyk_x")).resolves.toBeUndefined();
+  });
+
+  it("throws on a non-OK response — the caller must not wipe local state on a failed delete", async () => {
+    process.env.NEXT_PUBLIC_API_URL = "http://localhost:3100";
+    vi.resetModules();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 401 })));
+
+    const { deleteAccount } = await import("./authClient");
+    await expect(deleteAccount("hyk_x")).rejects.toThrow(/401/);
+  });
+});

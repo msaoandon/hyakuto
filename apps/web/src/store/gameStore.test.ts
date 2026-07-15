@@ -1,7 +1,16 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useGameStore, saveToState } from "./gameStore";
+import { deleteAccount as deleteAccountMock } from "@/data/authClient";
 import type { SaveState } from "@hyakuto/engine";
 import type { PlayerSaveT } from "@hyakuto/player-save";
+
+// The real authClient.deleteAccount does a network call gated on
+// NEXT_PUBLIC_API_URL, which this test env doesn't set — mock just that one
+// export so the "signed in" deletion path is testable without flipping env.
+vi.mock("@/data/authClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/authClient")>();
+  return { ...actual, deleteAccount: vi.fn() };
+});
 
 const makeSave = (over: Partial<SaveState> = {}): SaveState => ({
   axes: {},
@@ -158,5 +167,52 @@ describe("restoreFromServer", () => {
     expect(s.dmRead).toEqual(payload.dmRead);
     expect(s.session).toEqual(session);
     expect(s.authChoiceMade).toBe(true);
+  });
+});
+
+describe("deleteAccount", () => {
+  beforeEach(() => {
+    useGameStore.setState({ session: null, authChoiceMade: false });
+    vi.mocked(deleteAccountMock).mockReset();
+  });
+
+  it("wipes local state without a server call when there's no session (nothing to delete)", async () => {
+    useGameStore.getState().setMc({ name: "Yuki" });
+    useGameStore.getState().completeThread("1:a", makeSave());
+
+    await useGameStore.getState().deleteAccount();
+
+    const s = useGameStore.getState();
+    expect(deleteAccountMock).not.toHaveBeenCalled();
+    expect(s.mc).toEqual({ name: "", pronouns: "they" });
+    expect(s.mcChosen).toBe(false);
+    expect(s.completed).toEqual({});
+    expect(s.authChoiceMade).toBe(false); // un-armed, not just cleared — a fresh device, not a re-prompt
+  });
+
+  it("deletes server-side first, then wipes local state and the session, when signed in", async () => {
+    vi.mocked(deleteAccountMock).mockResolvedValue(undefined);
+    useGameStore.getState().signIn({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } });
+    useGameStore.getState().completeThread("1:a", makeSave());
+
+    await useGameStore.getState().deleteAccount();
+
+    expect(deleteAccountMock).toHaveBeenCalledWith("hyk_abc");
+    const s = useGameStore.getState();
+    expect(s.completed).toEqual({});
+    expect(s.session).toBeNull();
+    expect(s.authChoiceMade).toBe(false);
+  });
+
+  it("leaves local state and the session untouched when the server call fails", async () => {
+    vi.mocked(deleteAccountMock).mockRejectedValue(new Error("network down"));
+    useGameStore.getState().signIn({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } });
+    useGameStore.getState().completeThread("1:a", makeSave());
+
+    await expect(useGameStore.getState().deleteAccount()).rejects.toThrow("network down");
+
+    const s = useGameStore.getState();
+    expect(Object.keys(s.completed)).toEqual(["1:a"]); // nothing erased on a failed delete
+    expect(s.session).toEqual({ token: "hyk_abc", account: { provider: "google", displayName: "Yuki", email: null } });
   });
 });

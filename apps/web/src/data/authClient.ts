@@ -71,4 +71,14 @@ export async function revokeSession(token: string): Promise<void> {
   );
 }
 
+/** GDPR account deletion: destroys the player row server-side (saves, linked
+ *  accounts, sessions — everything, via cascade). Unlike revokeSession this is
+ *  NOT best-effort: the caller must only wipe local state once this resolves,
+ *  otherwise "deleted" is a lie the server doesn't back up. */
+export async function deleteAccount(token: string): Promise<void> {
+  if (!API) throw new Error("deleteAccount called with sync disabled");
+  const res = await fetch(`${API}/v1/me`, { method: "DELETE", headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`account deletion failed: ${res.status}`);
+}
+
 export { syncEnabled };
