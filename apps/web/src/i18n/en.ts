@@ -8,6 +8,7 @@ export const en = {
   "lobby.library": "Library",
   "lobby.load": "Load",
   "lobby.history": "History",
+  "lobby.guestBanner": "Playing as a guest — progress is only on this device and could be lost. Tap to link an account.",
   "story.chat": "Chat",
   "story.dms": "DMs",
   "story.dmsEmpty": "No messages yet.",
