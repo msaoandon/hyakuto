@@ -17,6 +17,7 @@ coding agent to test against.
 | [dm.md](dm.md) | DMs: Messages inbox off the hub, relationship gating, cross-day 1:1 conversations, shared chat player, exit-to-inbox, authoring guards. |
 | [persistence.md](persistence.md) | Save state: restart survival, hydration gate, idempotent commits, replay, reset. |
 | [i18n.md](i18n.md) | UI localization (en/uk), live switching, interpolation, key parity. |
+| [account.md](account.md) | Account & Saved Games: `/login`, guest sessions, Google/Discord sign-in, guest→account adoption, account deletion, the guest-sync banner, multi-slot save switch/new/delete. |
 
 ## Conventions (full legend in audio.md)
 

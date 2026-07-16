@@ -105,14 +105,23 @@ Steps:
 Expected: none of the partial play's effects are saved and the thread is not
 marked complete — only a fully completed thread commits.
 
-## PERS-09 — Guest data is device-local
+## PERS-09 — Guest data survives only as long as the device does
 - area: persistence
 - priority: low
-- platforms: [ios, android]
+- platforms: [ios, android, web]
 - automatable: no
 
 Steps:
-  1. Build progress as a guest (no account), then delete & reinstall the app.
-Expected: a reinstall starts fresh (guest save is device-local). Documents the
-current "device is the source of truth for guests" behavior; revisit when
-account/server sync lands.
+  1. Build progress as a guest (no linked account), then delete & reinstall
+     the app. Run once with sync disabled, once with it enabled.
+Expected: a reinstall starts fresh either way, but for different reasons:
+  - **Sync disabled**: expected outright — IndexedDB is the only copy that
+    ever existed, and it's gone with the app.
+  - **Sync enabled**: the server *does* still hold a copy, but it's addressed
+    only by the guest bearer token, which was itself stored only in the
+    now-deleted IndexedDB — nothing survives to prove the data is "yours."
+    The save isn't lost server-side, it's just permanently unreachable. This
+    is exactly the risk [account.md](account.md)'s ACCT-08 guest banner warns
+    about before it happens; a guest who links an account first (ACCT-04)
+    keeps their progress across a reinstall via account.md's sign-in/restore
+    flow (ACCT-05) instead.
