@@ -94,22 +94,59 @@ Expected: no restore notice — the server save is pulled and hydrated
 automatically in one replace (`restoreFromServer`), landing on `/lobby`
 already showing the account's candles/progress.
 
-### ACCT-06 — Sign-in with conflicting local + server progress shows a notice only
+### ACCT-06 — Sign-in with conflicting local + server progress forces an explicit choice (MOBA-style)
 - area: account
-- priority: med
+- priority: high
 - platforms: [web]
-- automatable: partial
+- automatable: partial   # the store actions are unit-tested; this is the UI wiring + a real conflict
 
 Preconditions: play a few minutes as a guest first (so local progress
 exists), *then* link an account (Settings → Link with {provider}) whose
 server save differs from local.
 Steps:
-  1. Complete the link flow.
-Expected: `account.restoreNotice` copy appears ("a save from this account was
-found... restoring it isn't supported yet"); local progress is left exactly
-as it was — nothing is silently merged or overwritten either direction. This
-is the documented remaining Phase-3 gap, not a bug to "fix" by asserting a
-specific resolution.
+  1. Complete the link flow and observe `/auth/return`.
+Expected: `account.conflictNotice` copy appears, explaining there's no
+merging — with two actions, "Use this account's save" and "Keep playing on
+this device." Neither local state nor the account's server save is touched
+until one is picked; the account's session is NOT silently adopted just by
+reaching this screen (a real bug in the earlier notice-only version).
+
+### ACCT-06a — "Use this account's save" discards local progress, adopts the account
+- area: account
+- priority: high
+- platforms: [web]
+- automatable: partial
+
+Preconditions: same as ACCT-06, at the conflict screen.
+Steps:
+  1. Tap "Use this account's save" (arms it), then "Yes, discard this
+     device's progress" (two-step confirm, like New Game/Delete Account).
+Expected: local state is fully replaced with the account's save (candles,
+completed threads, MC identity all now match the account, not the device);
+any locally-cached slot-0 avatar photo is cleared, not carried over as the
+account's photo; lands on `/lobby` or `/welcome` depending on the restored
+save's `mcChosen`. A direct API check confirms the account's server save is
+**unchanged** by this — it was pulled down, not pushed up. The old guest
+token (the one this device had been playing on) is revoked server-side —
+confirm via a direct `GET /v1/me` with it returning 401.
+
+### ACCT-06b — "Keep playing on this device" abandons the account link attempt
+- area: account
+- priority: high
+- platforms: [web]
+- automatable: partial
+
+Preconditions: same as ACCT-06, at the conflict screen.
+Steps:
+  1. Tap "Keep playing on this device."
+Expected: local save/mc/completed/dmRead are completely untouched (nothing
+was ever written for the conflicting account); routes to Settings, still
+showing "Link your account" (not signed in). The account session issued by
+the exchange is revoked server-side (hygiene — confirm via a direct
+`GET /v1/me` with it returning 401), and the next sync event (e.g.
+completing a thread) mints a brand-new guest session rather than reusing the
+old device token in the exchange (which the server already revoked as part
+of the token exchange, adopted or not).
 
 ### ACCT-07 — Sign out drops the session, play continues as guest
 - area: account

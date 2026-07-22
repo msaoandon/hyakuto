@@ -79,14 +79,34 @@ type GameStore = {
    *  it always has. */
   continueAsGuest: () => void;
   /** Adopt a session returned by authClient.exchangeCode (called from
-   *  /auth/return after the OAuth dance completes). */
+   *  /auth/return after the OAuth dance completes). Only call this once a
+   *  sign-in is known to be conflict-free — see `restoreFromServer` and
+   *  `abandonConflictedSignIn` for the case where the exchanged account
+   *  already has a save that differs from what's on this device. */
   signIn: (result: { token: string; account: AuthAccount }) => void;
-  /** Full local hydration from a server save fetched right after sign-in.
-   *  Only ever called when the device had nothing local to lose (see
-   *  /auth/return's `wasFresh` check) — a safe full replace, not a merge; the
-   *  genuine-conflict case (existing local progress AND an existing server
-   *  save) stays on the notice-only path instead. */
+  /** Full local hydration from a server save — a safe full REPLACE, never a
+   *  merge. Two call sites, both provably safe to replace: (1) auto-restore
+   *  on a provably-fresh device (see /auth/return's `wasFresh` check — there
+   *  is nothing local to lose); (2) the player explicitly picking "use this
+   *  account's save" when a genuine conflict was surfaced (existing local
+   *  progress AND a different existing server save) — MOBA-style: no silent
+   *  merge is ever attempted, the player picks one side and the other is
+   *  discarded. Always also purges any locally-cached slot-0 avatar photo —
+   *  it belonged to whichever playthrough is being replaced, never to the
+   *  incoming one. */
   restoreFromServer: (session: { token: string; account: AuthAccount }, payload: PlayerSaveT) => void;
+  /** The other half of conflict resolution: the player picked "keep playing
+   *  on this device" instead. The just-exchanged account session is never
+   *  adopted (nothing was written to `session` for it in the first place —
+   *  see /auth/return), so local save/mc/completed/dmRead need no cleanup;
+   *  this only tidies up identity. `apps/api`'s token exchange already
+   *  revoked the guest token that was traded in, so leaving it in `session`
+   *  would leave every subsequent sync silently failing (401) — clear it so
+   *  the next sync event mints a fresh guest session, same as `signOut`. The
+   *  abandoned account token is also revoked server-side (best-effort — it's
+   *  hygiene, not correctness: an unrevoked token is merely an unused live
+   *  session, not a safety issue). */
+  abandonConflictedSignIn: (abandonedToken: string) => Promise<void>;
   /** Revoke the session server-side and drop it locally. The local save is
    *  untouched — play continues as a guest; the next sync mints a fresh one. */
   signOut: () => Promise<void>;
@@ -226,17 +246,24 @@ export const useGameStore = create<GameStore>()(
       },
       continueAsGuest: () => set({ authChoiceMade: true }),
       signIn: ({ token, account }) => set({ session: { token, account }, authChoiceMade: true }),
-      restoreFromServer: (session, payload) =>
+      restoreFromServer: (session, payload) => {
+        void deleteMcAvatar(0); // /auth/return's restore paths always target slot 0 — see comment above
         set({
           session,
           authChoiceMade: true,
-          currentSlot: 0, // /auth/return's auto-restore always pulls slot 0
+          currentSlot: 0,
           save: payload.save,
           mc: payload.mc,
           mcChosen: payload.mcChosen,
+          mcAvatarUrl: null,
           completed: payload.completed,
           dmRead: payload.dmRead,
-        }),
+        });
+      },
+      abandonConflictedSignIn: async (abandonedToken) => {
+        await revokeSession(abandonedToken); // best-effort, see comment above
+        set({ session: null });
+      },
       signOut: async () => {
         const token = get().session?.token;
         if (token) await revokeSession(token);

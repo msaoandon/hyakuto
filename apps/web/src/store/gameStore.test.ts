@@ -5,6 +5,7 @@ import {
   fetchServerSlot as fetchServerSlotMock,
   listSlots as listSlotsMock,
   deleteSlot as deleteSlotMock,
+  revokeSession as revokeSessionMock,
 } from "@/data/authClient";
 import type { SaveState } from "@hyakuto/engine";
 import type { PlayerSaveT } from "@hyakuto/player-save";
@@ -20,6 +21,7 @@ vi.mock("@/data/authClient", async (importOriginal) => {
     fetchServerSlot: vi.fn(),
     listSlots: vi.fn(),
     deleteSlot: vi.fn(),
+    revokeSession: vi.fn(),
   };
 });
 
@@ -169,8 +171,10 @@ describe("restoreFromServer", () => {
   const session = { token: "hyk_restored", account: { provider: "google", displayName: "Yuki", email: null } };
 
   it("fully replaces local state from a server save and marks the session established", () => {
-    // The device had nothing local before this — restoreFromServer is only
-    // ever called on that safe path (see /auth/return's wasFresh check).
+    // Called either on the auto-restore path (device had nothing local — see
+    // /auth/return's wasFresh check) or when the player explicitly picked
+    // "use this account's save" resolving a conflict — either way, a full
+    // replace.
     useGameStore.getState().restoreFromServer(session, payload);
     const s = useGameStore.getState();
     expect(s.save).toEqual(payload.save);
@@ -180,6 +184,38 @@ describe("restoreFromServer", () => {
     expect(s.dmRead).toEqual(payload.dmRead);
     expect(s.session).toEqual(session);
     expect(s.authChoiceMade).toBe(true);
+  });
+
+  it("clears any locally-cached avatar — it belonged to whichever playthrough is being replaced", () => {
+    useGameStore.setState({ mcAvatarUrl: "blob:stale-local-photo" });
+    useGameStore.getState().restoreFromServer(session, payload);
+    expect(useGameStore.getState().mcAvatarUrl).toBeNull();
+  });
+});
+
+describe("abandonConflictedSignIn", () => {
+  beforeEach(() => {
+    useGameStore.setState({ session: { token: "hyk_dead_guest", account: null } });
+    vi.mocked(revokeSessionMock).mockReset().mockResolvedValue(undefined);
+  });
+
+  it("revokes the abandoned account token and drops the local (now-dead) guest session", async () => {
+    await useGameStore.getState().abandonConflictedSignIn("hyk_conflicting_account");
+
+    expect(revokeSessionMock).toHaveBeenCalledWith("hyk_conflicting_account");
+    expect(useGameStore.getState().session).toBeNull(); // next sync mints a fresh guest session
+  });
+
+  it("never touches local save/mc/completed — nothing was written for the conflicting account", async () => {
+    useGameStore.getState().setMc({ name: "Yuki" });
+    useGameStore.getState().completeThread("1:a", makeSave({ counters: { candles: 42 } }));
+
+    await useGameStore.getState().abandonConflictedSignIn("hyk_conflicting_account");
+
+    const s = useGameStore.getState();
+    expect(s.mc.name).toBe("Yuki");
+    expect(Object.keys(s.completed)).toEqual(["1:a"]);
+    expect(s.save.counters.candles).toBe(42);
   });
 });
 
